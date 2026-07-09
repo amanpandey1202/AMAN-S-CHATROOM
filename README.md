@@ -37,6 +37,14 @@ Both ESP32 boards must be wired to their respective nRF24L01 transceivers using 
 | **MOSI** | **GPIO 23** | SPI Master Out Slave In |
 | **MISO** | **GPIO 19** | SPI Master In Slave Out |
 
+
+
+# SCHEMATIC
+
+
+<img width="1024" height="1024" alt="esp32_nrf24l01_schematic_1783624642144" src="https://github.com/user-attachments/assets/94b66579-7c1e-4af9-8e30-ebd6d3d20a0c" />
+
+
 ---
 
 ## 🛠️ Modifying the Web UI Assets
