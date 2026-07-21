@@ -6,6 +6,8 @@ An offline, secure, decentralized local-network chatroom and walkie-talkie messa
 > ### ⚡ Live Interactive Web Demo
 > You can preview and test the complete chat client interface directly in your browser without any hardware:
 > **[👉 Open Live Interactive Web Preview](https://htmlpreview.github.io/?https://github.com/amanpandey1202/AMAN-S-CHATROOM/blob/main/preview.html)**
+> 
+> *💡 **Pro-tip**: Type `\v2` or `/v2` inside the chat input box to instantly toggle the **Handcrafted Cyberpunk Midnight Mesh Theme**!*
 
 ---
 
@@ -20,6 +22,7 @@ An offline, secure, decentralized local-network chatroom and walkie-talkie messa
 
 ## ✨ Features
 * **Decentralized Local Server**: Runs a lightweight Asynchronous Web Server and WebSocket server directly on the ESP32 chip.
+* **Dual Theme Engine (`\v2` Command)**: Type `\v2` or `/v2` in chat to toggle between Classic Glassmorphism and the Handcrafted Cyberpunk Midnight Mesh theme.
 * **Symmetrical Radio Bridge**: Transmits packets between two distant nodes over the nRF24L01+PA+LNA radio bridge on Channel 76 (2.476 GHz) to bypass local network blockages.
 * **End-to-End Encryption (E2EE)**: Secures private chats and the `#vault` room using standard browser Cryptography (ECDH and AES-GCM) with a secure RC4 encryption fallback.
 * **Walkie-Talkie Voice Messaging**: Downsamples, compresses, and broadcasts real-time mono voice streams (up to 32KB buffers) over WebSockets in the `#airwaves` and `#vault` rooms.
