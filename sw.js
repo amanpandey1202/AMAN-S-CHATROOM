@@ -1,6 +1,6 @@
-const char sw_js[] PROGMEM = R"rawliteral(
-const CACHE_NAME = 'esp32-chat-v6';
+const CACHE_NAME = 'esp32-chat-v4';
 const ASSETS = [
+  '/',
   '/manifest.json'
 ];
 
@@ -27,11 +27,8 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Never cache: WebSocket, Auth, API calls, or any non-GET request
-  if (e.request.url.includes('/ws') ||
-      e.request.url.includes('/auth') ||
-      e.request.url.includes('/api') ||
-      e.request.method !== 'GET') {
+  if (e.request.url.includes('/ws') || e.request.url.includes('/auth') || e.request.method !== 'GET') {
+    // Let WebSocket, Auth, and non-GET requests go to the network
     return;
   }
   e.respondWith(
@@ -51,6 +48,3 @@ self.addEventListener('fetch', (e) => {
       })
   );
 });
-
-)rawliteral";
-const unsigned int sw_js_len = sizeof(sw_js) - 1;

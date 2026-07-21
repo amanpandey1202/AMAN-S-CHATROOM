@@ -7,13 +7,18 @@
 #include <RF24.h>
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
+#include "esp_task_wdt.h"
+#include <Preferences.h>
 
 // -- Configuration -------------------------------------------
+#include "secret/secrets.h"
+
 namespace Config {
-  const char* AP_SSID       = "PURPLE-CHAT-A";     // Wi-Fi SSID for Node A
-  const char* AP_PASS       = "AMANPANDEY99";    // WPA2 Password (min 8 chars)
-  const String WEB_PASS     = "5676";            // Key to login to Web UI
-  const String ADMIN_PASS   = "AMAN1234";        // Password for administrative commands
+  // Credentials are dynamically decrypted from XOR storage to prevent firmware binary analysis extraction
+  inline String getSSID() { return Secrets::get(Secrets::AP_SSID_A, sizeof(Secrets::AP_SSID_A)); }
+  inline String getAPPass() { return Secrets::get(Secrets::AP_PASS, sizeof(Secrets::AP_PASS)); }
+  inline String getWebPass() { return Secrets::get(Secrets::WEB_PASS, sizeof(Secrets::WEB_PASS)); }
+  inline String getAdminPass() { return Secrets::get(Secrets::ADMIN_PASS, sizeof(Secrets::ADMIN_PASS)); }
   
   const uint8_t MAX_CLIENTS      = 4;  // ESP32 softAP reliably supports max 4 stations
   const uint8_t MAX_HISTORY      = 20;           // Keep in RAM
@@ -56,6 +61,8 @@ struct ChatClient {
   uint8_t  msgCount  = 0;
   bool     isAdmin   = false;
   String   wsBuffer  = "";                       // Buffer for fragmented WebSocket frames
+  uint32_t lastActivity = 0;
+  uint8_t  adminAttempts = 0;
 };
 
 struct HistMsg {
@@ -163,6 +170,7 @@ bool addBan(IPAddress ip, const String &username) {
       banList[i].ip = ip;
       banList[i].username = username;
       banList[i].active = true;
+      saveBansToNVS();
       return true;
     }
   }
@@ -178,6 +186,9 @@ bool removeBan(const String &query) {
         removed = true;
       }
     }
+  }
+  if (removed) {
+    saveBansToNVS();
   }
   return removed;
 }
@@ -292,6 +303,113 @@ struct ReassemblyBuffer {
   uint32_t lastActivity = 0;
 };
 static ReassemblyBuffer rxBuf;
+
+// Preferences and Bans
+Preferences prefs;
+
+void saveBansToNVS() {
+  if (!prefs.begin("bans", false)) {
+    Serial.println("[NVS] Error: Failed to open 'bans' for saving!");
+    return;
+  }
+  prefs.clear();
+  uint8_t count = 0;
+  for (int i = 0; i < MAX_BANS; i++) {
+    if (banList[i].active) {
+      String key = "b" + String(count);
+      String val = banList[i].ip.toString() + "|" + banList[i].username;
+      prefs.putString(key.c_str(), val);
+      count++;
+    }
+  }
+  prefs.putUChar("count", count);
+  prefs.end();
+}
+
+void loadBansFromNVS() {
+  for (int i = 0; i < MAX_BANS; i++) {
+    banList[i].active = false;
+    banList[i].username = "";
+    banList[i].ip = IPAddress(0, 0, 0, 0);
+  }
+  if (!prefs.begin("bans", false)) {
+    Serial.println("[NVS] Error: Failed to open 'bans' preferences!");
+    return;
+  }
+  uint8_t count = prefs.getUChar("count", 0);
+  for (int i = 0; i < count && i < MAX_BANS; i++) {
+    String key = "b" + String(i);
+    String val = prefs.getString(key.c_str(), "");
+    if (val.length() > 0) {
+      int pipeIdx = val.indexOf('|');
+      if (pipeIdx > 0) {
+        String ipStr = val.substring(0, pipeIdx);
+        String userStr = val.substring(pipeIdx + 1);
+        IPAddress ip;
+        if (ip.fromString(ipStr)) {
+          banList[i].ip = ip;
+          banList[i].username = userStr;
+          banList[i].active = true;
+        }
+      }
+    }
+  }
+  prefs.end();
+}
+
+// Pinned messages state
+struct PinnedMsg {
+  String text = "";
+  String from = "";
+  String ts = "";
+  bool active = false;
+};
+PinnedMsg pinnedMsgs[6];
+
+int roomIndex(const String &roomName) {
+  if (roomName == "comms") return 0;
+  if (roomName == "airwaves") return 1;
+  if (roomName == "terminal") return 2;
+  if (roomName == "game") return 3;
+  if (roomName == "darknet") return 4;
+  if (roomName == "vault") return 5;
+  return -1;
+}
+
+// Poll state
+struct PollState {
+  bool active = false;
+  String creator = "";
+  String room = "";
+  String question = "";
+  String options[4];
+  uint8_t optCount = 0;
+  uint8_t votes[4] = {0};
+  String votedNames[16];
+  uint8_t votedCount = 0;
+};
+PollState activePoll;
+
+// Message deduplication
+uint16_t recentMsgHashes[8] = {0};
+uint8_t hashIdx = 0;
+
+uint16_t msgHash(const String& user, const String& text) {
+  uint16_t h = 0;
+  for (char c : user) h = h * 31 + c;
+  for (char c : text) h = h * 31 + c;
+  return h;
+}
+
+bool isDuplicate(uint16_t h) {
+  for (int i = 0; i < 8; i++) {
+    if (recentMsgHashes[i] == h) return true;
+  }
+  recentMsgHashes[hashIdx++ % 8] = h;
+  return false;
+}
+
+uint32_t lastTypingRadio = 0;
 
 // -- Forward Declarations --------------------------------------
 void broadcastLinkStatus();
@@ -646,6 +764,7 @@ void broadcastRoom(const String &room, const String &payload) {
 // -- WebSocket event handling and message processing ----------------
 
 void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String &raw) {
+  c->lastActivity = millis();
 #if ARDUINOJSON_VERSION_MAJOR >= 7
   JsonDocument doc;
 #else
@@ -677,7 +796,7 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
 
     // Check if logged in with admin credentials
     String adminPass = doc["adminPass"] | "";
-    if (adminPass == Config::ADMIN_PASS) {
+    if (adminPass == Config::getAdminPass()) {
       c->isAdmin = true;
     }
 
@@ -686,6 +805,13 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
     if (clientTime > 0) {
       timeOffset = clientTime - (millis() / 1000);
       timeSynced = true;
+    }
+
+    // Sync client current room if provided
+    String clientRoom = doc["room"] | "comms";
+    if (clientRoom == "comms" || clientRoom == "airwaves" || clientRoom == "terminal" ||
+        clientRoom == "game" || clientRoom == "darknet" || (clientRoom == "vault" && c->isAdmin)) {
+      c->room = clientRoom;
     }
 
     // Send history for current room
@@ -711,6 +837,70 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
       String hs;
       serializeJson(h, hs);
       client->text(hs);
+    }
+
+    // Send pinned message and active poll for the current room
+    {
+      int rIdx = roomIndex(c->room);
+      if (rIdx >= 0 && pinnedMsgs[rIdx].active) {
+        #if ARDUINOJSON_VERSION_MAJOR >= 7
+        JsonDocument pinDoc;
+        #else
+        DynamicJsonDocument pinDoc(512);
+        #endif
+        pinDoc["type"] = "pinnedMsg";
+        pinDoc["room"] = c->room;
+        pinDoc["text"] = pinnedMsgs[rIdx].text;
+        pinDoc["from"] = pinnedMsgs[rIdx].from;
+        pinDoc["ts"] = pinnedMsgs[rIdx].ts;
+        pinDoc["active"] = true;
+        String pinOut;
+        serializeJson(pinDoc, pinOut);
+        client->text(pinOut);
+      }
+    }
+    if (activePoll.active && activePoll.room == c->room) {
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonDocument pollDoc;
+      #else
+      DynamicJsonDocument pollDoc(512);
+      #endif
+      pollDoc["type"] = "pollCreate";
+      pollDoc["creator"] = activePoll.creator;
+      pollDoc["room"] = activePoll.room;
+      pollDoc["question"] = activePoll.question;
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonArray arr = pollDoc["options"].to<JsonArray>();
+      #else
+      JsonArray arr = pollDoc.createNestedArray("options");
+      #endif
+      for (int i = 0; i < activePoll.optCount; i++) {
+        arr.add(activePoll.options[i]);
+      }
+      
+      String pollOut;
+      serializeJson(pollDoc, pollOut);
+      client->text(pollOut);
+      
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonDocument voteDoc;
+      #else
+      DynamicJsonDocument voteDoc(512);
+      #endif
+      voteDoc["type"] = "pollUpdate";
+      voteDoc["room"] = activePoll.room;
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonArray votesArr = voteDoc["votes"].to<JsonArray>();
+      #else
+      JsonArray votesArr = voteDoc.createNestedArray("votes");
+      #endif
+      for (int i = 0; i < activePoll.optCount; i++) {
+        votesArr.add(activePoll.votes[i]);
+      }
+      
+      String voteOut;
+      serializeJson(voteDoc, voteOut);
+      client->text(voteOut);
     }
 
     // Send the current Link Status to the newly joined user
@@ -792,6 +982,70 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
         h["hist"]  = true; h["room"] = newRoom; h["mesh"] = history[idx].mesh;
         String hs; serializeJson(h, hs); client->text(hs);
       }
+    }
+
+    // Send pinned messages and polls for new room
+    {
+      int rIdx = roomIndex(newRoom);
+      if (rIdx >= 0 && pinnedMsgs[rIdx].active) {
+        #if ARDUINOJSON_VERSION_MAJOR >= 7
+        JsonDocument pinDoc;
+        #else
+        DynamicJsonDocument pinDoc(512);
+        #endif
+        pinDoc["type"] = "pinnedMsg";
+        pinDoc["room"] = newRoom;
+        pinDoc["text"] = pinnedMsgs[rIdx].text;
+        pinDoc["from"] = pinnedMsgs[rIdx].from;
+        pinDoc["ts"] = pinnedMsgs[rIdx].ts;
+        pinDoc["active"] = true;
+        String pinOut;
+        serializeJson(pinDoc, pinOut);
+        client->text(pinOut);
+      }
+    }
+    if (activePoll.active && activePoll.room == newRoom) {
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonDocument pollDoc;
+      #else
+      DynamicJsonDocument pollDoc(512);
+      #endif
+      pollDoc["type"] = "pollCreate";
+      pollDoc["creator"] = activePoll.creator;
+      pollDoc["room"] = activePoll.room;
+      pollDoc["question"] = activePoll.question;
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonArray arr = pollDoc["options"].to<JsonArray>();
+      #else
+      JsonArray arr = pollDoc.createNestedArray("options");
+      #endif
+      for (int i = 0; i < activePoll.optCount; i++) {
+        arr.add(activePoll.options[i]);
+      }
+      
+      String pollOut;
+      serializeJson(pollDoc, pollOut);
+      client->text(pollOut);
+      
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonDocument voteDoc;
+      #else
+      DynamicJsonDocument voteDoc(512);
+      #endif
+      voteDoc["type"] = "pollUpdate";
+      voteDoc["room"] = activePoll.room;
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonArray votesArr = voteDoc["votes"].to<JsonArray>();
+      #else
+      JsonArray votesArr = voteDoc.createNestedArray("votes");
+      #endif
+      for (int i = 0; i < activePoll.optCount; i++) {
+        votesArr.add(activePoll.votes[i]);
+      }
+      
+      String voteOut;
+      serializeJson(voteDoc, voteOut);
+      client->text(voteOut);
     }
 
     // -- Broadcast "joined" to new room (skip for #game) ----------
@@ -888,6 +1142,122 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
     if (text.length() == 0 || text.length() > 300) return;
     text = expandEmoji(text);
 
+    // -- /status command (health report, visible only to sender) ------
+    if (text == "/status") {
+      uint32_t upSec = millis() / 1000;
+      uint8_t connCount = 0;
+      for (auto& cl : clients) if (cl.id) connCount++;
+      uint8_t peerCount = 0;
+      for (int i = 0; i < MAX_PEER_USERS; i++) if (peerUsers[i].active) peerCount++;
+      uint8_t banCount = 0;
+      for (int i = 0; i < MAX_BANS; i++) if (banList[i].active) banCount++;
+      
+      String st = "[Server Status]\\nNode: ";
+      st += NODE_ID;
+      st += "  |  Uptime: " + String(upSec/3600) + "h " + String((upSec%3600)/60) + "m\\n";
+      st += "Clients: " + String(connCount) + "/4  |  Radio: " + (peerOnline ? "ONLINE" : "OFFLINE") + "\\n";
+      st += "Free Heap: " + String(ESP.getFreeHeap()/1024) + "KB  |  TX: " + String(packetsSent) + "  RX: " + String(packetsReceived) + "  Fail: " + String(packetsFailed) + "\\n";
+      st += "Peer Users: " + String(peerCount) + "  |  Bans: " + String(banCount);
+      client->text("{\"type\":\"system\",\"text\":\"" + st + "\"}");
+      return;
+    }
+
+    // -- /poll command (admin only) ------------------------------------
+    if (text.startsWith("/poll ")) {
+      if (!c->isAdmin) {
+        client->text("{\"type\":\"error\",\"text\":\"Admins only\"}");
+        return;
+      }
+      if (activePoll.active) {
+        client->text("{\"type\":\"error\",\"text\":\"A poll is already active! Use /endpoll first.\"}");
+        return;
+      }
+      int firstQuote = text.indexOf('"');
+      int secondQuote = text.indexOf('"', firstQuote + 1);
+      if (firstQuote < 0 || secondQuote < 0) {
+        client->text("{\"type\":\"error\",\"text\":\"Format: /poll \\\"Question\\\" Opt1 Opt2 ...\"}");
+        return;
+      }
+      activePoll.question = text.substring(firstQuote + 1, secondQuote);
+      activePoll.creator = c->username;
+      activePoll.room = c->room;
+      activePoll.optCount = 0;
+      activePoll.votedCount = 0;
+      memset(activePoll.votes, 0, sizeof(activePoll.votes));
+      for (int i = 0; i < 16; i++) activePoll.votedNames[i] = "";
+      
+      String remainder = text.substring(secondQuote + 1);
+      remainder.trim();
+      int optStart = 0;
+      while (optStart < remainder.length() && activePoll.optCount < 4) {
+        int nextSpace = remainder.indexOf(' ', optStart);
+        String opt;
+        if (nextSpace < 0) {
+          opt = remainder.substring(optStart);
+          optStart = remainder.length();
+        } else {
+          opt = remainder.substring(optStart, nextSpace);
+          optStart = nextSpace + 1;
+        }
+        opt.trim();
+        if (opt.length() > 0) {
+          activePoll.options[activePoll.optCount++] = opt;
+        }
+      }
+      if (activePoll.optCount < 2) {
+        client->text("{\"type\":\"error\",\"text\":\"Must have at least 2 options.\"}");
+        return;
+      }
+      activePoll.active = true;
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonDocument pollDoc;
+      #else
+      DynamicJsonDocument pollDoc(512);
+      #endif
+      pollDoc["type"] = "pollCreate";
+      pollDoc["creator"] = activePoll.creator;
+      pollDoc["room"] = activePoll.room;
+      pollDoc["question"] = activePoll.question;
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonArray arr = pollDoc["options"].to<JsonArray>();
+      #else
+      JsonArray arr = pollDoc.createNestedArray("options");
+      #endif
+      for (int i = 0; i < activePoll.optCount; i++) {
+        arr.add(activePoll.options[i]);
+      }
+      String pollOut;
+      serializeJson(pollDoc, pollOut);
+      broadcastRoom(activePoll.room, pollOut);
+      sendJsonToRadio(pollOut);
+      return;
+    }
+    
+    // -- /endpoll command (admin only) ---------------------------------
+    if (text == "/endpoll") {
+      if (!c->isAdmin) {
+        client->text("{\"type\":\"error\",\"text\":\"Admins only\"}");
+        return;
+      }
+      if (!activePoll.active || activePoll.room != c->room) {
+        client->text("{\"type\":\"error\",\"text\":\"No active poll in this room.\"}");
+        return;
+      }
+      activePoll.active = false;
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonDocument endDoc;
+      #else
+      DynamicJsonDocument endDoc(256);
+      #endif
+      endDoc["type"] = "pollEnd";
+      endDoc["room"] = c->room;
+      String endOut;
+      serializeJson(endDoc, endOut);
+      broadcastRoom(c->room, endOut);
+      sendJsonToRadio(endOut);
+      return;
+    }
+
     // -- /dm command -------------------------------------------------
     if (text.startsWith("/dm ")) {
       int sp = text.indexOf(' ', 4);
@@ -895,6 +1265,44 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
       String dmText = (sp > 0) ? text.substring(sp + 1) : "";
       ChatClient *tc = findClientByName(target);
       if (!tc) {
+        // Try cross-node peer users
+        bool peerFound = false;
+        for (int i = 0; i < MAX_PEER_USERS; i++) {
+          if (peerUsers[i].active && peerUsers[i].name.equalsIgnoreCase(target)) {
+            peerFound = true;
+            break;
+          }
+        }
+        if (peerFound) {
+          #if ARDUINOJSON_VERSION_MAJOR >= 7
+          JsonDocument dmDoc;
+          #else
+          DynamicJsonDocument dmDoc(256);
+          #endif
+          dmDoc["type"] = "peerDm";
+          dmDoc["to"] = target;
+          dmDoc["from"] = c->username;
+          dmDoc["text"] = dmText;
+          dmDoc["ts"] = getTime();
+          String dmOut;
+          serializeJson(dmDoc, dmOut);
+          sendJsonToRadio(dmOut);
+          
+          // echo back to sender
+          #if ARDUINOJSON_VERSION_MAJOR >= 7
+          JsonDocument echoDoc;
+          #else
+          DynamicJsonDocument echoDoc(256);
+          #endif
+          echoDoc["type"] = "dm";
+          echoDoc["from"] = c->username;
+          echoDoc["text"] = "[→ " + target + "] " + dmText;
+          echoDoc["ts"] = getTime();
+          String echoOut;
+          serializeJson(echoDoc, echoOut);
+          client->text(echoOut);
+          return;
+        }
         client->text("{\"type\":\"error\",\"text\":\"User not found\"}");
         return;
       }
@@ -1043,12 +1451,19 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
     if (text.startsWith("/admin ")) {
       String pw = text.substring(7);
       pw.trim();
-      if (pw == Config::ADMIN_PASS) {
+      if (pw == Config::getAdminPass()) {
         c->isAdmin = true;
+        c->adminAttempts = 0;
         client->text("{\"type\":\"adminGranted\"}");
         broadcastUserList(c->room);
       } else {
-        client->text("{\"type\":\"error\",\"text\":\"Wrong admin password\"}");
+        c->adminAttempts++;
+        if (c->adminAttempts >= 3) {
+          client->text("{\"type\":\"error\",\"text\":\"Too many attempts. Disconnected.\"}");
+          client->close();
+        } else {
+          client->text("{\"type\":\"error\",\"text\":\"Wrong admin password (" + String(3 - c->adminAttempts) + " left)\"}");
+        }
       }
       return;
     }
@@ -1329,12 +1744,109 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
   if (msgType == "pubKey") {
     String key = doc["key"] | "";
     if (key.length() == 0) return;
+    bool isResp = doc["isResponse"] | false;
+    String relay = "{\"type\":\"pubKey\",\"from\":\"" + c->username + "\",\"key\":\"" + key + "\",\"isResponse\":" + (isResp ? "true" : "false") + "}";
     for (auto& other : clients) {
       if (other.id && other.id != c->id && other.room == c->room) {
-        String relay = "{\"type\":\"pubKey\",\"from\":\"" + c->username + "\",\"key\":\"" + key + "\"}"; 
-        ws.text(other.id, relay); break;
+        ws.text(other.id, relay);
       }
     }
+    // Relay over radio
+    #if ARDUINOJSON_VERSION_MAJOR >= 7
+    JsonDocument radioDoc;
+    #else
+    DynamicJsonDocument radioDoc(512);
+    #endif
+    radioDoc["type"] = "peerPubKey";
+    radioDoc["from"] = c->username;
+    radioDoc["key"]  = key;
+    radioDoc["room"] = c->room;
+    radioDoc["isResponse"] = isResp;
+    String radioOut;
+    serializeJson(radioDoc, radioOut);
+    sendJsonToRadio(radioOut);
+    return;
+  }
+
+  // -- pollVote ------------------------------------------------------
+  if (msgType == "pollVote") {
+    if (!activePoll.active || activePoll.room != c->room) return;
+    uint8_t optIdx = doc["option"] | 99;
+    if (optIdx >= activePoll.optCount) return;
+    
+    bool alreadyVoted = false;
+    for (int i = 0; i < activePoll.votedCount; i++) {
+      if (activePoll.votedNames[i].equalsIgnoreCase(c->username)) {
+        alreadyVoted = true;
+        break;
+      }
+    }
+    if (alreadyVoted) {
+      client->text("{\"type\":\"error\",\"text\":\"You have already voted!\"}");
+      return;
+    }
+    
+    activePoll.votedNames[activePoll.votedCount++] = c->username;
+    activePoll.votes[optIdx]++;
+    
+    #if ARDUINOJSON_VERSION_MAJOR >= 7
+    JsonDocument voteDoc;
+    #else
+    DynamicJsonDocument voteDoc(512);
+    #endif
+    voteDoc["type"] = "pollUpdate";
+    voteDoc["room"] = activePoll.room;
+    #if ARDUINOJSON_VERSION_MAJOR >= 7
+    JsonArray votesArr = voteDoc["votes"].to<JsonArray>();
+    #else
+    JsonArray votesArr = voteDoc.createNestedArray("votes");
+    #endif
+    for (int i = 0; i < activePoll.optCount; i++) {
+      votesArr.add(activePoll.votes[i]);
+    }
+    
+    String voteOut;
+    serializeJson(voteDoc, voteOut);
+    broadcastRoom(activePoll.room, voteOut);
+    sendJsonToRadio(voteOut);
+    return;
+  }
+
+  // -- pinMsg (admin only) -------------------------------------------
+  if (msgType == "pinMsg") {
+    if (!c->isAdmin) return;
+    int rIdx = roomIndex(c->room);
+    if (rIdx < 0) return;
+    
+    bool unpin = doc["unpin"] | false;
+    if (unpin) {
+      pinnedMsgs[rIdx].active = false;
+      pinnedMsgs[rIdx].text = "";
+      pinnedMsgs[rIdx].from = "";
+      pinnedMsgs[rIdx].ts = "";
+    } else {
+      pinnedMsgs[rIdx].text = doc["text"] | "";
+      pinnedMsgs[rIdx].from = doc["from"] | "";
+      pinnedMsgs[rIdx].ts = doc["ts"] | "";
+      pinnedMsgs[rIdx].active = true;
+    }
+    
+    #if ARDUINOJSON_VERSION_MAJOR >= 7
+    JsonDocument pinDoc;
+    #else
+    DynamicJsonDocument pinDoc(512);
+    #endif
+    pinDoc["type"] = "pinnedMsg";
+    pinDoc["room"] = c->room;
+    pinDoc["text"] = pinnedMsgs[rIdx].text;
+    pinDoc["from"] = pinnedMsgs[rIdx].from;
+    pinDoc["ts"] = pinnedMsgs[rIdx].ts;
+    pinDoc["active"] = pinnedMsgs[rIdx].active;
+    
+    String pinOut;
+    serializeJson(pinDoc, pinOut);
+    broadcastRoom(c->room, pinOut);
+    sendJsonToRadio(pinOut);
     return;
   }
 
@@ -1383,7 +1895,7 @@ void onWsEvent(AsyncWebSocket *srv, AsyncWebSocketClient *client,
     }
     int slot = freeSlot();
     if (slot < 0) {
-      client->text("{\"type\":\"error\",\"text\":\"Server full (max 8 users)\"}");
+      client->text("{\"type\":\"error\",\"text\":\"Node A is full (4/4). Connect to PURPLE-CHAT-B instead!\"}");
       client->close();
       return;
     }
@@ -1393,6 +1905,8 @@ void onWsEvent(AsyncWebSocket *srv, AsyncWebSocketClient *client,
     clients[slot].msgCount = 0;
     clients[slot].isAdmin  = false;
     clients[slot].wsBuffer  = "";
+    clients[slot].lastActivity = millis();
+    clients[slot].adminAttempts = 0;
     client->text("{\"type\":\"needName\"}");
   }
 
@@ -1651,6 +2165,14 @@ void processRadioMessage(const char* jsonStr) {
   if (deserializeJson(doc, jsonStr)) return;
   
   String type = doc["type"] | "";
+
+  // Deduplicate regular chat messages to prevent loop echos
+  if (type == "msg") {
+    String user = doc["user"] | "";
+    String text = doc["text"] | "";
+    uint16_t h = msgHash(user, text);
+    if (isDuplicate(h)) return;
+  }
   
   if (type == "msg") {
     String room  = doc["room"] | "comms";
@@ -1864,6 +2386,120 @@ void processRadioMessage(const char* jsonStr) {
       promoteQueue();
     }
   }
+  else if (type == "peerPubKey") {
+    String from = doc["from"] | "";
+    String key  = doc["key"]  | "";
+    String room = doc["room"] | "";
+    bool isResp = doc["isResponse"] | false;
+    if (from.length() > 0 && key.length() > 0 && room.length() > 0) {
+      String relay = "{\"type\":\"pubKey\",\"from\":\"" + from + "\",\"key\":\"" + key + "\",\"isResponse\":" + (isResp ? "true" : "false") + "}";
+      for (auto& c : clients) {
+        if (c.id && c.room == room) ws.text(c.id, relay);
+      }
+    }
+  }
+  else if (type == "peerDm") {
+    String to   = doc["to"] | "";
+    String from = doc["from"] | "";
+    String text = doc["text"] | "";
+    String ts   = doc["ts"] | "";
+    if (to.length() > 0) {
+      ChatClient* tc = findClientByName(to);
+      if (tc) {
+        #if ARDUINOJSON_VERSION_MAJOR >= 7
+        JsonDocument dm;
+        #else
+        DynamicJsonDocument dm(256);
+        #endif
+        dm["type"] = "dm";
+        dm["from"] = from;
+        dm["text"] = text;
+        dm["ts"]   = ts;
+        String dmOut;
+        serializeJson(dm, dmOut);
+        ws.text(tc->id, dmOut);
+      }
+    }
+  }
+  else if (type == "peerTyping") {
+    String user  = doc["user"] | "";
+    bool   state = doc["state"] | false;
+    String room  = doc["room"] | "";
+    if (user.length() > 0 && room.length() > 0) {
+      #if ARDUINOJSON_VERSION_MAJOR >= 7
+      JsonDocument tDoc;
+      #else
+      DynamicJsonDocument tDoc(128);
+      #endif
+      tDoc["type"]  = "typing";
+      tDoc["user"]  = user;
+      tDoc["state"] = state;
+      tDoc["room"]  = room;
+      String tOut;
+      serializeJson(tDoc, tOut);
+      for (auto &other : clients) {
+        if (other.id && other.room == room) {
+          ws.text(other.id, tOut);
+        }
+      }
+    }
+  }
+  else if (type == "pollCreate") {
+    activePoll.creator = doc["creator"] | "";
+    activePoll.room = doc["room"] | "";
+    activePoll.question = doc["question"] | "";
+    activePoll.active = true;
+    activePoll.optCount = 0;
+    activePoll.votedCount = 0;
+    memset(activePoll.votes, 0, sizeof(activePoll.votes));
+    for (int i = 0; i < 16; i++) activePoll.votedNames[i] = "";
+    
+    JsonArray arr = doc["options"].as<JsonArray>();
+    for (String opt : arr) {
+      if (activePoll.optCount < 4) {
+        activePoll.options[activePoll.optCount++] = opt;
+      }
+    }
+    broadcastRoom(activePoll.room, jsonStr);
+  }
+  else if (type == "pollUpdate") {
+    String room = doc["room"] | "";
+    if (activePoll.active && activePoll.room == room) {
+      JsonArray votesArr = doc["votes"].as<JsonArray>();
+      uint8_t idx = 0;
+      for (uint8_t v : votesArr) {
+        if (idx < activePoll.optCount) {
+          activePoll.votes[idx++] = v;
+        }
+      }
+      broadcastRoom(room, jsonStr);
+    }
+  }
+  else if (type == "pollEnd") {
+    String room = doc["room"] | "";
+    if (activePoll.active && activePoll.room == room) {
+      activePoll.active = false;
+      broadcastRoom(room, jsonStr);
+    }
+  }
+  else if (type == "pinnedMsg") {
+    String room = doc["room"] | "";
+    int rIdx = roomIndex(room);
+    if (rIdx >= 0) {
+      bool active = doc["active"] | false;
+      pinnedMsgs[rIdx].active = active;
+      if (active) {
+        pinnedMsgs[rIdx].text = doc["text"] | "";
+        pinnedMsgs[rIdx].from = doc["from"] | "";
+        pinnedMsgs[rIdx].ts = doc["ts"] | "";
+      } else {
+        pinnedMsgs[rIdx].text = "";
+        pinnedMsgs[rIdx].from = "";
+        pinnedMsgs[rIdx].ts = "";
+      }
+      broadcastRoom(room, jsonStr);
+    }
+  }
 }
 
 void broadcastLinkStatus() {
@@ -1942,14 +2578,34 @@ void broadcastBanList() {
 void setup() {
   Serial.begin(115200);
   delay(100);
+  randomSeed(esp_random()); // True hardware RNG seed
+  pinMode(2, OUTPUT); // Built-in LED status indicator
+
   Serial.println("--- Node A Setup Start ---");
   
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Disable brownout detector
   Serial.println("--- Brownout disabled ---");
 
-  // Clear memory structures
-  memset(clients, 0, sizeof(clients));
-  Serial.println("--- Memory structures cleared ---");
+  // Initialize memory structures safely (constructor constructs strings)
+  for (int i = 0; i < Config::MAX_CLIENTS; i++) {
+    clients[i].id = 0;
+    clients[i].username = "";
+    clients[i].room = "comms";
+    clients[i].lastMsgTs = 0;
+    clients[i].msgCount = 0;
+    clients[i].isAdmin = false;
+    clients[i].wsBuffer = "";
+    clients[i].lastActivity = 0;
+    clients[i].adminAttempts = 0;
+  }
+  for (int i = 0; i < 6; i++) {
+    pinnedMsgs[i].text = "";
+    pinnedMsgs[i].from = "";
+    pinnedMsgs[i].ts = "";
+    pinnedMsgs[i].active = false;
+  }
+  loadBansFromNVS(); // Load bans from flash
+  Serial.println("--- Memory structures cleared and bans loaded ---");
 
   // Initialize nRF24L01 Radio Configuration
   Serial.println("--- Initializing Radio ---");
@@ -1962,14 +2618,14 @@ void setup() {
   IPAddress subnet(255, 255, 255, 0);
   
   WiFi.softAPConfig(local_IP, gateway, subnet);
-  WiFi.softAP(Config::AP_SSID, Config::AP_PASS, 6, 0, Config::MAX_CLIENTS);
+  WiFi.softAP(Config::getSSID().c_str(), Config::getAPPass().c_str(), 6, 0, Config::MAX_CLIENTS);
   WiFi.setTxPower(WIFI_POWER_11dBm); // Reduce Wi-Fi TX power to prevent high peak current draw
   
   // Start the DNS server for captive portal
   dnsServer.start(53, "*", local_IP);
   
   Serial.print("Node A Wi-Fi SSID: ");
-  Serial.println(Config::AP_SSID);
+  Serial.println(Config::getSSID());
   Serial.print("Node A AP IP Address: ");
   Serial.println(WiFi.softAPIP());
 
@@ -1993,23 +2649,31 @@ void setup() {
   });
 
   server.on("/auth", HTTP_GET, [](AsyncWebServerRequest *req){
-    IPAddress clientIP = req->client()->remoteIP();
-    if (isBanned(clientIP, "")) {
-      req->send(200, "text/plain", "BANNED");
+    if (!req->client()) {
+      AsyncWebServerResponse *response = req->beginResponse(200, "text/plain", "NO");
+      response->addHeader("Access-Control-Allow-Origin", "*");
+      req->send(response);
       return;
     }
+    IPAddress clientIP = req->client()->remoteIP();
+    if (isBanned(clientIP, "")) {
+      AsyncWebServerResponse *response = req->beginResponse(200, "text/plain", "BANNED");
+      response->addHeader("Access-Control-Allow-Origin", "*");
+      req->send(response);
+      return;
+    }
+    String res = "NO";
     if (req->hasParam("key")) {
       String key = req->getParam("key")->value();
-      if (key == Config::ADMIN_PASS) {
-        req->send(200, "text/plain", "ADMIN");
-      } else if (key == Config::WEB_PASS) {
-        req->send(200, "text/plain", "OK");
-      } else {
-        req->send(200, "text/plain", "NO");
+      if (key == Config::getAdminPass()) {
+        res = "ADMIN";
+      } else if (key == Config::getWebPass()) {
+        res = "OK";
       }
-    } else {
-      req->send(200, "text/plain", "NO");
     }
+    AsyncWebServerResponse *response = req->beginResponse(200, "text/plain", res);
+    response->addHeader("Access-Control-Allow-Origin", "*");
+    req->send(response);
   });
 
   server.onNotFound([](AsyncWebServerRequest *req){
@@ -2042,6 +2706,13 @@ void loop() {
   if (now - lastCleanup > 5000) {
     ws.cleanupClients(Config::MAX_CLIENTS);
     cleanOfflinePeers();
+
+    // Client Inactivity Timeout (3-minute ghost client killer)
+    for (auto& c : clients) {
+      if (c.id && c.lastActivity > 0 && (now - c.lastActivity > 180000)) {
+        ws.close(c.id);
+      }
+    }
     lastCleanup = now;
   }
 
@@ -2083,6 +2754,40 @@ void loop() {
       String syncOut;
       serializeJson(syncDoc, syncOut);
       sendJsonToRadio(syncOut); // Enqueued, not blocking
+    }
+  }
+
+  // Auto radio re-initialization on chip disconnect (e.g. brownout recovery)
+  static uint32_t lastRadioRetry = 0;
+  if (!radio.isChipConnected() && now - lastRadioRetry > 15000) {
+    lastRadioRetry = now;
+    initRadio();
+  }
+
+  // LED Status Indicator blinks (GPIO 2)
+  static uint32_t lastLed = 0;
+  static bool ledState = false;
+  bool anyClient = false;
+  for (auto& c : clients) if (c.id) { anyClient = true; break; }
+  bool hardwareOk = radio.isChipConnected();
+  bool linked = hardwareOk && peerOnline;
+
+  if (anyClient && linked) {
+    digitalWrite(2, HIGH);               // Solid ON = all working
+    ledState = true;
+  } else if (!anyClient) {
+    // Fast blink (100ms ON / 100ms OFF) when idle/no connections
+    if (now - lastLed > 100) {
+      ledState = !ledState;
+      digitalWrite(2, ledState ? HIGH : LOW);
+      lastLed = now;
+    }
+  } else {
+    // Slow blink (1000ms ON / 1000ms OFF) when radio offline or link down
+    if (now - lastLed > 1000) {
+      ledState = !ledState;
+      digitalWrite(2, ledState ? HIGH : LOW);
+      lastLed = now;
     }
   }
 

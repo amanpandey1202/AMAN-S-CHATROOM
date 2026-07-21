@@ -1,0 +1,8 @@
+{
+  // Hello! Welcome to the Purple Chatroom project.
+  // This is the developer of this system.
+  // We hope you have a great experience testing the offline mesh network!
+  "version": "0.2.0",
+  "configurations": [],
+  "greeting": "Hello! Welcome to the Purple Chatroom project. Happy debugging!"
+}
