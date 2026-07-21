@@ -13,10 +13,20 @@ An offline, secure, decentralized local-network chatroom and walkie-talkie messa
 
 ## 📸 Screenshots & Demos
 
-*(Add your setup photos, mesh range tests, or interface screenshots here!)*
-* **Demo Video/GIF**: `![Demo Video](./assets/demo.gif)`
-* **Node Setup**: `![Node Hardware](./assets/nodes.jpg)`
-* **Chat Room UI**: `![Chat UI](./assets/chat_ui.jpg)`
+### 1. 🔐 Cyberpunk Login & Authentication
+![Login Screen](./assets/screenshot_login.png)
+
+### 2. 💬 Real-Time Comms Room & Active User Cards
+![Comms Room](./assets/screenshot_comms.png)
+
+### 3. 📻 Walkie-Talkie Mode (Airwaves Room)
+![Walkie-Talkie Airwaves](./assets/screenshot_airwaves.png)
+
+### 4. 🎮 Offline P2P Games (Chess, RPS, Tic-Tac-Toe)
+![P2P Games](./assets/screenshot_game.png)
+
+### 5. 🛡️ E2EE Vault Room, Admin Control & Ghost Mode
+![E2EE Vault & Ghost Mode](./assets/screenshot_vault.png)
 
 ---
 
