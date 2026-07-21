@@ -2,6 +2,11 @@
 
 An offline, secure, decentralized local-network chatroom and walkie-talkie messaging web application utilizing two **ESP32** microcontrollers connected via an **nRF24L01** radio transceiver bridge.
 
+> [!TIP]
+> ### ⚡ Live Interactive Web Demo
+> You can preview and test the complete chat client interface directly in your browser without any hardware:
+> **[👉 Open Live Interactive Web Preview](https://htmlpreview.github.io/?https://github.com/amanpandey1202/AMAN-S-CHATROOM/blob/main/preview.html)**
+
 ---
 
 ## 📸 Screenshots & Demos
