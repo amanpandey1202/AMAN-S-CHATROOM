@@ -844,7 +844,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
 
 
 /* --- Handcrafted Midnight Mesh Theme Override --- */
-:root{
+
+body.v2-theme{
   --bg:#0a0e27;--bg2:rgba(19,24,50,.9);--bg3:rgba(26,31,58,.92);
   --border:rgba(0,217,255,.24);--border-glow:rgba(255,0,110,.42);
   --accent:#00d9ff;--accent2:#ff006e;--purple:#7c3aed;--text:#f0f0f5;
@@ -853,7 +854,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
   --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --me-bg:rgba(0,217,255,.11);--other-bg:rgba(255,255,255,.035);--sys:rgba(8,11,30,.76);
 }
-body{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237,.15),transparent 55%),var(--bg);font-family:var(--font);letter-spacing:.01em;}
+body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237,.15),transparent 55%),var(--bg);font-family:var(--font);letter-spacing:.01em;}
 #leftSidebar,#rightSidebar,#topbar,#inputBar{background:rgba(10,14,39,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
 #leftSidebar{width:252px;border-right:1px solid rgba(124,58,237,.26);}
 #rightSidebar{width:256px;border-left:1px solid rgba(0,217,255,.2);}
@@ -1257,6 +1258,26 @@ body{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237,.15),tra
 
   /* -- Sound Synthesizer -- */
   window.toggleSound=()=>{soundOn=!soundOn;$("soundBtn").style.opacity=soundOn?1:.35;};
+
+  
+  window.toggleV2Theme = function(forcedState) {
+    const body = document.body;
+    const isV2 = (forcedState !== undefined) ? forcedState : !body.classList.contains("v2-theme");
+    if (isV2) {
+      body.classList.add("v2-theme");
+      localStorage.setItem("theme_v2", "true");
+      addSys("⚡ Switched to V2 Cyberpunk Midnight Mesh Theme!");
+    } else {
+      body.classList.remove("v2-theme");
+      localStorage.setItem("theme_v2", "false");
+      addSys("✨ Switched to Classic Theme.");
+    }
+  };
+
+  // Auto-apply on boot if saved
+  if (localStorage.getItem("theme_v2") === "true") {
+    document.body.classList.add("v2-theme");
+  }
 
   function beep(freq,dur=0.08){
     if(!soundOn)return;
@@ -2310,7 +2331,7 @@ body{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237,.15),tra
     // Case 1: Just typing a command (e.g. /d or /k)
     if (!val.includes(" ")) {
       // /admin is hidden from suggestions (still works if typed manually)
-      const baseCmds = ["/dm ", "/clear", "/kick ", "/ban "];
+      const baseCmds = ["/dm ", "/clear", "/v2", "/kick ", "/ban "];
       if(myIsAdmin) baseCmds.push("/unban ");
       const matches = baseCmds.filter(c => c.startsWith(val));
       if (val !== "" && matches.length > 0) {
@@ -2410,6 +2431,14 @@ body{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237,.15),tra
 
   /* -- Send Message (E2EE aware) -- */
   window.sendMsg=async()=>{
+    const rawVal = msgInput.value.trim();
+    if (rawVal.toLowerCase() === "/v2" || rawVal.toLowerCase() === "\\v2" || rawVal.toLowerCase() === "\v2") {
+      toggleV2Theme();
+      msgInput.value = '';
+      cancelReply();
+      return;
+    }
+
     const text=msgInput.value.trim();
     if(!text)return;
     if(text.startsWith("/admin ")){
