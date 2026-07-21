@@ -1380,7 +1380,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
       decryptAllPendingMessages();
     }
   }
-  const isMockMode = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.search.includes('mock=true'));
+  const isMockMode = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github') || location.search.includes('mock=true'));
 
   // --- EMOJI PICKER IMPLEMENTATION ---
   const EMOJI_LIST = [
