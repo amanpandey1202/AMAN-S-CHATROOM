@@ -2713,10 +2713,10 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
   };
 
   /* -- Game Idle Timer -- */
-  let idleTimer=null, idleCountdownTimer=null, idleSeconds=0;
+  let idleTimer=null, idleCountdownTimer=null, idleSeconds=45;
   function startGameIdleTimer(){
     clearGameIdleTimer();
-    idleSeconds=300;
+    idleSeconds=45;
     $('idleCountdown').textContent=idleSeconds;
     $('gameIdleBar').style.display='block';
     idleCountdownTimer=setInterval(()=>{

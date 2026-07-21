@@ -947,7 +947,7 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
     }
 
     // -- Leave game / vault cleanly ---------------------------------
-    if (oldRoom == "game") { handleGameForfeit(c->id); removeFromQueue(c->id); }
+    // Do not forfeit on room switch during active game
     if (oldRoom == "vault" && !c->isAdmin) removeVaultAllowed(c->id);
 
     // -- Broadcast "left" to old room (skip for #game) -------------
