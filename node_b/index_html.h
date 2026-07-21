@@ -1736,14 +1736,12 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
     if(!name){$("loginErr").textContent="Enter your username";return;}
     
     if (isMockMode) {
-      const isAdminPass=(pass==="AMAN1234");
-      const isUserPass=(pass==="7788");
-      if(!isAdminPass && !isUserPass){
-        $("loginErr").textContent="Incorrect password";
-        return;
-      }
-      enteredPass=pass; myIsAdmin=isAdminPass; username=name;
-      $("login").style.display="none";
+      const isAdminPass = (pass === "AMAN1234" || pass === "@amanotic");
+      // Allow any password in Mock Preview mode so user is never locked out
+      enteredPass = pass || "AMAN1234"; 
+      myIsAdmin = isAdminPass; 
+      username = name;
+      $("login").style.display = "none";
       $("app").classList.add("show");
       if(myIsAdmin) $('adminPanel').style.display='block';
       $("statusDot").style.background="var(--accent)";
@@ -1752,7 +1750,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
       handle({type:"msg",user:"System",text:"You are in mock preview mode. WebSocket is bypassed.",ts:"12:00",room:"comms",mesh:false});
       handle({type:"msg",user:"RadioBridge",text:"Hello from Node B! Hover users in the sidebar to see admin actions.",ts:"12:01",room:"comms",mesh:true});
       if(myIsAdmin) handle({type:"banList",bans:[]});
-    } else {
+    }} else {
       fetch("/auth?key="+encodeURIComponent(pass))
         .then(r=>r.text())
         .then(res=>{
