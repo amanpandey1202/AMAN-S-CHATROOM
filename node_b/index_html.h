@@ -3532,3 +3532,4 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 )rawliteral";
+const size_t index_html_len = sizeof(index_html) - 1;
