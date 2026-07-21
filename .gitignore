@@ -1,0 +1,14 @@
+# Ignore raw/draft HTML pages in the root folder
+index.html
+index_v2.html
+index_v3.html
+preview.html
+purple_chatroom.html
+sw.js
+manifest.json
+
+# Ignore local secret configurations
+node_a/secret/secrets.h
+node_b/secret/secrets.h
+*.log
+verify_compilation.js
