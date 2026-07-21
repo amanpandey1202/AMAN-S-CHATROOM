@@ -3472,13 +3472,25 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
     }
   }
 
-  // Rock-Paper-Scissors Game Logic
+  // Rock-Paper-Scissors Game Logic (Best of 3)
+  let rpsScoreA = 0, rpsScoreB = 0, rpsRound = 1;
+
   function initRpsGame() {
     myRpsChoice = null;
     opponentRpsChoice = null;
+    rpsScoreA = 0;
+    rpsScoreB = 0;
+    rpsRound = 1;
+    updateRpsScoreDisp();
     renderRpsBoard();
     updateRpsTurnBadge();
-    $('boardHint').textContent = 'Make your choice!';
+    $('boardHint').textContent = '🏆 Best of 3 Match – Round 1! Make your choice!';
+  }
+
+  function updateRpsScoreDisp() {
+    const sA = $('scoreDispA'); const sB = $('scoreDispB');
+    if (sA) sA.textContent = rpsScoreA;
+    if (sB) sB.textContent = rpsScoreB;
   }
 
   function renderRpsBoard() {
@@ -3544,23 +3556,20 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
     const badge = $('turnBadge');
     if (!badge) return;
     if (myRpsChoice && opponentRpsChoice) {
-      badge.textContent = 'Game Over';
+      badge.textContent = 'Evaluating Round ' + rpsRound + '...';
       badge.className = '';
     } else if (myRpsChoice) {
       badge.textContent = '\u23F3 Waiting for opponent...';
       badge.className = '';
     } else {
-      badge.textContent = '\u2B50 Make your choice!';
+      badge.textContent = '\u2B50 Round ' + rpsRound + ' (First to 2 Wins)';
       badge.className = 'my-turn';
     }
   }
 
   function checkRpsResult() {
     if (!myRpsChoice || !opponentRpsChoice) return;
-    
-    gameActive = false;
-    clearGameIdleTimer();
-    
+
     let result = '';
     if (myRpsChoice === opponentRpsChoice) {
       result = 'draw';
@@ -3570,33 +3579,52 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
       (myRpsChoice === 'paper' && opponentRpsChoice === 'rock')
     ) {
       result = 'win';
+      if (myMark === 0) rpsScoreA++; else rpsScoreB++;
     } else {
       result = 'loss';
+      if (myMark === 0) rpsScoreB++; else rpsScoreA++;
     }
 
     const emojiMap = { rock: '\u270A', paper: '\u270B', scissors: '\u270C' };
     const myEmoji = emojiMap[myRpsChoice];
     const oppEmoji = emojiMap[opponentRpsChoice];
 
+    const isMatchOver = (rpsScoreA >= 2 || rpsScoreB >= 2);
+    updateRpsScoreDisp();
+
     setTimeout(() => {
-      showRpsResultOverlay(result, myEmoji, oppEmoji);
-      autoLeaveAfter(5000);
-    }, 1000);
+      if (isMatchOver) {
+        gameActive = false;
+        clearGameIdleTimer();
+        const iWonMatch = (myMark === 0 ? rpsScoreA >= 2 : rpsScoreB >= 2);
+        showRpsMatchOverlay(iWonMatch ? 'win' : 'loss', rpsScoreA, rpsScoreB);
+        autoLeaveAfter(6000);
+      } else {
+        rpsRound++;
+        myRpsChoice = null;
+        opponentRpsChoice = null;
+        renderRpsBoard();
+        updateRpsTurnBadge();
+        const roundMsg = result === 'draw' ? 'Round Tied! Pick again.' : (result === 'win' ? 'You won Round ' + (rpsRound - 1) + '! 🎉' : 'Opponent won Round ' + (rpsRound - 1) + '!');
+        $('boardHint').textContent = '🏆 Best of 3 (Round ' + rpsRound + ') – ' + roundMsg;
+        startGameIdleTimer();
+      }
+    }, 1200);
   }
 
-  function showRpsResultOverlay(result, myChoice, oppChoice) {
+  function showRpsMatchOverlay(result, scoreA, scoreB) {
     const ol = $('gameOverlay');
     if (!ol) return;
     ol.style.display = 'flex';
-    const autoMsg = `<div style="font-size:.7rem;color:var(--muted);margin-top:10px;">&#x23F1; Returning to chat in 5s&hellip;</div>`;
-    
-    let title = '';
-    let emoji = '';
-    let sub = '';
-
+    const autoMsg = '<div style="font-size:.7rem;color:var(--muted);margin-top:10px;">\u23F1 Returning to chat in 6s...</div>';
     if (result === 'win') {
-      title = 'Victory!';
-      emoji = '\u{1F3C6}';
+      ol.innerHTML = '<div class="g-card"><span class="g-emoji">🏆</span><div class="g-title">BEST OF 3 CHAMPION!</div><div class="g-sub">You won the Rock-Paper-Scissors Match!<br>Final Score: <b>' + scoreA + ' : ' + scoreB + '</b></div><button class="g-btn primary" onclick="leaveGameToComms()">Play Again</button>' + autoMsg + '</div>';
+    } else {
+      ol.innerHTML = '<div class="g-card"><span class="g-emoji">💀</span><div class="g-title">MATCH DEFEAT</div><div class="g-sub">Opponent won the Best of 3 Match.<br>Final Score: <b>' + scoreA + ' : ' + scoreB + '</b></div><button class="g-btn secondary" onclick="leaveGameToComms()">Leave Now</button>' + autoMsg + '</div>';
+    }
+  }
+
+  ';
       sub = `You won! You chose ${myChoice} and opponent chose ${oppChoice}.`;
     } else if (result === 'loss') {
       title = 'Defeated';
