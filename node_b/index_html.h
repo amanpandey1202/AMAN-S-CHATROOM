@@ -1472,8 +1472,8 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
   }
 
   /* -- Mock Login (For VS Code Preview Mode) -- */
-  $("passIn").addEventListener("keydown",e=>{if(e.key==="Enter")$("nameIn").focus();});
-  $("nameIn").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+  
+  
 
   // -- Vault Tab Click --
   window.onVaultTabClick=()=>{
@@ -1740,6 +1740,25 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
 
   // Update login subtitle dynamically based on connection context
   document.addEventListener('DOMContentLoaded', () => {
+    const passIn = $('passIn');
+    const nameIn = $('nameIn');
+    if (passIn) {
+      passIn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (nameIn) nameIn.focus();
+        }
+      });
+    }
+    if (nameIn) {
+      nameIn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          doLogin();
+        }
+      });
+    }
+
     const sub = $('loginSub');
     if (sub) {
       sub.textContent = isMockMode ? "Offline Mesh Bridge (Preview Mode)" : "Offline Mesh Bridge (ESP32 Node)";
