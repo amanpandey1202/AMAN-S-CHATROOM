@@ -62,7 +62,24 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
   animation:loginIn .35s ease-out;
 }
 @keyframes loginIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-#login .pumpkin-logo{width:66px;height:66px;display:flex;align-items:center;justify-content:center;color:var(--accent2);animation:float 3s ease-in-out infinite;}
+
+#login .pumpkin-logo {
+  font-size: 5rem;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: floatPumpkin 3s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 16px #ff6600) drop-shadow(0 0 32px #ffaa00) drop-shadow(0 0 50px rgba(124, 58, 237, 0.85));
+  margin-bottom: 6px;
+  user-select: none;
+}
+@keyframes floatPumpkin {
+  0% { transform: translateY(0) rotate(-3deg) scale(1); filter: drop-shadow(0 0 16px #ff6600) drop-shadow(0 0 32px #ffaa00) drop-shadow(0 0 50px rgba(124, 58, 237, 0.85)); }
+  100% { transform: translateY(-12px) rotate(3deg) scale(1.08); filter: drop-shadow(0 0 24px #ff7700) drop-shadow(0 0 45px #ffcc00) drop-shadow(0 0 65px rgba(0, 217, 255, 0.9)); }
+}
+
 #login .pumpkin-logo svg{width:100%;height:100%;}
 @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
 #login h1{font-size:1.7rem;font-weight:800;color:#f1f5f9;text-align:center;line-height:1.3;}
