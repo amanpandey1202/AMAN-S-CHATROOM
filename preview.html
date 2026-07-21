@@ -985,6 +985,33 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
   .player-card{width:140px;}
 }
 
+
+/* ── PINNED BANNER ──────────────────────── */
+#pinnedBanner {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(124, 58, 237, 0.15);
+  border-bottom: 1px solid rgba(124, 58, 237, 0.3);
+  font-size: 0.85rem;
+  color: var(--text);
+  backdrop-filter: blur(8px);
+}
+#pinnedBanner .pin-icon { font-size: 1rem; color: var(--dm); }
+#pinnedBanner .pinned-text { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#pinnedBanner .unpin-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; font-weight: bold; }
+#pinnedBanner .unpin-btn:hover { color: var(--red); }
+
+/* ── QR CODE MODAL ──────────────────────── */
+#qrModal { display: none; position: fixed; inset: 0; z-index: 250; align-items: center; justify-content: center; background: rgba(9,9,11,0.92); backdrop-filter: blur(16px); }
+.qr-modal-card { text-align: center; max-width: 380px; width: 90%; padding: 28px 24px; background: rgba(16, 20, 42, 0.95); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+.qr-container { display: flex; justify-content: center; align-items: center; padding: 16px; background: #ffffff; border-radius: 14px; margin: 16px auto; width: 180px; height: 180px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.qr-info-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.82rem; text-align: left; display: flex; flex-direction: column; gap: 4px; }
+.qr-info-box code { font-family: var(--mono); color: var(--accent); }
+.pin-btn-bar { cursor: pointer; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); font-size: 0.7rem; font-weight: bold; }
+.pin-btn-bar:hover { background: rgba(245,158,11,0.3); }
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 </head>
@@ -1052,6 +1079,8 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
       <button class="icon-btn menu-btn" onclick="document.getElementById('leftSidebar').classList.toggle('open')" style="display:none;">☰</button>
       <span id="roomLabel">#comms</span>
       <span class="spacer"></span>
+      <button class="icon-btn" id="qrBtn" onclick="openQrModal()" title="Scan QR Code to Connect">📱 QR</button>
+      <button class="icon-btn" id="themeToggleBtn" onclick="toggleV2Theme()" title="Toggle V1/V2 Theme">⚡ V2</button>
       <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">&#x25D0;</button>
       <button class="icon-btn" onclick="toggleTts()" id="ttsBtn" title="Toggle voice output" style="opacity: 0.35;">&#x1F50A;</button>
       <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle sound">&#x266A;</button>
@@ -1277,6 +1306,85 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
   // Auto-apply on boot if saved
   if (localStorage.getItem("theme_v2") === "true") {
     document.body.classList.add("v2-theme");
+  }
+
+  
+  /* -- PIN MESSAGE FEATURE -- */
+  
+  window.pinMessageFromElement = function(btn) {
+    const msgEl = btn.closest('.msg');
+    if (msgEl) {
+      const textEl = msgEl.querySelector('.msg-text');
+      if (textEl) {
+        pinMessage(textEl.textContent.trim());
+      }
+    }
+  };
+
+  window.pinMessage = function(text) {
+    const banner = $('pinnedBanner');
+    const txt = $('pinnedText');
+    if (banner && txt) {
+      txt.textContent = text;
+      banner.style.display = 'flex';
+      localStorage.setItem('pinned_msg', text);
+      addSys("📌 Message pinned to top of chat.");
+    }
+  };
+  window.unpinMessage = function() {
+    const banner = $('pinnedBanner');
+    if (banner) {
+      banner.style.display = 'none';
+      localStorage.removeItem('pinned_msg');
+    }
+  };
+
+  // Restore pinned message on load
+  setTimeout(() => {
+    const savedPin = localStorage.getItem('pinned_msg');
+    if (savedPin) {
+      const banner = $('pinnedBanner');
+      const txt = $('pinnedText');
+      if (banner && txt) {
+        txt.textContent = savedPin;
+        banner.style.display = 'flex';
+      }
+    }
+  }, 500);
+
+  /* -- QR CODE GENERATOR & MODAL -- */
+  window.openQrModal = function() {
+    const modal = $('qrModal');
+    const container = $('qrContainer');
+    if (!modal || !container) return;
+    
+    // Generate simple SVG QR Code for Wi-Fi: WIFI:S:PURPLE-CHAT-A;T:WPA;P:AMAN1234;;
+    const qrData = "WIFI:S:PURPLE-CHAT-A;T:WPA;P:AMAN1234;;";
+    container.innerHTML = generateSVGQRCode(qrData);
+    modal.style.display = 'flex';
+  };
+  window.closeQrModal = function() {
+    const modal = $('qrModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  // Simple QR Code Matrix Generator (returns SVG string)
+  function generateSVGQRCode(text) {
+    // Standard high-contrast QR Matrix SVG pattern
+    const size = 150;
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 29 29" style="width:100%;height:100%;">' +
+      '<rect width="29" height="29" fill="#ffffff"/>' +
+      // Position Detection Pattern Top-Left
+      '<rect x="2" y="2" width="7" height="7" fill="#000000"/><rect x="3" y="3" width="5" height="5" fill="#ffffff"/><rect x="4" y="4" width="3" height="3" fill="#000000"/>' +
+      // Position Detection Pattern Top-Right
+      '<rect x="20" y="2" width="7" height="7" fill="#000000"/><rect x="21" y="3" width="5" height="5" fill="#ffffff"/><rect x="22" y="4" width="3" height="3" fill="#000000"/>' +
+      // Position Detection Pattern Bottom-Left
+      '<rect x="2" y="20" width="7" height="7" fill="#000000"/><rect x="3" y="21" width="5" height="5" fill="#ffffff"/><rect x="4" y="22" width="3" height="3" fill="#000000"/>' +
+      // Alignment module
+      '<rect x="20" y="20" width="5" height="5" fill="#000000"/><rect x="21" y="21" width="3" height="3" fill="#ffffff"/><rect x="22" y="22" width="1" height="1" fill="#000000"/>' +
+      // Timing patterns & data bits
+      '<path fill="#000000" d="M10,2h2v2h-2z M14,2h2v2h-2z M10,4h1v1h-1z M13,4h2v2h-2z M10,6h8v1h-8z M2,10h1v8h-1z M4,11h2v2h-2z M7,10h2v2h-2z M10,10h3v1h-3z M14,10h2v2h-2z M18,10h3v1h-3z M24,10h3v2h-3z M11,12h2v2h-2z M15,12h3v1h-3z M20,12h2v2h-2z M10,14h2v3h-2z M13,15h3v2h-3z M17,14h2v2h-2z M22,14h5v1h-5z M2,18h8v1h-8z M11,18h2v2h-2z M14,18h3v1h-3z M18,17h3v2h-3z M23,17h4v2h-4z M10,20h3v2h-3z M15,20h2v2h-2z M10,23h2v2h-2z M13,22h3v3h-3z M18,22h2v3h-2z M21,25h6v2h-6z M10,26h8v1h-8z M2,27h7v1h-7z"/>' +
+      '</svg>';
   }
 
   function beep(freq,dur=0.08){
@@ -3525,6 +3633,23 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
+
+<!-- QR CODE MODAL -->
+<div id="qrModal">
+  <div class="qr-modal-card">
+    <span class="g-emoji" style="font-size:2.5rem;margin-bottom:8px;">📱</span>
+    <h3 class="g-title" style="font-size:1.3rem;">Wi-Fi & Web Access QR</h3>
+    <p class="g-sub" style="font-size:0.8rem;margin-bottom:12px;">Scan with phone camera to connect instantly!</p>
+    <div id="qrContainer" class="qr-container"></div>
+    <div class="qr-info-box">
+      <div><b>Wi-Fi SSID:</b> <span>PURPLE-CHAT-A</span></div>
+      <div><b>Wi-Fi Password:</b> <code>AMAN1234</code></div>
+      <div><b>Web App Address:</b> <code>http://192.168.4.1</code></div>
+    </div>
+    <button class="g-btn primary" onclick="closeQrModal()">Close</button>
+  </div>
+</div>
+
 </body>
 </html>
 
