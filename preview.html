@@ -1892,66 +1892,6 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
         }, 1500);
       }
 
-      // Mock game select/move logic
-      if (currentRoom === 'game') {
-        if (obj.text.startsWith('GAME_SELECT:')) {
-          const game = obj.text.substring(12);
-          setTimeout(() => {
-            handle({
-              type: "msg",
-              user: "Cyber_Rival",
-              text: 'GAME_SELECT:' + game,
-              ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-              room: 'game',
-              mesh: true
-            });
-          }, 400);
-        } else if (obj.text.startsWith('GAME_MOVE:chess:')) {
-          setTimeout(() => {
-            if (!gameActive || activeGameName !== 'chess') return;
-            const blackPieces = ['\u265A', '\u265B', '\u265C', '\u265D', '\u265E', '\u265F'];
-            const blackIndices = [];
-            chessBoard.forEach((p, idx) => { if (p && blackPieces.includes(p)) blackIndices.push(idx); });
-            if (blackIndices.length > 0) {
-              let moved = false;
-              for (let attempt = 0; attempt < 100; attempt++) {
-                const fromIdx = blackIndices[Math.floor(Math.random() * blackIndices.length)];
-                const toIdx = Math.floor(Math.random() * 64);
-                if (fromIdx === toIdx) continue;
-                const target = chessBoard[toIdx];
-                const whitePieces = ['\u2654', '\u2655', '\u2656', '\u2657', '\u2658', '\u2659'];
-                if (target === '' || whitePieces.includes(target)) {
-                  handle({
-                    type: "msg",
-                    user: "Cyber_Rival",
-                    text: 'GAME_MOVE:chess:' + fromIdx + '-' + toIdx,
-                    ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                    room: 'game',
-                    mesh: true
-                  });
-                  moved = true;
-                  break;
-                }
-              }
-            }
-          }, 1500);
-        } else if (obj.text.startsWith('GAME_MOVE:rps:')) {
-          setTimeout(() => {
-            if (!gameActive || activeGameName !== 'rps') return;
-            const choices = ['rock', 'paper', 'scissors'];
-            const botChoice = choices[Math.floor(Math.random() * 3)];
-            handle({
-              type: "msg",
-              user: "Cyber_Rival",
-              text: 'GAME_MOVE:rps:' + botChoice,
-              ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-              room: 'game',
-              mesh: true
-            });
-          }, 1000);
-        }
-      }
-
       // Handle mock admin commands
       if (obj.text.startsWith("/clear")) {
         setTimeout(() => handle({type: "clearRoom", room: currentRoom}), 100);
@@ -1989,59 +1929,117 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
           });
         },1500);
       }
-    } else if (obj.type === "gameMove") {
-      // Handle local player's move in preview mode, then run bot move
-      // Generate standard board from UI classes
+    } else if (obj.type === "gameSelect") {
+      // Broadcast player's select
       setTimeout(() => {
-        const board = Array.from($('tttBoard').children).map(c => {
-          if (c.classList.contains('x')) return 0;
-          if (c.classList.contains('o')) return 1;
-          return -1;
+        handle({
+          type: "msg",
+          user: username,
+          text: 'GAME_SELECT:' + obj.game,
+          ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+          room: 'game',
+          mesh: false
         });
-        if (!gameActive) return;
-        
-        // Check if player won
-        const winLines = [
-          [0,1,2],[3,4,5],[6,7,8],
-          [0,3,6],[1,4,7],[2,5,8],
-          [0,4,8],[2,4,6]
-        ];
-        const checkWin = (b) => {
-          for (let i = 0; i < winLines.length; i++) {
-            const [x,y,z] = winLines[i];
-            if (b[x] >= 0 && b[x] === b[y] && b[y] === b[z]) return {winner: b[x], line: [x,y,z]};
-          }
-          return null;
-        };
-
-        let res = checkWin(board);
-        if (res) {
+      }, 100);
+      // Cyber_Rival joins/confirms game choice
+      setTimeout(() => {
+        handle({
+          type: "msg",
+          user: "Cyber_Rival",
+          text: 'GAME_SELECT:' + obj.game,
+          ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+          room: 'game',
+          mesh: true
+        });
+      }, 800);
+    } else if (obj.type === "gameMove") {
+      if (obj.game === 'chess') {
+        // Broadcast player move
+        setTimeout(() => {
           handle({
-            type: 'gameBoard',
-            board: board,
-            turn: 0,
-            nameA: username,
-            nameB: 'Cyber_Rival',
-            scoreA: res.winner === 0 ? 1 : 0,
-            scoreB: res.winner === 1 ? 1 : 0,
-            winner: res.winner,
-            winLine: res.line
+            type: "msg",
+            user: username,
+            text: 'GAME_MOVE:chess:' + obj.move,
+            ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            room: 'game',
+            mesh: false
           });
-          return;
-        }
+        }, 50);
 
-        if (!board.includes(-1)) {
-          handle({type: 'gameBoard', board: board, turn: 0, nameA: username, nameB: 'Cyber_Rival', scoreA: 0, scoreB: 0, draw: true});
-          return;
-        }
+        // Run Chess Bot after 1.2s
+        setTimeout(() => {
+          if (!gameActive || activeGameName !== 'chess') return;
+          const blackPieces = ['\u265A', '\u265B', '\u265C', '\u265D', '\u265E', '\u265F'];
+          const blackIndices = [];
+          chessBoard.forEach((p, idx) => { if (p && blackPieces.includes(p)) blackIndices.push(idx); });
+          
+          const playableIndices = blackIndices.filter(idx => chessLegalMoves(idx).length > 0);
+          if (playableIndices.length > 0) {
+            const fromIdx = playableIndices[Math.floor(Math.random() * playableIndices.length)];
+            const legal = chessLegalMoves(fromIdx);
+            const toIdx = legal[Math.floor(Math.random() * legal.length)];
+            handle({
+              type: "msg",
+              user: "Cyber_Rival",
+              text: 'GAME_MOVE:chess:' + fromIdx + '-' + toIdx,
+              ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+              room: 'game',
+              mesh: true
+            });
+          }
+        }, 1200);
+      } else if (obj.game === 'rps') {
+        // Broadcast player rps choice
+        setTimeout(() => {
+          handle({
+            type: "msg",
+            user: username,
+            text: 'GAME_MOVE:rps:' + obj.move,
+            ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            room: 'game',
+            mesh: false
+          });
+        }, 50);
 
-        // Bot plays turn
-        const emptyIndices = [];
-        board.forEach((v, idx) => { if (v < 0) emptyIndices.push(idx); });
-        if (emptyIndices.length > 0) {
-          const randIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-          board[randIdx] = 1; // Bot mark (O)
-          res = checkWin(board);
+        // Run RPS Bot after 1s
+        setTimeout(() => {
+          if (!gameActive || activeGameName !== 'rps') return;
+          const choices = ['rock', 'paper', 'scissors'];
+          const botChoice = choices[Math.floor(Math.random() * 3)];
+          handle({
+            type: "msg",
+            user: "Cyber_Rival",
+            text: 'GAME_MOVE:rps:' + botChoice,
+            ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            room: 'game',
+            mesh: true
+          });
+        }, 1000);
+      } else {
+        // Tic-Tac-Toe Move
+        setTimeout(() => {
+          const board = Array.from($('tttBoard').children).map(c => {
+            if (c.classList.contains('x')) return 0;
+            if (c.classList.contains('o')) return 1;
+            return -1;
+          });
+          if (!gameActive) return;
+
+          // Check if player won
+          const winLines = [
+            [0,1,2],[3,4,5],[6,7,8],
+            [0,3,6],[1,4,7],[2,5,8],
+            [0,4,8],[2,4,6]
+          ];
+          const checkWin = (b) => {
+            for (let i = 0; i < winLines.length; i++) {
+              const [x,y,z] = winLines[i];
+              if (b[x] >= 0 && b[x] === b[y] && b[y] === b[z]) return {winner: b[x], line: [x,y,z]};
+            }
+            return null;
+          };
+
+          let res = checkWin(board);
           if (res) {
             handle({
               type: 'gameBoard',
@@ -2049,30 +2047,58 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
               turn: 0,
               nameA: username,
               nameB: 'Cyber_Rival',
-              scoreA: 0,
-              scoreB: 1,
+              scoreA: res.winner === 0 ? 1 : 0,
+              scoreB: res.winner === 1 ? 1 : 0,
               winner: res.winner,
               winLine: res.line
             });
-          } else if (!board.includes(-1)) {
-            handle({type: 'gameBoard', board: board, turn: 0, nameA: username, nameB: 'Cyber_Rival', scoreA: 0, scoreB: 0, draw: true});
-          } else {
-            handle({
-              type: 'gameBoard',
-              board: board,
-              turn: 0,
-              nameA: username,
-              nameB: 'Cyber_Rival',
-              scoreA: 0,
-              scoreB: 0
-            });
+            return;
           }
-        }
-      }, 700);
+
+          if (!board.includes(-1)) {
+            handle({type: 'gameBoard', board: board, turn: 0, nameA: username, nameB: 'Cyber_Rival', scoreA: 0, scoreB: 0, draw: true});
+            return;
+          }
+
+          // Bot plays turn
+          const emptyIndices = [];
+          board.forEach((v, idx) => { if (v < 0) emptyIndices.push(idx); });
+          if (emptyIndices.length > 0) {
+            const randIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+            board[randIdx] = 1; // Bot mark (O)
+            res = checkWin(board);
+            if (res) {
+              handle({
+                type: 'gameBoard',
+                board: board,
+                turn: 0,
+                nameA: username,
+                nameB: 'Cyber_Rival',
+                scoreA: 0,
+                scoreB: 1,
+                winner: res.winner,
+                winLine: res.line
+              });
+            } else if (!board.includes(-1)) {
+              handle({type: 'gameBoard', board: board, turn: 0, nameA: username, nameB: 'Cyber_Rival', scoreA: 0, scoreB: 0, draw: true});
+            } else {
+              handle({
+                type: 'gameBoard',
+                board: board,
+                turn: 0,
+                nameA: username,
+                nameB: 'Cyber_Rival',
+                scoreA: 0,
+                scoreB: 0
+              });
+            }
+          }
+        }, 700);
+      }
     }
   }
 
-  /* -- WS Packet Router -- */
+    /* -- WS Packet Router -- */
   function handle(d){
     switch(d.type){
       case "needName": {
