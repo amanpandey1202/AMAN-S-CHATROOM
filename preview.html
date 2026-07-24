@@ -1793,7 +1793,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
       handle({type:"msg",user:"System",text:"You are in mock preview mode. WebSocket is bypassed.",ts:"12:00",room:"comms",mesh:false});
       handle({type:"msg",user:"RadioBridge",text:"Hello from Node B! Hover users in the sidebar to see admin actions.",ts:"12:01",room:"comms",mesh:true});
       if(myIsAdmin) handle({type:"banList",bans:[]});
-    }} else {
+    } else {
       fetch("/auth?key="+encodeURIComponent(pass))
         .then(r=>r.text())
         .then(res=>{
