@@ -1376,9 +1376,18 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
     const container = $('qrContainer');
     if (!modal || !container) return;
     
-    // Generate simple SVG QR Code for Wi-Fi: WIFI:S:PURPLE-CHAT-A;T:WPA;P:AMAN1234;;
-    const qrData = "WIFI:S:PURPLE-CHAT-A;T:WPA;P:AMAN1234;;";
+    const nodeEl = $('localNode');
+    const localNodeChar = nodeEl ? nodeEl.textContent.trim().substring(0,1) : 'A';
+    const ssid = localNodeChar === 'B' ? "AMAN'S CHATROOM - B" : "AMAN'S CHATROOM - A";
+    const qrData = "WIFI:S:" + ssid + ";T:WPA;P:AMAN1234;;";
+    
     container.innerHTML = generateSVGQRCode(qrData);
+    
+    const ssidLabel = $('qrSsidLabel');
+    if (ssidLabel) {
+      ssidLabel.textContent = ssid;
+    }
+    
     modal.style.display = 'flex';
   };
   window.closeQrModal = function() {
@@ -3773,7 +3782,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <p class="g-sub" style="font-size:0.8rem;margin-bottom:12px;">Scan with phone camera to connect instantly!</p>
     <div id="qrContainer" class="qr-container"></div>
     <div class="qr-info-box">
-      <div><b>Wi-Fi SSID:</b> <span>PURPLE-CHAT-A</span></div>
+      <div><b>Wi-Fi SSID:</b> <span id="qrSsidLabel">AMAN'S CHATROOM - A</span></div>
       <div><b>Wi-Fi Password:</b> <code>AMAN1234</code></div>
       <div><b>Web App Address:</b> <code>http://192.168.4.1</code></div>
     </div>
