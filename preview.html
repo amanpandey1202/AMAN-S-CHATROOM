@@ -1040,8 +1040,8 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
     <span class="pumpkin-logo">🎃</span>
     <h1>AMAN'S <span>CHATROOM</span></h1>
     <p id="loginSub">Offline Mesh Network</p>
-    <input class="inp" id="passIn" type="password" placeholder="Enter password">
     <input class="inp" id="nameIn" type="text" placeholder="Your name (1–16 chars)" maxlength="16">
+    <input class="inp" id="passIn" type="password" placeholder="Enter password">
     <div id="loginErr"></div>
     <div id="pwaTip" style="display:none;margin:6px 0;padding:10px 12px;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:10px;font-size:.83rem;color:var(--text);text-align:center;">
       Tap browser menu → <b>Add to Home Screen</b> for the full app!
@@ -1741,19 +1741,27 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
   document.addEventListener('DOMContentLoaded', () => {
     const passIn = $('passIn');
     const nameIn = $('nameIn');
-    if (passIn) {
-      passIn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (nameIn) nameIn.focus();
-        }
-      });
-    }
     if (nameIn) {
       nameIn.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
-          doLogin();
+          if (passIn && !passIn.value.trim()) {
+            passIn.focus();
+          } else {
+            doLogin();
+          }
+        }
+      });
+    }
+    if (passIn) {
+      passIn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (nameIn && !nameIn.value.trim()) {
+            nameIn.focus();
+          } else {
+            doLogin();
+          }
         }
       });
     }
