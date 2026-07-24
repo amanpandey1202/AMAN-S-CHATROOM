@@ -3665,26 +3665,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
     }
   }
 
-  ';
-      sub = `You won! You chose ${myChoice} and opponent chose ${oppChoice}.`;
-    } else if (result === 'loss') {
-      title = 'Defeated';
-      emoji = '\u{1F480}';
-      sub = `You lost. You chose ${myChoice} and opponent chose ${oppChoice}.`;
-    } else {
-      title = 'Draw!';
-      emoji = '\u{1F91D}';
-      sub = `It's a draw! Both players chose ${myChoice}.`;
-    }
 
-    ol.innerHTML = `<div class="g-card">
-      <span class="g-emoji">${emoji}</span>
-      <div class="g-title">${title}</div>
-      <div class="g-sub">${sub}</div>
-      <button class="g-btn secondary" onclick="leaveGameToComms()">Leave Now</button>
-      ${autoMsg}
-    </div>`;
-  }
 
   function onGameMoveReceived(move, sender) {
     const isSenderMe = (sender === username);
