@@ -1152,6 +1152,51 @@ body.bw-theme .room-btn.active {
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
 }
 
+
+
+/* ── ELECTRIC CYAN TEXT & BUTTON REFINEMENTS ── */
+.flash-topbar-btn, #sendBtn, .btn {
+  background: rgba(0, 240, 255, 0.12) !important;
+  border: 1.5px solid #00f0ff !important;
+  color: #00f0ff !important;
+  font-weight: 800 !important;
+  border-radius: 10px !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 8px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.6) !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.2) !important;
+  cursor: pointer !important;
+  animation: neonAuraPulse 2.4s ease-in-out infinite alternate !important;
+  transition: all 0.2s ease !important;
+}
+
+.flash-topbar-btn:hover, #sendBtn:hover, .btn:hover {
+  background: rgba(0, 240, 255, 0.25) !important;
+  border-color: #00f0ff !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 12px #00f0ff, 0 0 24px #00f0ff !important;
+  box-shadow: 0 0 26px #00f0ff, 0 0 50px rgba(0, 240, 255, 0.6) !important;
+  transform: translateY(-1px) scale(1.02) !important;
+}
+
+/* Vault Invite Input & Button (Bottom Right) */
+.vault-invite-row input {
+  background: rgba(10, 16, 30, 0.95) !important;
+  border: 1px solid rgba(0, 240, 255, 0.3) !important;
+  color: #00f0ff !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+}
+
+.vault-invite-row button {
+  background: rgba(0, 240, 255, 0.15) !important;
+  border: 1px solid #00f0ff !important;
+  color: #00f0ff !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
+}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 </head>
