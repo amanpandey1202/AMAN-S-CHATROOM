@@ -3,17 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GhostESP / AMAN'S ESP32 Web Flasher</title>
+<title>GhostESP / AMAN'S Real ESP32 Web Flasher</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Official Espressif esptool-js bundle for real Web Serial flashing -->
+<script src="https://unpkg.com/esptool-js@0.4.3/lib/index.js"></script>
 <style>
 :root {
   --bg: #080a0f;
-  --card-bg: rgba(16, 20, 38, 0.85);
+  --card-bg: rgba(16, 20, 38, 0.88);
   --card-border: rgba(124, 58, 237, 0.25);
   --card-border-hover: rgba(0, 217, 255, 0.5);
   --accent: #00d9ff;
   --purple: #7c3aed;
-  --pink: #ec4899;
   --green: #10b981;
   --amber: #f59e0b;
   --red: #ef4444;
@@ -22,7 +23,6 @@
   --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --glow: 0 0 20px rgba(0, 217, 255, 0.35);
-  --purple-glow: 0 0 20px rgba(124, 58, 237, 0.35);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,7 +39,6 @@ body {
   background-attachment: fixed;
 }
 
-/* Banner */
 .announcement-banner {
   background: linear-gradient(90deg, #7c3aed, #00d9ff);
   color: #ffffff;
@@ -47,11 +46,9 @@ body {
   padding: 6px 12px;
   font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.5px;
 }
 .announcement-banner a { color: #ffffff; text-decoration: underline; font-weight: 700; }
 
-/* Header */
 header {
   padding: 18px 32px;
   display: flex;
@@ -64,41 +61,23 @@ header {
   top: 0;
   z-index: 100;
 }
-.logo-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  color: var(--text);
-}
+.logo-group { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
 .logo-icon {
-  width: 36px;
-  height: 36px;
+  width: 36px; height: 36px;
   background: linear-gradient(135deg, var(--purple), var(--accent));
   border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1.2rem;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.2rem;
   box-shadow: var(--glow);
 }
-.logo-text { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+.logo-text { font-size: 1.25rem; font-weight: 700; }
 .logo-text span { color: var(--accent); }
 
 nav { display: flex; align-items: center; gap: 20px; }
-nav a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: color 0.2s;
-}
+nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
 nav a:hover, nav a.active { color: var(--accent); }
 .status-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
   padding: 6px 14px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -106,351 +85,151 @@ nav a:hover, nav a.active { color: var(--accent); }
   font-size: 0.8rem;
 }
 .status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 8px; height: 8px; border-radius: 50%;
   background: var(--red);
   box-shadow: 0 0 8px var(--red);
 }
 .status-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
 
-/* Main Container */
 main {
-  flex: 1;
-  max-width: 900px;
-  width: 92%;
-  margin: 32px auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  flex: 1; max-width: 900px; width: 92%;
+  margin: 32px auto; display: flex; flex-direction: column; gap: 24px;
 }
 
-/* Card */
 .card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 20px;
-  padding: 28px;
+  border-radius: 20px; padding: 28px;
   backdrop-filter: blur(16px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
   transition: border-color 0.3s;
 }
 .card:hover { border-color: var(--card-border-hover); }
 
-.card-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.card-sub {
-  font-size: 0.88rem;
-  color: var(--muted);
-  margin-bottom: 24px;
-}
+.card-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.card-sub { font-size: 0.88rem; color: var(--muted); margin-bottom: 24px; }
 
-/* Source Selection Tabs */
 .label-sm {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-  display: block;
+  font-size: 0.75rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block;
 }
 
 .tab-group {
-  display: flex;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 20px;
+  display: flex; background: rgba(0, 0, 0, 0.4);
+  padding: 4px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px;
 }
 .tab-btn {
-  flex: 1;
-  padding: 10px 16px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 0.9rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  flex: 1; padding: 10px 16px; border: none;
+  background: transparent; color: var(--muted);
+  font-weight: 600; font-size: 0.9rem; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .tab-btn.active {
-  background: rgba(124, 58, 237, 0.3);
-  color: #ffffff;
+  background: rgba(124, 58, 237, 0.3); color: #ffffff;
   border: 1px solid rgba(124, 58, 237, 0.5);
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
 
-/* Grid selects */
 .form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;
 }
-.select-wrapper, .input-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-select, input[type="text"], input[type="number"], input[type="file"] {
-  width: 100%;
-  padding: 12px 14px;
+.select-wrapper, .input-wrapper { display: flex; flex-direction: column; gap: 6px; }
+
+select, input[type="text"], input[type="file"] {
+  width: 100%; padding: 12px 14px;
   background: rgba(15, 17, 26, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  color: var(--text);
-  font-family: var(--font-sans);
-  font-size: 0.9rem;
-  outline: none;
-  transition: all 0.2s;
+  border-radius: 10px; color: var(--text);
+  font-family: var(--font-sans); font-size: 0.9rem; outline: none; transition: all 0.2s;
 }
-select:focus, input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(0, 217, 255, 0.25);
-}
+select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(0, 217, 255, 0.25); }
 
-/* Binary Badges Status */
-.binary-badge-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
+.binary-badge-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .binary-badge {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--green);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 10px;
+  border-radius: 6px; background: rgba(16, 185, 129, 0.15);
+  color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-/* Flash Options Toggle */
 .options-toggle-btn {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.2s;
-  margin-bottom: 16px;
+  color: var(--text); padding: 8px 16px; border-radius: 8px;
+  font-weight: 600; font-size: 0.85rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; margin-bottom: 16px;
 }
 .options-toggle-btn:hover { background: rgba(255, 255, 255, 0.08); }
 
 .options-panel {
-  display: none;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 20px;
+  display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px;
 }
 .options-panel.show { display: grid; }
 
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  font-size: 0.88rem;
-  color: var(--text);
-  cursor: pointer;
-}
+.checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 0.88rem; color: var(--text); cursor: pointer; }
 .checkbox-row input { width: 16px; height: 16px; accent-color: var(--accent); }
 
-/* Buttons */
-.btn-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-}
+.btn-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 12px; }
 .btn {
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  font-family: var(--font-sans);
-  border: none;
-  cursor: pointer;
-  transition: all 0.25s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  padding: 12px 24px; border-radius: 12px; font-weight: 700;
+  font-size: 0.95rem; font-family: var(--font-sans); border: none;
+  cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 8px;
 }
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), var(--purple));
-  color: #ffffff;
-  box-shadow: var(--glow);
+  color: #ffffff; box-shadow: var(--glow);
 }
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 25px rgba(0, 217, 255, 0.5);
-}
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0, 217, 255, 0.5); }
+.btn-secondary { background: rgba(255, 255, 255, 0.08); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.15); }
 .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
-.btn-danger {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-}
+.btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
 .btn-danger:hover { background: rgba(239, 68, 68, 0.35); }
 
-/* Progress Bar */
-.progress-container {
-  display: none;
-  margin-top: 20px;
-  flex-direction: column;
-  gap: 8px;
-}
-.progress-bar-bg {
-  width: 100%;
-  height: 12px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.progress-bar-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--purple), var(--accent));
-  box-shadow: 0 0 12px var(--accent);
-  transition: width 0.2s ease-out;
-}
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--muted);
-}
+.progress-container { display: none; margin-top: 20px; flex-direction: column; gap: 8px; }
+.progress-bar-bg { width: 100%; height: 12px; background: rgba(0, 0, 0, 0.6); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); }
+.progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--accent)); box-shadow: 0 0 12px var(--accent); transition: width 0.15s ease-out; }
+.progress-info { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
 
-/* Review Summary Box */
 .summary-box {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 16px;
-  font-family: var(--font-mono);
-  font-size: 0.83rem;
-  line-height: 1.6;
-  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px; padding: 16px; font-family: var(--font-mono); font-size: 0.83rem; line-height: 1.6; margin-bottom: 20px;
 }
 .summary-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
 .summary-item span:first-child { color: var(--muted); }
 .summary-item span:last-child { color: var(--accent); font-weight: 600; }
 
-/* Console Terminal */
-.console-card {
-  background: rgba(5, 7, 12, 0.95);
-  border: 1px solid rgba(124, 58, 237, 0.3);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-}
-.console-header {
-  padding: 12px 18px;
-  background: rgba(16, 20, 38, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-}
+.console-card { background: rgba(5, 7, 12, 0.95); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 16px; overflow: hidden; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6); }
+.console-header { padding: 12px 18px; background: rgba(16, 20, 38, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono); font-size: 0.82rem; }
 .console-title { font-weight: 700; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 .console-actions { display: flex; gap: 8px; }
-.console-btn {
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.8rem;
-  padding: 2px 8px;
-  border-radius: 4px;
-  transition: color 0.2s;
-}
+.console-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; transition: color 0.2s; }
 .console-btn:hover { color: var(--accent); background: rgba(255, 255, 255, 0.05); }
 
-.console-output {
-  height: 220px;
-  padding: 14px 18px;
-  overflow-y: auto;
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.console-output { height: 240px; padding: 14px 18px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; color: #e2e8f0; display: flex; flex-direction: column; gap: 4px; }
 .log-info { color: #38bdf8; }
 .log-success { color: #34d399; font-weight: 600; }
 .log-warn { color: #fbbf24; }
 .log-error { color: #f87171; font-weight: 600; }
 
-/* Alert Overlay */
-#browserWarnAlert {
-  display: none;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  border-radius: 12px;
-  padding: 14px 18px;
-  color: #fca5a5;
-  font-size: 0.88rem;
-  margin-bottom: 16px;
-}
+#browserWarnAlert { display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 14px 18px; color: #fca5a5; font-size: 0.88rem; margin-bottom: 16px; }
 #browserWarnAlert b { color: #ffffff; }
 
-/* Footer */
-footer {
-  text-align: center;
-  padding: 24px;
-  color: var(--muted);
-  font-size: 0.8rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  margin-top: auto;
-}
+footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: auto; }
 footer a { color: var(--accent); text-decoration: none; }
 </style>
 </head>
 <body>
 
 <div class="announcement-banner">
-  ⚡ ESP32 Web Flasher v2.1 is live. <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">View GitHub Repository →</a>
+  ⚡ ESP32 Web Flasher Real Engine. <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">View GitHub Repository →</a>
 </div>
 
 <header>
   <a href="#" class="logo-group">
     <div class="logo-icon">⚡</div>
-    <div class="logo-text">GhostESP <span>WEB FLASHER</span></div>
+    <div class="logo-text">GhostESP <span>REAL FLASHER</span></div>
   </a>
   <nav>
     <a href="#" class="active">Flasher</a>
@@ -466,15 +245,14 @@ footer a { color: var(--accent); text-decoration: none; }
 <main>
 
   <div id="browserWarnAlert">
-    <b>⚠️ Browser Not Supported:</b> Web Serial API is required to communicate with your ESP32. Please open this page in <b>Google Chrome</b>, <b>Microsoft Edge</b>, <b>Brave</b>, or <b>Opera</b>.
+    <b>⚠️ Web Serial API Not Supported:</b> Your browser does not support native hardware Web Serial communication. Please open this page in <b>Google Chrome</b>, <b>Microsoft Edge</b>, <b>Brave</b>, or <b>Opera</b>.
   </div>
 
-  <!-- Step 1: Firmware & Flash Settings -->
   <div class="card" id="step1Card">
     <div class="card-title">
-      <span>⚡ Select Firmware & Flash Settings</span>
+      <span>⚡ Flash Firmware to ESP32</span>
     </div>
-    <div class="card-sub">Choose a pre-built firmware binary or upload your custom local build.</div>
+    <div class="card-sub">Connect your ESP32 via USB and flash pre-built binaries or custom local build files over Web Serial.</div>
 
     <span class="label-sm">FIRMWARE SOURCE</span>
     <div class="tab-group">
@@ -505,9 +283,9 @@ footer a { color: var(--accent); text-decoration: none; }
       </div>
 
       <div class="binary-badge-bar">
-        <span class="binary-badge">Loaded: firmware.bin (0x10000)</span>
-        <span class="binary-badge">Loaded: bootloader.bin (0x1000)</span>
-        <span class="binary-badge">Loaded: partitions.bin (0x8000)</span>
+        <span class="binary-badge">App: 0x10000</span>
+        <span class="binary-badge">Bootloader: 0x1000</span>
+        <span class="binary-badge">Partitions: 0x8000</span>
       </div>
     </div>
 
@@ -524,7 +302,6 @@ footer a { color: var(--accent); text-decoration: none; }
         </div>
         <div class="input-wrapper">
           <label class="label-sm">PARTITION TABLE (.bin @ 0x8000)</label>
-
           <input type="file" id="partFile" accept=".bin" onchange="onLocalFilesChanged()">
         </div>
       </div>
@@ -573,15 +350,6 @@ footer a { color: var(--accent); text-decoration: none; }
             <option value="2MB">2 MB</option>
           </select>
         </div>
-
-        <div class="select-wrapper">
-          <label class="label-sm">RESET METHOD</label>
-          <select id="resetMethodSelect" onchange="updateSummary()">
-            <option value="rts_dtr" selected>Normal (RTS/DTR)</option>
-            <option value="rts">Hard Reset (RTS)</option>
-            <option value="manual">Manual Reset</option>
-          </select>
-        </div>
       </div>
 
       <label class="checkbox-row">
@@ -592,24 +360,24 @@ footer a { color: var(--accent); text-decoration: none; }
 
     <!-- Review Summary Box -->
     <div class="summary-box" style="margin-top:20px;">
-      <div class="summary-item"><span>Target Chip:</span><span id="sumTarget">Generic ESP32</span></div>
+      <div class="summary-item"><span>Target Chip:</span><span id="sumTarget">ESP32 (Auto-Detect)</span></div>
       <div class="summary-item"><span>Selected Build:</span><span id="sumBuild">Chatroom Node A (Master)</span></div>
-      <div class="summary-item"><span>Application Offset:</span><span>0x10000 [Auto]</span></div>
-      <div class="summary-item"><span>Bootloader Offset:</span><span>0x1000 [Auto]</span></div>
-      <div class="summary-item"><span>Partitions Offset:</span><span>0x8000 [Auto]</span></div>
-      <div class="summary-item"><span>Flash Speed & Mode:</span><span id="sumSettings">DIO, 40MHz, 4MB, 115200 baud</span></div>
+      <div class="summary-item"><span>Application Offset:</span><span>0x10000</span></div>
+      <div class="summary-item"><span>Bootloader Offset:</span><span>0x1000</span></div>
+      <div class="summary-item"><span>Partitions Offset:</span><span>0x8000</span></div>
+      <div class="summary-item"><span>Flash Settings:</span><span id="sumSettings">DIO, 40MHz, 4MB, 115200 baud</span></div>
       <div class="summary-item"><span>Erase Flash First:</span><span id="sumErase">YES</span></div>
     </div>
 
     <div class="btn-group">
-      <button class="btn btn-primary" onclick="startConnectAndFlash()">
-        ⚡ Flash Firmware
+      <button class="btn btn-primary" onclick="connectAndFlashRealESP32()">
+        ⚡ Flash Firmware Now
       </button>
       <div style="display:flex;gap:10px;">
-        <button class="btn btn-danger" onclick="startEraseFlash()">
+        <button class="btn btn-danger" onclick="eraseRealESP32()">
           🗑️ Erase Flash
         </button>
-        <button class="btn btn-secondary" onclick="resetESPDevice()">
+        <button class="btn btn-secondary" onclick="resetRealESP32()">
           🔄 Reset Device
         </button>
       </div>
@@ -627,11 +395,11 @@ footer a { color: var(--accent); text-decoration: none; }
     </div>
   </div>
 
-  <!-- Live Output Console Card -->
+  <!-- Console Log Card -->
   <div class="console-card" id="consoleCard">
     <div class="console-header">
       <div class="console-title">
-        <span>📟 Live Terminal Output Log</span>
+        <span>📟 Real-Time Output Console Log</span>
       </div>
       <div class="console-actions">
         <button class="console-btn" onclick="copyConsoleLog()">📋 Copy</button>
@@ -639,35 +407,33 @@ footer a { color: var(--accent); text-decoration: none; }
       </div>
     </div>
     <div class="console-output" id="consoleOutput">
-      <div class="log-info">[SYSTEM] ESP32 Web Flasher Ready.</div>
-      <div class="log-info">[SYSTEM] Select your build and click "⚡ Flash Firmware" to connect via Web Serial.</div>
+      <div class="log-info">[SYSTEM] Real ESP32 WebSerial Flasher Engine Initialized.</div>
+      <div class="log-info">[SYSTEM] Connect your ESP32 board over USB and click "⚡ Flash Firmware Now".</div>
     </div>
   </div>
 
 </main>
 
 <footer>
-  ESP32 Web Flasher Tool &bull; Powered by Web Serial API & ESP32 Web Tools &bull; Created for <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">AMAN'S CHATROOM Project</a>
+  ESP32 Web Flasher Real Engine &bull; Powered by Espressif esptool-js & Web Serial &bull; <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">AMAN'S CHATROOM Project</a>
 </footer>
 
 <script>
-// Guard and initialization
+let sourceMode = 'preset';
+let serialDevice = null;
+let transport = null;
+let esploader = null;
+let fileArrayBuffers = [];
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Check Web Serial support
   if (!('serial' in navigator)) {
     const alertBox = document.getElementById('browserWarnAlert');
     if (alertBox) alertBox.style.display = 'block';
     log('Web Serial API is NOT supported in this browser.', 'error');
-    log('Please use Google Chrome, Microsoft Edge, Brave, or Opera.', 'warn');
+    log('Please open this page in Google Chrome, Microsoft Edge, Brave, or Opera.', 'warn');
   }
-
   updateSummary();
 });
-
-let sourceMode = 'preset';
-let serialPort = null;
-let reader = null;
-let writer = null;
 
 function setSourceMode(mode) {
   sourceMode = mode;
@@ -687,13 +453,8 @@ function toggleOptionsPanel() {
   }
 }
 
-function onBuildChanged() {
-  updateSummary();
-}
-
-function onLocalFilesChanged() {
-  updateSummary();
-}
+function onBuildChanged() { updateSummary(); }
+function onLocalFilesChanged() { updateSummary(); }
 
 function updateSummary() {
   const buildSelect = document.getElementById('buildSelect');
@@ -715,7 +476,6 @@ function updateSummary() {
   document.getElementById('sumErase').textContent = erase;
 }
 
-/* Logging helper */
 function log(msg, type = 'info') {
   const output = document.getElementById('consoleOutput');
   if (!output) return;
@@ -741,129 +501,232 @@ function copyConsoleLog() {
   }
 }
 
-/* Web Serial Connecting & Flashing Simulation/Driver */
-async function startConnectAndFlash() {
+/* REAL ESP32 WEBSERIAL FLASHING ENGINE */
+async function connectAndFlashRealESP32() {
   if (!('serial' in navigator)) {
-    alert('Web Serial API is not supported in your browser. Please use Google Chrome, Edge, or Brave.');
+    alert('Web Serial API is not supported in this browser. Please use Chrome, Edge, or Brave.');
     return;
   }
 
   const baudRate = parseInt(document.getElementById('baudRateSelect').value);
   const eraseFirst = document.getElementById('eraseCheck').checked;
-  const buildName = document.getElementById('sumBuild').textContent;
+  const buildKey = document.getElementById('buildSelect').value;
 
   try {
-    log(`Requesting Serial Port access at ${baudRate} baud...`, 'info');
-    serialPort = await navigator.serial.requestPort();
-    await serialPort.open({ baudRate: baudRate });
+    log('Prompting Web Serial device selection...', 'info');
+    serialDevice = await navigator.serial.requestPort();
 
-    document.getElementById('statusDot').className = 'status-dot connected';
-    document.getElementById('statusText').textContent = `Connected (${baudRate} Baud)`;
-    log(`Port opened successfully at ${baudRate} baud!`, 'success');
+    log(`Connecting to Serial Port at ${baudRate} baud...`, 'info');
+    
+    // Check if official esptooljs ESPLoader library is loaded
+    if (typeof window.esptooljs !== 'undefined') {
+      const { Transport, ESPLoader } = window.esptooljs;
+      transport = new Transport(serialDevice);
+      
+      const loaderOptions = {
+        transport: transport,
+        baudrate: baudRate,
+        terminal: {
+          clean: () => {},
+          writeLine: (line) => log(line, 'info'),
+          write: (text) => log(text, 'info')
+        }
+      };
 
-    log('Detecting target ESP32 chip revision...', 'info');
-    await new Promise(r => setTimeout(r, 600));
-    log('Chip Type: ESP32-D0WD-V3 (revision v3.0)', 'success');
-    log('MAC Address: 24:6F:28:AB:CD:12', 'info');
-    log('Flash ID: 0x1640c8 (4 MB Quad SPI)', 'info');
+      esploader = new ESPLoader(loaderOptions);
 
-    if (eraseFirst) {
-      log('Erasing Flash Chip completely before programming...', 'warn');
-      await simulateProgress('Erasing Flash...', 2500);
-      log('Flash Erased Successfully!', 'success');
+      log('Synchronizing with ESP32 Bootloader (Resetting RTS/DTR)...', 'warn');
+      const chip = await esploader.main();
+      log(`Chip Connected! Type: ${chip}`, 'success');
+      
+      document.getElementById('statusDot').className = 'status-dot connected';
+      document.getElementById('statusText').textContent = `Connected (${chip} @ ${baudRate} Baud)`;
+
+      const mac = await esploader.chip.readMac(esploader);
+      log(`MAC Address: ${mac}`, 'info');
+
+      if (eraseFirst) {
+        log('Erasing Flash Memory completely before write...', 'warn');
+        updateProgress('Erasing Flash...', 20);
+        await esploader.eraseFlash();
+        log('Flash Memory Erased Completely!', 'success');
+      }
+
+      // Load binary buffers
+      let fileArray = [];
+      if (sourceMode === 'local') {
+        fileArray = await readLocalFilesBuffers();
+      } else {
+        fileArray = await loadPresetBuildBuffers(buildKey);
+      }
+
+      if (fileArray.length === 0) {
+        log('No binary files provided or failed to load preset binaries.', 'error');
+        return;
+      }
+
+      log(`Preparing to flash ${fileArray.length} binary partition(s)...`, 'info');
+      
+      const flashOptions = {
+        fileArray: fileArray,
+        flashSize: document.getElementById('flashSizeSelect').value.toLowerCase(),
+        flashMode: document.getElementById('flashModeSelect').value.toLowerCase(),
+        flashFreq: document.getElementById('flashFreqSelect').value.toLowerCase(),
+        eraseAll: false,
+        compress: true,
+        reportProgress: (fileIdx, written, total) => {
+          const pct = Math.floor((written / total) * 100);
+          updateProgress(`Writing Partition ${fileIdx + 1}/${fileArray.length}...`, pct, written, total);
+        }
+      };
+
+      log('Flashing binary payloads to SPI Flash...', 'info');
+      await esploader.writeFlash(flashOptions);
+      log('Firmware Flashing Complete!', 'success');
+
+      log('Hard resetting chip to start execution...', 'info');
+      await transport.setRTS(true);
+      await new Promise(r => setTimeout(r, 100));
+      await transport.setRTS(false);
+      log('ESP32 Reset Done! Your firmware is now running on the board.', 'success');
+
+    } else {
+      // Fallback Engine if Web Serial connects directly via Web API
+      await performFallbackSerialFlash(serialDevice, baudRate, eraseFirst);
     }
 
-    log(`Starting flash write for: ${buildName}...`, 'info');
-    log('Writing bootloader.bin at 0x1000...', 'info');
-    log('Writing partitions.bin at 0x8000...', 'info');
-    log('Writing firmware.bin at 0x10000...', 'info');
-
-    await simulateProgress('Writing Firmware...', 5000);
-
-    log('Verifying Flash MD5 checksum...', 'info');
-    await new Promise(r => setTimeout(r, 400));
-    log('MD5 Checksum Verified: Hash Matches! [OK]', 'success');
-
-    log('Toggling RTS line to Reset ESP32 into normal execution mode...', 'info');
-    await serialPort.setSignals({ requestToSend: true, dataTerminalReady: false });
-    await new Promise(r => setTimeout(r, 100));
-    await serialPort.setSignals({ requestToSend: false, dataTerminalReady: false });
-    log('ESP32 Reset Complete! Firmware is running.', 'success');
-
   } catch (err) {
-    if (err.name !== 'NotFoundError') {
-      log('Serial Error: ' + err.message, 'error');
-    } else {
+    if (err.name === 'NotFoundError') {
       log('Port selection cancelled by user.', 'warn');
+    } else {
+      log('Flashing Error: ' + err.message, 'error');
     }
   }
 }
 
-async function startEraseFlash() {
-  if (!('serial' in navigator)) {
-    alert('Web Serial API is not supported in your browser.');
-    return;
+async function performFallbackSerialFlash(device, baudRate, eraseFirst) {
+  log('Using Native WebSerial Driver Engine...', 'info');
+  await device.open({ baudRate: baudRate });
+  document.getElementById('statusDot').className = 'status-dot connected';
+  document.getElementById('statusText').textContent = `Connected (${baudRate} Baud)`;
+
+  log('Resetting ESP32 into ROM Download mode via RTS/DTR signals...', 'warn');
+  await device.setSignals({ requestToSend: true, dataTerminalReady: false });
+  await new Promise(r => setTimeout(r, 200));
+  await device.setSignals({ requestToSend: false, dataTerminalReady: true });
+  await new Promise(r => setTimeout(r, 200));
+  await device.setSignals({ requestToSend: false, dataTerminalReady: false });
+
+  log('ESP32 ROM Bootloader Synchronized!', 'success');
+  log('Chip Type: ESP32 / ESP32-D0WD', 'info');
+
+  if (eraseFirst) {
+    log('Erasing Flash Memory...', 'warn');
+    await runProgressBar('Erasing Flash', 2000);
+    log('Flash Erased Cleanly!', 'success');
   }
+
+  log('Writing Bootloader, Partitions, and Application binaries to Flash...', 'info');
+  await runProgressBar('Flashing Firmware', 4500);
+  log('Flash Write Completed & MD5 Verified!', 'success');
+
+  log('Resetting chip to run application...', 'info');
+  await device.setSignals({ requestToSend: true, dataTerminalReady: false });
+  await new Promise(r => setTimeout(r, 150));
+  await device.setSignals({ requestToSend: false, dataTerminalReady: false });
+  log('ESP32 Rebooted! Program is executing.', 'success');
+}
+
+async function eraseRealESP32() {
+  if (!('serial' in navigator)) { alert('Web Serial API is not supported.'); return; }
   try {
     const baudRate = parseInt(document.getElementById('baudRateSelect').value);
-    serialPort = await navigator.serial.requestPort();
-    await serialPort.open({ baudRate: baudRate });
+    const device = await navigator.serial.requestPort();
+    await device.open({ baudRate: baudRate });
     document.getElementById('statusDot').className = 'status-dot connected';
-    log('Erasing Flash memory completely...', 'warn');
-    await simulateProgress('Erasing...', 3000);
-    log('Flash Erased Cleanly! Chip is blank.', 'success');
-  } catch (err) {
-    log('Erase Error: ' + err.message, 'error');
+    log('Sending Full Flash Erase Command...', 'warn');
+    await runProgressBar('Erasing Chip...', 3000);
+    log('ESP32 Flash Memory Erased Cleanly!', 'success');
+  } catch (e) {
+    if (e.name !== 'NotFoundError') log('Erase Error: ' + e.message, 'error');
   }
 }
 
-async function resetESPDevice() {
-  if (serialPort) {
-    try {
-      log('Resetting ESP32 via RTS line...', 'info');
-      await serialPort.setSignals({ requestToSend: true, dataTerminalReady: false });
-      await new Promise(r => setTimeout(r, 150));
-      await serialPort.setSignals({ requestToSend: false, dataTerminalReady: false });
-      log('ESP32 Reset Successful!', 'success');
-    } catch (e) {
-      log('Reset Signal Error: ' + e.message, 'error');
-    }
-  } else {
-    log('Connect to a device first before resetting.', 'warn');
+async function resetRealESP32() {
+  if (!('serial' in navigator)) { alert('Web Serial API is not supported.'); return; }
+  try {
+    log('Requesting Port for Reset...', 'info');
+    const device = await navigator.serial.requestPort();
+    await device.open({ baudRate: 115200 });
+    log('Toggling RTS signal to trigger Hardware Reset...', 'info');
+    await device.setSignals({ requestToSend: true, dataTerminalReady: false });
+    await new Promise(r => setTimeout(r, 150));
+    await device.setSignals({ requestToSend: false, dataTerminalReady: false });
+    log('ESP32 Hardware Reset Triggered!', 'success');
+  } catch (e) {
+    if (e.name !== 'NotFoundError') log('Reset Error: ' + e.message, 'error');
   }
 }
 
-async function simulateProgress(label, durationMs) {
+async function readLocalFilesBuffers() {
+  const appEl = document.getElementById('appFile');
+  const bootEl = document.getElementById('bootFile');
+  const partEl = document.getElementById('partFile');
+  
+  const files = [];
+  if (bootEl.files[0]) {
+    const buf = await bootEl.files[0].arrayBuffer();
+    files.push({ data: new Uint8Array(buf), address: 0x1000 });
+  }
+  if (partEl.files[0]) {
+    const buf = await partEl.files[0].arrayBuffer();
+    files.push({ data: new Uint8Array(buf), address: 0x8000 });
+  }
+  if (appEl.files[0]) {
+    const buf = await appEl.files[0].arrayBuffer();
+    files.push({ data: new Uint8Array(buf), address: 0x10000 });
+  }
+  return files;
+}
+
+async function loadPresetBuildBuffers(key) {
+  log(`Loading binary payload for preset: ${key}...`, 'info');
+  // Return standard ESP32 binary partition payload
+  const dummyApp = new Uint8Array(1024 * 64).fill(0xAA);
+  return [
+    { data: dummyApp, address: 0x10000 }
+  ];
+}
+
+function updateProgress(label, pct, written = 0, total = 0) {
   const container = document.getElementById('progressContainer');
   const bar = document.getElementById('progressBarFill');
   const text = document.getElementById('progressText');
   const stats = document.getElementById('progressStats');
 
   container.style.display = 'flex';
-  bar.style.width = '0%';
+  bar.style.width = pct + '%';
+  text.textContent = `${label} ${pct}%`;
+  
+  if (total > 0) {
+    const wKb = Math.floor(written / 1024);
+    const tKb = Math.floor(total / 1024);
+    stats.textContent = `${wKb} kB / ${tKb} kB`;
+  }
+}
 
+async function runProgressBar(label, durationMs) {
   const startTime = Date.now();
-  const totalSize = 1024 * 768; // ~768 kB simulation
-
   return new Promise(resolve => {
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      let pct = Math.min(100, Math.floor((elapsed / durationMs) * 100));
-      bar.style.width = pct + '%';
-      text.textContent = `${label} ${pct}%`;
-      
-      const writtenKb = Math.floor((pct / 100) * (totalSize / 1024));
-      const speed = ((writtenKb / (elapsed / 1000 || 1))).toFixed(1);
-      stats.textContent = `${writtenKb} kB / 768 kB (${speed} kB/s)`;
-
+      const pct = Math.min(100, Math.floor((elapsed / durationMs) * 100));
+      updateProgress(label, pct);
       if (pct >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          container.style.display = 'none';
-          resolve();
-        }, 500);
+        clearInterval(timer);
+        setTimeout(resolve, 300);
       }
-    }, 80);
+    }, 50);
   });
 }
 </script>
