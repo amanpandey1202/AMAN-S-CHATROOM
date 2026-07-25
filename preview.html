@@ -1258,33 +1258,44 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(255, 255, 
 
 
 
-/* ── GLASSMORPHIC NEON GLOW BUTTONS ── */
-.btn, #sendBtn, .flash-topbar-btn {
-  background: rgba(0, 240, 255, 0.08) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(0, 240, 255, 0.55) !important;
-  color: #00f0ff !important;
+
+
+/* ── HIGH-INTENSITY AMBIENT NEON GLOW BUTTONS ── */
+.flash-topbar-btn, #sendBtn, .btn {
+  background: rgba(0, 240, 255, 0.14) !important;
+  border: 1.5px solid #00f0ff !important;
+  color: #ffffff !important;
   font-weight: 800 !important;
   border-radius: 10px !important;
   letter-spacing: 0.5px !important;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3), inset 0 0 12px rgba(0, 240, 255, 0.12) !important;
+  text-shadow: 0 0 8px #00f0ff, 0 0 16px #00f0ff !important;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.7), 0 0 36px rgba(0, 240, 255, 0.45), inset 0 0 14px rgba(0, 240, 255, 0.3) !important;
   cursor: pointer !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  animation: neonAuraPulse 2.4s ease-in-out infinite alternate !important;
+  transition: all 0.2s ease !important;
 }
 
-.btn:hover, #sendBtn:hover, .flash-topbar-btn:hover {
-  background: rgba(0, 240, 255, 0.22) !important;
-  border-color: #00f0ff !important;
+@keyframes neonAuraPulse {
+  0% {
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.6), 0 0 28px rgba(0, 240, 255, 0.35), inset 0 0 10px rgba(0, 240, 255, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.9), 0 0 48px rgba(0, 240, 255, 0.6), inset 0 0 18px rgba(0, 240, 255, 0.4);
+  }
+}
+
+.flash-topbar-btn:hover, #sendBtn:hover, .btn:hover {
+  background: rgba(0, 240, 255, 0.3) !important;
+  border-color: #ffffff !important;
   color: #ffffff !important;
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.9) !important;
-  box-shadow: 0 0 28px rgba(0, 240, 255, 0.65), inset 0 0 16px rgba(0, 240, 255, 0.3) !important;
-  transform: translateY(-1px) scale(1.02) !important;
+  text-shadow: 0 0 12px #ffffff, 0 0 24px #00f0ff !important;
+  box-shadow: 0 0 30px #00f0ff, 0 0 60px rgba(0, 240, 255, 0.8), inset 0 0 20px rgba(0, 240, 255, 0.5) !important;
+  transform: translateY(-2px) scale(1.03) !important;
 }
 
-.btn:active, #sendBtn:active, .flash-topbar-btn:active {
-  transform: translateY(0) scale(0.98) !important;
+.flash-sidebar-card {
+  border: 1.5px solid #00f0ff !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
 }
 
 </style>
