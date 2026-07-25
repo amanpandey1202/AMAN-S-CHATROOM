@@ -418,6 +418,12 @@ async function connectESP32(baud) {
   log('✓ Connected! Chip: ' + chip, 'ok');
   document.getElementById('statusDot').className = 'dot connected';
   document.getElementById('statusText').textContent = 'Connected · ' + chip;
+
+  // Log all available methods so we can debug any future API issues
+  const proto = Object.getPrototypeOf(esploader);
+  const methods = Object.getOwnPropertyNames(proto).filter(m => m !== 'constructor');
+  log('[DBG] Available methods: ' + methods.join(', '), 'plain');
+
   return esploader;
 }
 
@@ -444,7 +450,8 @@ async function startFlash() {
     log('Starting flash write with MD5 verification...', 'info');
     showProgress('Preparing...', 0, 0, totalBytes);
 
-    await esploader.write_flash({
+    // 3. Flash — try write_flash first, then writeFlash, then manual partition loop
+    const flashOptions = {
       fileArray,
       flash_size: 'detect',
       flash_mode: 'keep',
@@ -458,7 +465,36 @@ async function startFlash() {
       calculateMD5Hash(image) {
         return CryptoJS.MD5(CryptoJS.enc.Latin1.parse(image)).toString();
       }
-    });
+    };
+
+    if (typeof esploader.write_flash === 'function') {
+      log('Using write_flash() method...', 'info');
+      await esploader.write_flash(flashOptions);
+    } else if (typeof esploader.writeFlash === 'function') {
+      log('Using writeFlash() method...', 'info');
+      await esploader.writeFlash(flashOptions);
+    } else if (typeof esploader.flash_binary === 'function') {
+      log('Using flash_binary() per-partition fallback...', 'warn');
+      if (eraseAll) {
+        log('Erasing flash first...', 'warn');
+        await esploader.erase_flash();
+      }
+      for (let i = 0; i < fileArray.length; i++) {
+        const part = fileArray[i];
+        const partName = BUILDS[selectedBuild].files[i] ? BUILDS[selectedBuild].files[i].name : ('Part ' + (i+1));
+        log('Writing ' + partName + ' @ 0x' + part.address.toString(16) + '...', 'info');
+        showProgress('Writing ' + partName + '...', (i / fileArray.length) * 100, i, fileArray.length);
+        await esploader.flash_binary(part.data, part.address);
+        log('✓ ' + partName + ' written.', 'ok');
+      }
+      showProgress('Flash Complete!', 100, fileArray.length, fileArray.length);
+    } else {
+      // Last resort: find ANY method that could write flash
+      const proto = Object.getPrototypeOf(esploader);
+      const allMethods = Object.getOwnPropertyNames(proto);
+      const flashMethods = allMethods.filter(m => m.toLowerCase().includes('flash') || m.toLowerCase().includes('write'));
+      throw new Error('No flash write method found. Available flash/write methods: ' + (flashMethods.join(', ') || 'none') + '. All: ' + allMethods.join(', '));
+    }
 
     showProgress('✓ Flash Complete!', 100, totalBytes, totalBytes);
     log("✓ AMAN'S CHATROOM flashed & MD5 verified successfully!", 'ok');
