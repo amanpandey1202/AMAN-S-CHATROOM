@@ -77,11 +77,17 @@ body.bw-theme .msg.me {
   border-color: rgba(255, 255, 255, 0.22) !important;
 }
 
-body.bw-theme .user-avatar,
+body.bw-theme .user-avatar {
+  background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(99,102,241,0.3)) !important;
+  border: 1px solid #00f0ff !important;
+  color: #00f0ff !important;
+}
+
+body.bw-theme .btn,
 body.bw-theme #sendBtn {
-  background: #ffffff !important;
-  color: #000000 !important;
-  font-weight: 700;
+  background: linear-gradient(135deg, #00f0ff, #7c3aed) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5) !important;
 }
 
 body.bw-theme .room-btn.active {
