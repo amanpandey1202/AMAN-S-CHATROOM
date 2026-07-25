@@ -32,6 +32,55 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 
+/* ── COMPLETE BLACK & WHITE GHOSTESP THEME OVERRIDES ── */
+body.bw-theme {
+  --bg:#000000;
+  --bg2:rgba(10,10,10,0.95);
+  --bg3:rgba(18,18,18,0.95);
+  --border:rgba(255,255,255,0.12);
+  --border-glow:rgba(255,255,255,0.25);
+  --accent:#ffffff;
+  --accent2:#a3a3a3;
+  --text:#ffffff;
+  --muted:#737373;
+  --me-bg:rgba(255,255,255,0.08);
+  --other-bg:rgba(255,255,255,0.03);
+  --sys:rgba(15,15,15,0.9);
+}
+
+body.bw-theme #leftSidebar,
+body.bw-theme #rightSidebar,
+body.bw-theme #topbar,
+body.bw-theme #inputBar,
+body.bw-theme .login-panel,
+body.bw-theme .stat-card,
+body.bw-theme .user-item,
+body.bw-theme .msg.other,
+body.bw-theme #msgInput,
+body.bw-theme .qr-modal-card {
+  background: rgba(10, 10, 10, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+body.bw-theme .msg.me {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+body.bw-theme .user-avatar,
+body.bw-theme #sendBtn {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700;
+}
+
+body.bw-theme .room-btn.active {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
 /* ── LOGIN ─────────────────────────────── */
 #login{
   position:fixed;inset:0;z-index:100;
@@ -1144,6 +1193,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
       <span class="spacer"></span>
       <a class="flash-topbar-btn" href="flasher.html" target="_blank" title="Open ESP32 WebSerial Flasher to upload firmware">⚡ Flash ESP32</a>
       <button class="icon-btn" id="qrBtn" onclick="openQrModal()" title="Scan QR Code to Connect">📱 QR</button>
+      <button class="icon-btn" onclick="toggleBwTheme()" title="Toggle Black & White / Purple Theme">☯ B&W</button>
       <button class="icon-btn" onclick="toggleTts()" id="ttsBtn" title="Toggle voice output" style="opacity: 0.35;">🔊</button>
       <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle sound">🎵</button>
       <button class="icon-btn users-btn" onclick="document.getElementById('rightSidebar').classList.toggle('open')" style="display:none;" title="Online Users">👥</button>
@@ -1351,23 +1401,23 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
   window.toggleSound=()=>{soundOn=!soundOn;$("soundBtn").style.opacity=soundOn?1:.35;};
 
   
-  window.toggleV2Theme = function(forcedState) {
+  window.toggleBwTheme = function(forcedState) {
     const body = document.body;
-    const isV2 = (forcedState !== undefined) ? forcedState : !body.classList.contains("v2-theme");
-    if (isV2) {
-      body.classList.add("v2-theme");
-      localStorage.setItem("theme_v2", "true");
-      addSys("⚡ Switched to V2 Cyberpunk Midnight Mesh Theme!");
+    const isBw = (forcedState !== undefined) ? forcedState : !body.classList.contains("bw-theme");
+    if (isBw) {
+      body.classList.add("bw-theme");
+      localStorage.setItem("theme_bw", "true");
+      if (typeof addSys === "function") addSys("☯ Switched to Complete Black & White GhostESP Theme!");
     } else {
-      body.classList.remove("v2-theme");
-      localStorage.setItem("theme_v2", "false");
-      addSys("✨ Switched to Classic Theme.");
+      body.classList.remove("bw-theme");
+      localStorage.setItem("theme_bw", "false");
+      if (typeof addSys === "function") addSys("✨ Switched to Classic Cyberpunk Theme.");
     }
   };
 
   // Auto-apply on boot if saved
-  if (localStorage.getItem("theme_v2") === "true") {
-    document.body.classList.add("v2-theme");
+  if (localStorage.getItem("theme_bw") === "true") {
+    document.body.classList.add("bw-theme");
   }
 
   

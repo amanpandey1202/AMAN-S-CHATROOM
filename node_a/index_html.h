@@ -14,29 +14,71 @@ const char index_html[] PROGMEM = R"rawliteral(
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#000000;--bg2:#070707;--bg3:#0f0f0f;
-  --border:rgba(255,255,255,0.08);--border-glow:rgba(255,255,255,0.12);
-  --accent:#ffffff;--accent2:#8c8c8c;--text:#f1f5f9;
-  --muted:#6b7280;--dm:#eab308;--red:#ef4444;--green:#22c55e;
-  --me-bg:rgba(255,255,255,0.06);--other-bg:rgba(255,255,255,0.03);
-  --sys:rgba(15,15,15,0.85);--radius:12px;
+  --bg:#09090b;--bg2:rgba(15,18,28,0.92);--bg3:rgba(22,26,40,0.9);
+  --border:rgba(99,102,241,0.28);--border-glow:rgba(99,102,241,0.55);
+  --accent:#6366f1;--accent2:#a5b4fc;--text:#f1f5f9;
+  --muted:#64748b;--dm:#f59e0b;--red:#ef4444;--green:#22c55e;
+  --me-bg:rgba(99,102,241,0.15);--other-bg:rgba(255,255,255,0.05);
+  --sys:rgba(15,23,42,0.8);--radius:14px;
   --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  --neon-glow:0 0 10px rgba(255,255,255,0.05);
+  --neon-glow:0 0 14px rgba(99,102,241,0.4);
   /* Chess board classic colors */
-  --chess-light:#2c2c2c;--chess-dark:#141414;
+  --chess-light:#f0d9b5;--chess-dark:#b58863;
   --chess-select:#f6f669;--chess-legal:#cdd16f;
   --chess-check:#e74c3c;
 }
 
 /* Reset */
 *{box-sizing:border-box;margin:0;padding:0;}
-body{
-  background-color: var(--bg);
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.05), transparent 45%),
-    radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 100% 100%, 24px 24px;
-  color:var(--text);font-family:var(--font);height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── COMPLETE BLACK & WHITE GHOSTESP THEME OVERRIDES ── */
+body.bw-theme {
+  --bg:#000000;
+  --bg2:rgba(10,10,10,0.95);
+  --bg3:rgba(18,18,18,0.95);
+  --border:rgba(255,255,255,0.12);
+  --border-glow:rgba(255,255,255,0.25);
+  --accent:#ffffff;
+  --accent2:#a3a3a3;
+  --text:#ffffff;
+  --muted:#737373;
+  --me-bg:rgba(255,255,255,0.08);
+  --other-bg:rgba(255,255,255,0.03);
+  --sys:rgba(15,15,15,0.9);
+}
+
+body.bw-theme #leftSidebar,
+body.bw-theme #rightSidebar,
+body.bw-theme #topbar,
+body.bw-theme #inputBar,
+body.bw-theme .login-panel,
+body.bw-theme .stat-card,
+body.bw-theme .user-item,
+body.bw-theme .msg.other,
+body.bw-theme #msgInput,
+body.bw-theme .qr-modal-card {
+  background: rgba(10, 10, 10, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+body.bw-theme .msg.me {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+body.bw-theme .user-avatar,
+body.bw-theme #sendBtn {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700;
+}
+
+body.bw-theme .room-btn.active {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
 }
 
 /* ── LOGIN ─────────────────────────────── */
@@ -993,6 +1035,7 @@ body{
       <span id="roomLabel">#comms</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="qrBtn" onclick="openQrModal()" title="Scan QR Code to Connect">📱 QR</button>
+      <button class="icon-btn" onclick="toggleBwTheme()" title="Toggle Black & White / Purple Theme">☯ B&W</button>
       <button class="icon-btn" onclick="toggleTts()" id="ttsBtn" title="Toggle voice output" style="opacity: 0.35;">🔊</button>
       <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle sound">🎵</button>
       <button class="icon-btn users-btn" onclick="document.getElementById('rightSidebar').classList.toggle('open')" style="display:none;" title="Online Users">👥</button>
@@ -1192,6 +1235,25 @@ body{
 
   /* -- Theme Switch -- */
   window.toggleTheme=()=>{};
+  
+  window.toggleBwTheme = function(forcedState) {
+    const body = document.body;
+    const isBw = (forcedState !== undefined) ? forcedState : !body.classList.contains("bw-theme");
+    if (isBw) {
+      body.classList.add("bw-theme");
+      localStorage.setItem("theme_bw", "true");
+      if (typeof addSys === "function") addSys("☯ Switched to Complete Black & White GhostESP Theme!");
+    } else {
+      body.classList.remove("bw-theme");
+      localStorage.setItem("theme_bw", "false");
+      if (typeof addSys === "function") addSys("✨ Switched to Classic Cyberpunk Theme.");
+    }
+  };
+
+  // Auto-apply on boot if saved
+  if (localStorage.getItem("theme_bw") === "true") {
+    document.body.classList.add("bw-theme");
+  }
 
   /* -- Sound Synthesizer -- */
   /* -- Sound Synthesizer -- */
