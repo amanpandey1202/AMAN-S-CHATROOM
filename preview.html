@@ -30,7 +30,20 @@
 
 /* Reset */
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+html, body {
+  height: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #000000 !important;
+  color: var(--text);
+  font-family: var(--font);
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
 
 /* ── COMPLETE BLACK & WHITE GHOSTESP THEME OVERRIDES ── */
 body.bw-theme {

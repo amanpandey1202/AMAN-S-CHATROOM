@@ -1566,7 +1566,7 @@ body:not(.purple-theme) #inputBar {
       <span id="roomLabel">#comms</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="qrBtn" onclick="openQrModal()" title="Scan QR Code to Connect">📱 QR</button>
-      <button class="icon-btn" onclick="toggleThemeMode()" title="Toggle Cyberpunk Purple / GhostESP Cyan Theme">🎨 Theme</button>
+      <button class="icon-btn" onclick="toggleThemeMode()" title="Toggle Cyberpunk Purple / GhostESP Cyan Theme">🎨</button>
       <button class="icon-btn" onclick="toggleTts()" id="ttsBtn" title="Toggle voice output" style="opacity: 0.35;">🔊</button>
       <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle sound">🎵</button>
       <button class="icon-btn users-btn" onclick="document.getElementById('rightSidebar').classList.toggle('open')" style="display:none;" title="Online Users">👥</button>
@@ -1690,8 +1690,6 @@ body:not(.purple-theme) #inputBar {
     <div id="adminPanel">
       <h3>Ban Manager</h3>
       <div id="banList"><span id="banListEmpty">No active bans.</span></div>
-      <h3 style="margin-top:16px;color:var(--dm);">Vault Invite</h3>
-      
     </div>
   </div>
 </div>
@@ -1709,9 +1707,7 @@ body:not(.purple-theme) #inputBar {
   </div>
 </div>
 
-<!-- Vault Invite Toast -->
-<div id="vaultInviteToast">
-  <div class="vit-title">Vault Invitation</div>
+
   <div class="vit-sub" id="vitSub">Admin invited you to the vault.</div>
   <button class="vit-btn accept" id="vitAccept">Accept</button>
   <button class="vit-btn decline" onclick="dismissVaultInvite()">Decline</button>
@@ -2087,7 +2083,7 @@ body:not(.purple-theme) #inputBar {
     $('vaultInviteToast').style.display='block';
     setTimeout(dismissVaultInvite,18000);
   }
-  window.dismissVaultInvite=()=>{ $('vaultInviteToast').style.display='none'; };
+  
 
   // -- Vault E2EE (PBKDF2 + AES-GCM from room key) --
   async function deriveVaultKey(roomKey){
