@@ -27,18 +27,6 @@
   --chess-select:#f6f669;--chess-legal:#cdd16f;
   --chess-check:#e74c3c;
 }
-[data-theme=light]{
-  --bg:#f8fafc;--bg2:rgba(255,255,255,0.85);--bg3:rgba(241,245,249,0.8);
-  --border:rgba(124,58,237,0.2);--border-glow:rgba(124,58,237,0.4);
-  --accent:#6d28d9;--accent2:#8b5cf6;--text:#0f172a;
-  --muted:#64748b;--dm:#d97706;--red:#dc2626;
-  --me-bg:rgba(109,40,217,0.1);--other-bg:rgba(0,0,0,0.05);
-  --sys:rgba(226,232,240,0.9);
-  --neon-glow:0 0 10px rgba(109,40,217,0.2);
-}
-/* =====================================================
-   AMAN'S CHATROOM — FamilyLink-style Dark Dashboard
-   ===================================================== */
 
 /* Reset */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -585,11 +573,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dv
 }
 #topbar .spacer{flex:1;}
 .icon-btn{
-  width:34px;height:34px;border-radius:9px;
+  min-width:34px;width:auto;padding:0 10px;height:34px;border-radius:9px;
   background:rgba(255,255,255,0.05);
   border:1px solid rgba(255,255,255,0.08);
   color:#94a3b8;
-  font-size:1rem;display:flex;align-items:center;justify-content:center;
+  font-size:0.86rem;display:inline-flex;align-items:center;justify-content:center;gap:6px;
   cursor:pointer;transition:background .15s,color .15s;
 }
 .icon-btn:hover{background:rgba(124,58,237,0.2);color:#f1f5f9;border-color:rgba(124,58,237,0.4);}
@@ -1155,10 +1143,8 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
       <span class="spacer"></span>
       <a class="flash-topbar-btn" href="flasher.html" target="_blank" title="Open ESP32 WebSerial Flasher to upload firmware">⚡ Flash ESP32</a>
       <button class="icon-btn" id="qrBtn" onclick="openQrModal()" title="Scan QR Code to Connect">📱 QR</button>
-      <button class="icon-btn" id="themeToggleBtn" onclick="toggleV2Theme()" title="Toggle V1/V2 Theme">⚡ V2</button>
-      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">&#x25D0;</button>
-      <button class="icon-btn" onclick="toggleTts()" id="ttsBtn" title="Toggle voice output" style="opacity: 0.35;">&#x1F50A;</button>
-      <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle sound">&#x266A;</button>
+      <button class="icon-btn" onclick="toggleTts()" id="ttsBtn" title="Toggle voice output" style="opacity: 0.35;">🔊</button>
+      <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle sound">🎵</button>
       <button class="icon-btn users-btn" onclick="document.getElementById('rightSidebar').classList.toggle('open')" style="display:none;" title="Online Users">👥</button>
     </div>
 
