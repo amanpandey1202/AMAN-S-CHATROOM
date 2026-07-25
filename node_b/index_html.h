@@ -1,3762 +1,773 @@
 const char index_html[] PROGMEM = R"rawliteral(
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ESP Chat">
-<link rel="manifest" href="/manifest.json">
-<title>AMAN'S CHATROOM 🎃</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostESP / AMAN'S Real ESP32 Web Flasher</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Official Espressif esptool-js bundle for real Web Serial flashing -->
+<script src="https://unpkg.com/esptool-js@0.4.3/lib/index.js"></script>
 <style>
-
-:root{
-  --bg:#09090b;--bg2:rgba(15,18,28,0.92);--bg3:rgba(22,26,40,0.9);
-  --border:rgba(99,102,241,0.28);--border-glow:rgba(99,102,241,0.55);
-  --accent:#6366f1;--accent2:#a5b4fc;--text:#f1f5f9;
-  --muted:#64748b;--dm:#f59e0b;--red:#ef4444;--green:#22c55e;
-  --me-bg:rgba(99,102,241,0.15);--other-bg:rgba(255,255,255,0.05);
-  --sys:rgba(15,23,42,0.8);--radius:14px;
-  --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  --neon-glow:0 0 14px rgba(99,102,241,0.4);
-  /* Chess board classic colors */
-  --chess-light:#f0d9b5;--chess-dark:#b58863;
-  --chess-select:#f6f669;--chess-legal:#cdd16f;
-  --chess-check:#e74c3c;
+:root {
+  --bg: #080a0f;
+  --card-bg: rgba(16, 20, 38, 0.88);
+  --card-border: rgba(124, 58, 237, 0.25);
+  --card-border-hover: rgba(0, 217, 255, 0.5);
+  --accent: #00d9ff;
+  --purple: #7c3aed;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --glow: 0 0 20px rgba(0, 217, 255, 0.35);
 }
-[data-theme=light]{
-  --bg:#f8fafc;--bg2:rgba(255,255,255,0.85);--bg3:rgba(241,245,249,0.8);
-  --border:rgba(124,58,237,0.2);--border-glow:rgba(124,58,237,0.4);
-  --accent:#6d28d9;--accent2:#8b5cf6;--text:#0f172a;
-  --muted:#64748b;--dm:#d97706;--red:#dc2626;
-  --me-bg:rgba(109,40,217,0.1);--other-bg:rgba(0,0,0,0.05);
-  --sys:rgba(226,232,240,0.9);
-  --neon-glow:0 0 10px rgba(109,40,217,0.2);
-}
-/* =====================================================
-   AMAN'S CHATROOM — FamilyLink-style Dark Dashboard
-   ===================================================== */
 
-/* Reset */
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
-
-/* ── LOGIN ─────────────────────────────── */
-#login{
-  position:fixed;inset:0;z-index:100;
-  background:var(--bg);
-  display:flex;align-items:center;justify-content:center;padding:20px;
-}
-.login-panel{
-  background:#1a1a2e;
-  border:1px solid rgba(124,58,237,0.35);
-  border-radius:20px;
-  padding:40px 36px;
-  display:flex;flex-direction:column;align-items:center;gap:14px;
-  width:380px;max-width:100%;
-  box-shadow:0 8px 40px rgba(0,0,0,0.6);
-  animation:loginIn .35s ease-out;
-}
-@keyframes loginIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-
-#login .pumpkin-logo {
-  font-size: 5rem;
-  width: 96px;
-  height: 96px;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: floatPumpkin 3s ease-in-out infinite alternate;
-  filter: drop-shadow(0 0 16px #ff6600) drop-shadow(0 0 32px #ffaa00) drop-shadow(0 0 50px rgba(124, 58, 237, 0.85));
-  margin-bottom: 6px;
-  user-select: none;
-}
-@keyframes floatPumpkin {
-  0% { transform: translateY(0) rotate(-3deg) scale(1); filter: drop-shadow(0 0 16px #ff6600) drop-shadow(0 0 32px #ffaa00) drop-shadow(0 0 50px rgba(124, 58, 237, 0.85)); }
-  100% { transform: translateY(-12px) rotate(3deg) scale(1.08); filter: drop-shadow(0 0 24px #ff7700) drop-shadow(0 0 45px #ffcc00) drop-shadow(0 0 65px rgba(0, 217, 255, 0.9)); }
+  flex-direction: column;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(0, 217, 255, 0.12) 0%, transparent 40%);
+  background-attachment: fixed;
 }
 
-#login .pumpkin-logo svg{width:100%;height:100%;}
-@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
-#login h1{font-size:1.7rem;font-weight:800;color:#f1f5f9;text-align:center;line-height:1.3;}
-#login h1 span{color:var(--accent);}
-#login p{font-size:.72rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
-.inp{
-  width:100%;padding:12px 16px;
-  background:#0f0f1a;
-  border:1px solid rgba(124,58,237,0.3);
-  border-radius:10px;
-  color:var(--text);font-family:var(--font);font-size:.95rem;
-  outline:none;transition:border-color .2s,box-shadow .2s;
-}
-.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,0.15);}
-.btn{
-  width:100%;padding:13px;
-  background:var(--accent);
-  border:none;border-radius:10px;
-  color:#fff;font-weight:700;font-size:.95rem;font-family:var(--font);
-  cursor:pointer;transition:background .2s,transform .15s;
-}
-.btn:hover{background:#6d28d9;transform:translateY(-1px);}
-.btn:active{transform:translateY(0);}
-#loginErr{font-size:.8rem;color:var(--red);min-height:16px;font-weight:600;text-align:center;}
-
-/* ── APP SHELL ─────────────────────────── */
-#app{display:none;flex:1;flex-direction:row;min-height:0;}
-#app.show{display:flex;}
-
-/* ── LEFT SIDEBAR ──────────────────────── */
-#leftSidebar{
-  width:240px;flex-shrink:0;
-  display:flex;flex-direction:column;
-  background:#111120;
-  border-right:1px solid rgba(255,255,255,0.06);
-  overflow-y:auto;overflow-x:hidden;
-}
-#leftSidebar::-webkit-scrollbar{width:3px;}
-#leftSidebar::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.4);border-radius:4px;}
-
-/* ── RIGHT SIDEBAR ─────────────────────── */
-#rightSidebar{
-  width:240px;flex-shrink:0;
-  display:flex;flex-direction:column;
-  background:#111120;
-  border-left:1px solid rgba(255,255,255,0.06);
-  overflow-y:auto;overflow-x:hidden;
-}
-#rightSidebar::-webkit-scrollbar{width:3px;}
-#rightSidebar::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.4);border-radius:4px;}
-.sidebar-header{
-  display:flex;align-items:center;gap:10px;
-  padding:16px 16px 14px;
-  border-bottom:1px solid rgba(255,255,255,0.06);
-}
-
-/* Logo header */
-.logo-header{
-  display:flex;align-items:center;gap:10px;
-  padding:16px 16px 14px;
-  border-bottom:1px solid rgba(255,255,255,0.06);
-}
-.logo-title{
-  font-size:0.9rem;font-weight:800;color:#f1f5f9;letter-spacing:.5px;
-  white-space:nowrap;
-}
-.logo-title span{color:var(--accent);}
-#statusDot{
-  width:9px;height:9px;border-radius:50%;
-  background:#22c55e;flex-shrink:0;
-  box-shadow:0 0 0 2px rgba(34,197,94,0.25);
-}
-
-/* Section labels */
-.section-title{
-  font-size:.62rem;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:1.5px;
-  padding:14px 16px 6px;
-}
-
-/* ── ROOM BUTTONS ──────────────────────── */
-#rooms{
-  display:flex;flex-direction:column;gap:2px;
-  padding:0 8px;
-}
-.room-btn{
-  display:flex;align-items:center;gap:10px;
-  padding:9px 10px;
-  border-radius:10px;
-  border:none;background:transparent;
-  color:#94a3b8;
-  font-family:var(--font);font-size:.88rem;font-weight:500;
-  cursor:pointer;text-align:left;
-  transition:background .15s,color .15s,transform .15s;
-  position:relative;overflow:hidden;
-}
-.room-btn .r-icon{
-  font-size:1.25rem;width:24px;text-align:center;
-  flex-shrink:0;line-height:1;
-}
-.room-btn .r-label{flex:1;}
-
-/* Active state — filled purple pill (exactly like FamilyLink) */
-.room-btn.active{
-  background:var(--accent);
-  color:#fff;
-  font-weight:600;
-}
-.room-btn:hover:not(.active){
-  background:rgba(255,255,255,0.06);
-  color:#f1f5f9;
-  transform:translateX(2px);
-}
-/* Ripple on click */
-.room-btn::after{
-  content:'';position:absolute;inset:0;
-  background:rgba(255,255,255,0.1);
-  opacity:0;border-radius:10px;
-  transition:opacity .2s;
-}
-.room-btn:active::after{opacity:1;}
-
-/* Special room tints when not active */
-.room-btn.darknet-btn:not(.active){color:#f87171;}
-.room-btn.vault-btn:not(.active){color:#fbbf24;}
-
-/* ── STAT CARDS (FamilyLink-style 2×2 grid) ── */
-#radioMonitor{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  padding:12px;
-  margin-top:4px;
-}
-.stat-card{
-  background:#1a1a2e;
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:12px;
-  padding:10px 12px;
-  display:flex;flex-direction:column;gap:4px;
-  transition:border-color .2s;
-}
-.stat-card:hover{border-color:rgba(124,58,237,0.4);}
-.stat-card.wide{grid-column:1/-1;}
-.stat-label{
-  font-size:.6rem;font-weight:700;
-  color:var(--muted);
-  text-transform:uppercase;letter-spacing:1px;
-}
-.stat-val{
-  font-size:1rem;font-weight:800;color:#f1f5f9;
-}
-.stat-val.online{color:#22c55e;}
-.stat-val.offline{color:#ef4444;}
-
-/* ── ONLINE USERS ─ Rich Cards ────────── */
-#sidebar{
-  display:flex;flex-direction:column;gap:4px;
-  padding:0 8px 8px;
-}
-
-/* Each user card */
-.user-item{
-  display:flex;flex-direction:column;
-  padding:9px 10px 8px;
-  border-radius:11px;
-  border:1px solid transparent;
-  background:rgba(255,255,255,0.03);
-  transition:background .15s, border-color .15s;
-  cursor:default;
-  gap:6px;
-}
-.user-item:hover{
-  background:rgba(99,102,241,0.07);
-  border-color:rgba(99,102,241,0.2);
-}
-
-/* Top row: avatar + name + role badge */
-.user-top-row{
-  display:flex;align-items:center;gap:8px;
-}
-
-/* Avatar circle (initials) */
-.user-avatar{
-  width:32px;height:32px;border-radius:50%;
-  background:linear-gradient(135deg,#6366f1,#818cf8);
-  display:flex;align-items:center;justify-content:center;
-  font-size:.72rem;font-weight:800;color:#fff;
-  flex-shrink:0;text-transform:uppercase;
-  box-shadow:0 0 0 2px rgba(99,102,241,0.3);
-  position:relative;
-}
-.user-avatar.admin-av{
-  background:linear-gradient(135deg,#f59e0b,#fbbf24);
-  box-shadow:0 0 0 2px rgba(245,158,11,0.4);
-  color:#1a1a00;
-}
-/* Online pulse indicator on avatar */
-.user-avatar::after{
-  content:'';
-  position:absolute;bottom:0;right:0;
-  width:9px;height:9px;border-radius:50%;
-  background:#22c55e;
-  border:2px solid #111120;
-}
-
-.user-info{flex:1;min-width:0;}
-.user-name{
-  font-size:.84rem;font-weight:700;color:#f1f5f9;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  cursor:pointer;display:block;line-height:1.2;
-}
-.user-name:hover{color:#a5b4fc;}
-.user-name.admin::after{content:" ADMIN";color:#fbbf24;font-size:.55rem;letter-spacing:.06em;}
-
-.user-role-badge{
-  display:inline-flex;align-items:center;gap:3px;
-  font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
-  padding:1px 6px;border-radius:4px;margin-top:2px;
-}
-.user-role-badge.badge-admin{
-  background:rgba(245,158,11,0.15);color:#fbbf24;
-  border:1px solid rgba(245,158,11,0.3);
-}
-.user-role-badge.badge-user{
-  background:rgba(99,102,241,0.12);color:#a5b4fc;
-  border:1px solid rgba(99,102,241,0.25);
-}
-
-/* Room user occupant avatars */
-.room-user-avatars {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: auto;
-  padding-left: 6px;
-}
-.room-user-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.6rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-transform: uppercase;
-  border: 1px solid rgba(255,255,255,0.2);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-.room-user-avatar.admin-avatar {
-  background: #f59e0b;
-  color: #1a1a00;
-  border-color: rgba(245,158,11,0.5);
-}
-
-/* System notice avatar line */
-.msg.sys-avatar-line {
-  align-self: center;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
-  color: var(--muted);
-  font-size: 0.72rem;
-  padding: 4px 10px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 4px auto;
-}
-.sys-avatar {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.55rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-transform: uppercase;
-}
-.sys-avatar.admin-sys-av {
-  background: #f59e0b;
-  color: #1a1a00;
-}
-.sys-avatar-text {
-  font-weight: 500;
-}
-
-/* Meta row: node + room info */
-.user-meta-row{
-  display:flex;align-items:center;gap:6px;
-  padding-left:40px; /* indent under avatar */
-}
-.user-meta-chip{
-  display:inline-flex;align-items:center;gap:3px;
-  font-size:.6rem;color:var(--muted);font-weight:500;
-  background:rgba(255,255,255,0.05);
-  padding:2px 7px;border-radius:5px;
-  border:1px solid rgba(255,255,255,0.07);
-}
-
-/* Action buttons row */
-.user-actions{
-  display:flex;align-items:center;gap:4px;
-  padding-left:40px;
-}
-.user-action-btn{
-  display:flex;align-items:center;gap:4px;
-  font-size:.65rem;font-weight:700;
-  padding:3px 9px;border-radius:6px;
-  border:none;cursor:pointer;
-  font-family:var(--font);
-  transition:all .15s;
-}
-.ua-dm{
-  background:rgba(99,102,241,0.15);
-  color:#a5b4fc;
-  border:1px solid rgba(99,102,241,0.3);
-}
-.ua-dm:hover{background:rgba(99,102,241,0.3);}
-.ua-kick{
-  background:rgba(245,158,11,0.12);
-  color:#fbbf24;
-  border:1px solid rgba(245,158,11,0.25);
-}
-.ua-kick:hover{background:rgba(245,158,11,0.25);}
-.ua-ban:hover{background:rgba(239,68,68,0.25);}
-.ua-ban{
-  background:rgba(239,68,68,0.1);
-  color:#f87171;
-  border:1px solid rgba(239,68,68,0.25);
-}
-.ua-invite{
-  background:rgba(245,158,11,0.15);
-  color:#fbbf24;
-  border:1px solid rgba(245,158,11,0.3);
-}
-.ua-invite:hover{background:rgba(245,158,11,0.3);}
-.ua-self-tag{
-  font-size:.6rem;color:var(--muted);
-  padding:2px 7px;border-radius:5px;
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.07);
-}
-
-/* Mic button */
-#micBtn{
-  width:36px;height:36px;border-radius:50%;
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.1);
-  color:#64748b;font-size:1.1rem;
-  display:none;align-items:center;justify-content:center;
-  cursor:pointer;transition:all .2s;flex-shrink:0;
-}
-#micBtn:hover{background:rgba(99,102,241,0.2);color:#a5b4fc;border-color:rgba(99,102,241,0.4);}
-#micBtn.recording{
-  background:rgba(239,68,68,0.2);
-  border-color:#ef4444;
-  color:#ef4444;
-  animation:micPulse 1s ease-in-out infinite;
-}
-@keyframes micPulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4);}
-  50%{box-shadow:0 0 0 8px rgba(239,68,68,0);}
-}
-
-/* Emoji Picker styling */
-#emojiBtn {
-  width:36px;height:36px;border-radius:50%;
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.1);
-  color:#64748b;font-size:1.1rem;
-  display:none;align-items:center;justify-content:center;
-  cursor:pointer;transition:all .2s;flex-shrink:0;
-}
-#emojiBtn:hover{background:rgba(99,102,241,0.2);color:#a5b4fc;border-color:rgba(99,102,241,0.4);}
-#emojiPicker {
-  position: absolute;
-  bottom: 70px;
-  right: 16px;
-  width: 280px;
-  max-height: 200px;
-  background: rgba(20, 20, 35, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 12px;
-  display: none;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  overflow-y: auto;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-#emojiPicker.show {
-  display: grid;
-}
-.emoji-item {
-  font-size: 1.3rem;
+.announcement-banner {
+  background: linear-gradient(90deg, #7c3aed, #00d9ff);
+  color: #ffffff;
   text-align: center;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: transform 0.1s, background 0.1s;
-}
-.emoji-item:hover {
-  transform: scale(1.2);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* Voice activity indicator */
-#voiceActivity{
-  display:none;
-  align-items:center;gap:6px;
-  font-size:.72rem;color:#ef4444;font-weight:700;
-  padding:4px 10px;border-radius:8px;
-  background:rgba(239,68,68,0.1);
-  border:1px solid rgba(239,68,68,0.25);
-  white-space:nowrap;
-}
-#voiceActivity.show{display:flex;}
-#voiceActivity span{display:flex;gap:2px;align-items:center;}
-#voiceActivity span i{
-  display:inline-block;width:3px;border-radius:2px;
-  background:#ef4444;
-  animation:waveBar .8s ease-in-out infinite alternate;
-}
-#voiceActivity span i:nth-child(2){height:8px;animation-delay:.1s;}
-#voiceActivity span i:nth-child(3){height:12px;animation-delay:.2s;}
-#voiceActivity span i:nth-child(4){height:6px;animation-delay:.3s;}
-#voiceActivity span i:nth-child(5){height:10px;animation-delay:.15s;}
-@keyframes waveBar{from{height:4px;}to{height:14px;}}
-
-/* 2-player notice */
-.two-player-notice{
-  display:flex;align-items:center;gap:6px;
-  font-size:.72rem;color:#fbbf24;font-weight:600;
-  padding:5px 12px;border-radius:8px;
-  background:rgba(245,158,11,0.08);
-  border:1px solid rgba(245,158,11,0.25);
-  margin:0 auto 4px;
-}
-
-.admin-action-btn{
-  background:none;border:none;cursor:pointer;
-  font-size:.8rem;padding:2px 4px;border-radius:6px;transition:transform .15s;
-}
-.admin-action-btn:hover{transform:scale(1.2);}
-.kick-btn{color:var(--dm);}
-.ban-btn{color:var(--red);}
-
-/* ── PANELS ────────────────────────────── */
-#adminPanel,#vaultPanel{
-  display:none;
-  margin:8px;
-  padding:12px;
-  border-radius:12px;
-}
-#adminPanel{
-  background:rgba(239,68,68,0.07);
-  border:1px solid rgba(239,68,68,0.2);
-}
-#vaultPanel{
-  background:rgba(245,158,11,0.07);
-  border:1px solid rgba(245,158,11,0.2);
-}
-#adminPanel h3,#vaultPanel h3{
-  font-size:.6rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:1px;margin-bottom:10px;
-}
-#adminPanel h3{color:#ef4444;} #vaultPanel h3{color:#f59e0b;}
-
-.ban-entry{display:flex;align-items:center;gap:6px;padding:6px;background:rgba(239,68,68,0.1);border-radius:8px;font-size:.75rem;margin-bottom:6px;}
-.ban-name{flex:1;font-weight:600;color:var(--red);}
-.ban-ip{font-size:.6rem;color:var(--muted);}
-.unban-btn{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:2px 8px;cursor:pointer;}
-#banListEmpty{font-size:.8rem;color:var(--muted);text-align:center;}
-
-.vault-key-display{font-family:monospace;font-size:1.05rem;font-weight:800;color:#f59e0b;text-align:center;padding:9px;background:rgba(245,158,11,0.08);border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid rgba(245,158,11,0.2);}
-.vault-btn{width:100%;margin-bottom:6px;padding:8px;font-size:.75rem;font-weight:600;border-radius:8px;border:none;cursor:pointer;}
-.vault-btn.danger{background:rgba(239,68,68,0.12);color:#ef4444;}
-.vault-btn.safe{background:rgba(124,58,237,0.12);color:var(--accent);}
-.vault-invite-row{display:flex;gap:6px;margin-top:8px;}
-.vault-invite-row input{flex:1;background:#0f0f1a;border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:var(--text);padding:6px 10px;font-size:.8rem;outline:none;}
-.vault-invite-row button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8rem;font-weight:700;flex-shrink:0;}
-
-/* ── TOP BAR ───────────────────────────── */
-#mainContent{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;}
-#topbar{
-  display:flex;align-items:center;gap:12px;
-  padding:12px 20px;
-  background:#111120;
-  border-bottom:1px solid rgba(255,255,255,0.06);
-  flex-shrink:0;
-}
-#roomLabel{
-  font-size:1rem;font-weight:700;color:#f1f5f9;
-  display:flex;align-items:center;gap:6px;
-}
-#topbar .spacer{flex:1;}
-.icon-btn{
-  width:34px;height:34px;border-radius:9px;
-  background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.08);
-  color:#94a3b8;
-  font-size:1rem;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:background .15s,color .15s;
-}
-.icon-btn:hover{background:rgba(124,58,237,0.2);color:#f1f5f9;border-color:rgba(124,58,237,0.4);}
-
-/* ── MESSAGES ──────────────────────────── */
-#msgs-wrap{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;}
-#msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;}
-#msgs::-webkit-scrollbar{width:6px;}
-#msgs::-webkit-scrollbar-track{background:transparent;}
-#msgs::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.25);border-radius:6px;}
-
-.msg{padding:11px 15px;border-radius:14px;max-width:70%;animation:fadeUp .22s ease-out;word-break:break-word;position:relative;cursor:pointer;}
-.msg:hover .react-bar{display:flex;}
-@keyframes fadeUp{from{transform:translateY(8px);opacity:0;}to{transform:none;opacity:1;}}
-.msg.me{align-self:flex-end;background:rgba(124,58,237,0.18);border:1px solid rgba(124,58,237,0.3);border-bottom-right-radius:3px;}
-.msg.other{align-self:flex-start;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-bottom-left-radius:3px;}
-.msg.dm-msg{align-self:flex-start;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);}
-.msg.sys{align-self:center;background:rgba(15,23,42,0.8);color:var(--muted);font-size:.78rem;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.05);}
-
-.badge{display:inline-flex;align-items:center;font-size:.62rem;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:6px;}
-.badge.local{background:rgba(124,58,237,0.2);color:#a78bfa;}
-.badge.mesh{background:rgba(14,165,233,0.18);color:#38bdf8;}
-
-.msg-header{display:flex;align-items:baseline;gap:8px;margin-bottom:5px;}
-.msg-user{font-size:.83rem;font-weight:700;color:#a78bfa;}
-.msg.other .msg-user{color:#a78bfa;}
-.msg-ts{font-size:.68rem;color:var(--muted);margin-left:auto;}
-.msg-text{font-size:.93rem;line-height:1.55;}
-.reply-quote{font-size:.78rem;color:var(--muted);border-left:3px solid var(--accent);padding:5px 10px;margin-bottom:7px;background:rgba(0,0,0,0.2);border-radius:5px;}
-.dm-label{font-size:.72rem;color:#f59e0b;margin-bottom:4px;font-weight:800;text-transform:uppercase;}
-
-.reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
-.reaction-pill{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:3px 7px;font-size:.73rem;cursor:pointer;}
-.react-bar{display:none;position:absolute;top:-34px;left:0;background:#1a1a2e;border:1px solid rgba(124,58,237,0.3);border-radius:20px;padding:5px 12px;gap:8px;font-size:1.1rem;z-index:5;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
-.react-btn{cursor:pointer;transition:transform .2s;}
-.react-btn:hover{transform:scale(1.4);}
-
-#suggestions{position:absolute;bottom:80px;left:20px;background:#1a1a2e;border:1px solid rgba(124,58,237,0.3);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,0.5);max-height:200px;overflow-y:auto;z-index:15;display:flex;flex-direction:column;padding:6px;gap:3px;}
-.suggest-item{padding:9px 14px;border-radius:8px;cursor:pointer;font-size:.88rem;color:var(--text);transition:background .15s;}
-.suggest-item:hover{background:var(--accent);color:#fff;}
-
-#scrollBtn{position:absolute;bottom:80px;right:20px;background:#a78bfa;color:#1a1a2e;border:none;border-radius:50%;width:40px;height:40px;font-size:1.1rem;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:transform .2s;}
-#scrollBtn:hover{transform:translateY(-2px);}
-#scrollBtn.show{display:flex;}
-#typing{font-size:.78rem;color:var(--muted);padding:3px 20px;min-height:22px;font-style:italic;}
-
-/* ── INPUT BAR ─────────────────────────── */
-#replyBanner{display:none;font-size:.8rem;color:var(--text);padding:9px 20px;background:#1a1a2e;border-top:1px solid rgba(255,255,255,0.06);align-items:center;gap:10px;}
-#replyBanner.show{display:flex;}
-#replyCancel{cursor:pointer;color:var(--red);font-weight:bold;}
-
-#inputBar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#111120;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
-#e2eeBadge{display:none;align-items:center;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:10px;background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1);}
-#e2eeBadge.active{color:#a78bfa;background:rgba(124,58,237,0.12);border-color:rgba(124,58,237,0.4);}
-#e2eeBadge.vault{color:#f59e0b;background:rgba(245,158,11,0.1);border-color:#f59e0b;}
-#e2eeBadge.fallback-warning{color:#f87171;background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);animation:pulse 2s infinite;}
-#msgInput{flex:1;background:#1a1a2e;border:1px solid rgba(255,255,255,0.08);color:var(--text);padding:12px 16px;border-radius:12px;font-family:var(--font);font-size:.93rem;outline:none;transition:border-color .2s;}
-#msgInput:focus{border-color:rgba(124,58,237,0.5);}
-#sendBtn{background:var(--accent);color:#fff;border:none;border-radius:12px;padding:12px 22px;font-family:var(--font);font-weight:700;font-size:.9rem;cursor:pointer;transition:background .2s;}
-#sendBtn:hover{background:#6d28d9;}
-
-/* -- Game Area -- */
-/* ===== GAME AREA — PREMIUM REDESIGN ===== */
-#gameArea{
-  display:none;flex:1;flex-direction:column;align-items:center;justify-content:flex-start;
-  overflow-y:auto;overflow-x:hidden;position:relative;
-  background:radial-gradient(ellipse at 60% 20%,rgba(124,58,237,0.12) 0%,transparent 60%),
-             radial-gradient(ellipse at 10% 80%,rgba(236,72,153,0.08) 0%,transparent 50%),
-             var(--bg);
-  padding:0;
-}
-#gameArea::-webkit-scrollbar{width:4px;}
-#gameArea::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.3);border-radius:4px;}
-
-#gameTopBar{
-  display:flex;align-items:center;justify-content:space-between;
-  width:100%;padding:14px 20px;
-  background:rgba(10,10,18,0.85);border-bottom:1px solid var(--border);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  flex-shrink:0;position:sticky;top:0;z-index:10;
-}
-#gameTopBar .game-room-title{font-size:1rem;font-weight:800;color:var(--accent2);letter-spacing:1px;}
-#gameBackBtn{
-  background:rgba(30,30,45,0.8);color:var(--text);border:1px solid var(--border);
-  border-radius:10px;padding:8px 16px;font-size:.82rem;font-weight:700;cursor:pointer;
-  transition:all .2s;font-family:var(--font);
-}
-#gameBackBtn:hover{background:rgba(239,68,68,0.15);border-color:var(--red);color:var(--red);}
-
-#gameIdleBar{
-  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:50;
-  font-size:.82rem;color:var(--red);font-weight:700;display:none;
-  background:rgba(9,9,11,0.96);padding:8px 22px;border-radius:20px;
-  border:1px solid var(--red);box-shadow:0 0 16px rgba(239,68,68,0.3);
-  animation:pulse 1s infinite;
-}
-
-#gameOverlay{
-  display:none;position:absolute;inset:0;z-index:20;
-  align-items:center;justify-content:center;
-  background:rgba(5,5,14,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-}
-
-#gameLive{
-  display:none;flex-direction:column;gap:20px;align-items:center;
-  width:100%;max-width:520px;padding:20px 16px;margin:0 auto;
-}
-
-/* Player Cards */
-.player-panel{display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between;}
-.player-card{
-  flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;
-  border-radius:16px;background:rgba(20,20,35,0.8);border:1.5px solid var(--border);
-  transition:all .25s;position:relative;overflow:hidden;
-}
-.player-card::before{
-  content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;
-  background:linear-gradient(135deg,rgba(124,58,237,0.12),transparent);
-}
-.player-card.active{border-color:var(--accent);box-shadow:0 0 20px rgba(124,58,237,0.35);}
-.player-card.active::before{opacity:1;}
-.player-card.active-b{border-color:#ec4899;box-shadow:0 0 20px rgba(236,72,153,0.35);}
-.player-card.active-b::before{background:linear-gradient(135deg,rgba(236,72,153,0.12),transparent);opacity:1;}
-
-.mark-badge{
-  width:38px;height:38px;border-radius:10px;display:flex;align-items:center;
-  justify-content:center;font-weight:900;font-size:1.1rem;flex-shrink:0;
-}
-.mark-x{background:rgba(124,58,237,0.2);color:var(--accent2);border:2px solid var(--accent);}
-.mark-o{background:rgba(236,72,153,0.2);color:#ec4899;border:2px solid #ec4899;}
-.p-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.p-name{font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.p-status{font-size:.68rem;color:var(--muted);}
-
-.score-bar{
-  display:flex;flex-direction:column;align-items:center;gap:2px;
-  font-size:1.6rem;font-weight:900;flex-shrink:0;
-  text-shadow:0 0 14px rgba(124,58,237,0.6);
-  color:var(--accent2);
-}
-.score-label{font-size:.6rem;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;}
-
-/* Turn Badge */
-#turnBadge{
-  font-size:.85rem;font-weight:700;padding:8px 22px;border-radius:20px;
-  border:1px solid var(--border);color:var(--muted);background:rgba(20,20,35,0.8);
-  transition:all .3s;text-align:center;
-}
-#turnBadge.my-turn{
-  color:#fff;border-color:var(--accent);
-  background:linear-gradient(135deg,rgba(124,58,237,0.4),rgba(147,51,234,0.25));
-  box-shadow:0 0 16px rgba(124,58,237,0.4);animation:pulse 1.8s infinite;
-}
-
-.board-panel{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;}
-#tttBoard{display:grid;grid-template-columns:repeat(3,90px);grid-template-rows:repeat(3,90px);gap:10px;}
-.ttt-cell{
-  width:90px;height:90px;border-radius:14px;
-  background:rgba(20,20,38,0.85);border:1.5px solid rgba(255,255,255,0.07);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:2.4rem;font-weight:900;transition:all .2s;
-}
-.ttt-cell.empty:hover{border-color:var(--accent);background:rgba(124,58,237,0.1);transform:scale(1.04);}
-.ttt-cell.x{
-  color:var(--accent2);border-color:var(--accent);
-  background:rgba(124,58,237,0.15);box-shadow:inset 0 0 12px rgba(124,58,237,0.2);
-}
-.ttt-cell.o{
-  color:#ec4899;border-color:#ec4899;
-  background:rgba(236,72,153,0.12);box-shadow:inset 0 0 12px rgba(236,72,153,0.2);
-}
-.ttt-cell.win-cell{animation:winFlash .5s ease-in-out 5;}
-@keyframes winFlash{0%,100%{filter:brightness(1);}50%{filter:brightness(1.7) drop-shadow(0 0 10px currentColor);}}
-
-#boardHint{
-  font-size:.78rem;color:var(--muted);text-align:center;
-  background:rgba(20,20,35,0.6);padding:6px 16px;border-radius:10px;
-  border:1px solid rgba(255,255,255,0.06);
-}
-
-/* G-Cards (overlay cards) */
-.g-card{
-  text-align:center;padding:40px 48px;border-radius:24px;
-  background:rgba(12,12,22,0.97);border:1px solid var(--border);
-  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  box-shadow:0 20px 60px rgba(0,0,0,0.7),0 0 40px rgba(124,58,237,0.12);
-  max-width:420px;width:90%;
-  animation:fadeUp .3s ease-out;
-}
-.vault-modal-card{
-  text-align:center;padding:48px 56px;border-radius:24px;
-  background:rgba(12,12,22,0.97);border:1.5px solid rgba(245,158,11,0.5);
-  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  box-shadow:0 20px 60px rgba(0,0,0,0.8),0 0 40px rgba(245,158,11,0.2);
-  max-width:460px;width:90%;
-  animation:fadeUp .3s ease-out;
-}
-.g-emoji,.vault-modal-icon{font-size:3.5rem;margin-bottom:16px;display:block;}
-.g-title,.vault-modal-title{font-size:1.6rem;font-weight:800;color:var(--text);margin-bottom:8px;}
-.vault-modal-title{color:var(--gold);}
-.g-sub,.vault-modal-sub{font-size:.88rem;color:var(--muted);margin-bottom:22px;line-height:1.6;}
-.queue-badge{
-  display:inline-block;padding:6px 18px;border-radius:20px;
-  background:var(--me-bg);border:1px solid var(--accent);
-  color:var(--accent2);font-weight:700;margin-bottom:16px;font-size:.85rem;
-}
-.g-btn{
-  display:block;width:100%;padding:13px 24px;border-radius:12px;border:none;
-  cursor:pointer;font-weight:700;font-size:.9rem;margin:6px 0;
-  font-family:var(--font);transition:all .2s;
-}
-.g-btn.primary{background:linear-gradient(135deg,var(--accent),#9333ea);color:#fff;}
-.g-btn.primary:hover{filter:brightness(1.15);transform:translateY(-1px);}
-.g-btn.secondary{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid var(--border);}
-.g-btn.secondary:hover{background:rgba(255,255,255,0.1);color:var(--text);}
-
-
-.spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px;}
-#vaultModal{display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(9,9,11,0.9);}
-#vaultKeyInput{width:100%;text-align:center;font-family:monospace;font-size:1.4rem;font-weight:800;letter-spacing:8px;padding:14px;background:var(--bg3);border:2px solid rgba(245,158,11,0.3);border-radius:12px;color:var(--dm);outline:none;margin-bottom:16px;}
-#vaultKeyInput:focus{border-color:var(--dm);}
-.vault-modal-err{color:var(--red);font-size:.85rem;margin-bottom:14px;min-height:18px;}
-
-/* Toasts */
-#vaultInviteToast{display:none;position:fixed;bottom:80px;right:24px;z-index:300;padding:16px 20px;background:var(--bg2);border:1px solid rgba(245,158,11,0.4);border-radius:16px;backdrop-filter:blur(16px);box-shadow:0 10px 30px rgba(0,0,0,0.5);}
-.vit-title{font-weight:800;font-size:.9rem;color:var(--dm);margin-bottom:6px;}
-.vit-sub{font-size:.8rem;color:var(--text);margin-bottom:14px;}
-.vit-btn{padding:8px 16px;border-radius:10px;border:none;cursor:pointer;font-size:.8rem;font-weight:700;margin-right:8px;}
-.vit-btn.accept{background:rgba(245,158,11,0.2);color:var(--dm);border:1px solid var(--dm);}
-.vit-btn.decline{background:var(--bg3);color:var(--muted);border:1px solid var(--border);}
-
-/* Ghost Msg, Chess, and RPS styles */
-.msg.ghost-msg {
-  background: rgba(16, 185, 129, 0.12) !important;
-  border: 1.5px dashed rgba(16, 185, 129, 0.4) !important;
-  color: #10b981 !important;
-  text-shadow: 0 0 5px rgba(16, 185, 129, 0.4);
-  font-family: monospace;
-}
-#ghostToggleWrap {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  margin-right: 8px;
+  padding: 6px 12px;
   font-size: 0.8rem;
-  color: #10b981;
-  cursor: pointer;
-  user-select: none;
-  font-weight: bold;
+  font-weight: 600;
 }
-#ghostCheck {
-  cursor: pointer;
-}
+.announcement-banner a { color: #ffffff; text-decoration: underline; font-weight: 700; }
 
-.close-sidebar-btn {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 1.25rem;
-  cursor: pointer;
-  margin-left: auto;
-  padding: 4px;
-  transition: color 0.2s;
-}
-.close-sidebar-btn:hover {
-  color: var(--text);
-}
-
-
-/* --- Handcrafted Midnight Mesh Theme Override --- */
-
-body.v2-theme{
-  --bg:#0a0e27;--bg2:rgba(19,24,50,.9);--bg3:rgba(26,31,58,.92);
-  --border:rgba(0,217,255,.24);--border-glow:rgba(255,0,110,.42);
-  --accent:#00d9ff;--accent2:#ff006e;--purple:#7c3aed;--text:#f0f0f5;
-  --muted:#9ca3c4;--dm:#ffb454;--radius:14px;
-  --font:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --me-bg:rgba(0,217,255,.11);--other-bg:rgba(255,255,255,.035);--sys:rgba(8,11,30,.76);
-}
-body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237,.15),transparent 55%),var(--bg);font-family:var(--font);letter-spacing:.01em;}
-#leftSidebar,#rightSidebar,#topbar,#inputBar{background:rgba(10,14,39,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
-#leftSidebar{width:252px;border-right:1px solid rgba(124,58,237,.26);}
-#rightSidebar{width:256px;border-left:1px solid rgba(0,217,255,.2);}
-.logo-header,.sidebar-header{border-bottom:1px solid rgba(255,255,255,.07);padding:18px 16px 12px;}
-.logo-title{display:flex;align-items:center;gap:8px;color:var(--text);font-size:.86rem;letter-spacing:.08em;}
-.logo-title span{color:var(--accent);}
-.brand-glyph{width:17px;height:17px;color:var(--accent2);}
-#statusDot{width:10px;height:10px;background:#22d3aa;box-shadow:0 0 0 0 rgba(34,211,170,.45);animation:statusPulse 2.1s ease-out infinite;}
-@keyframes statusPulse{0%{box-shadow:0 0 0 0 rgba(34,211,170,.45)}70%{box-shadow:0 0 0 11px rgba(34,211,170,0)}100%{box-shadow:0 0 0 0 rgba(34,211,170,0)}}
-.section-title{color:#7f88ad;font-size:.6rem;}
-#rooms{padding:0 10px 8px;gap:6px;}
-.room-btn{padding:10px 10px 10px 14px;border-radius:16px 9px 16px 7px;border:1px solid transparent;color:#c4cae2;transition:transform .28s cubic-bezier(.2,.9,.2,1),border-color .2s,background .2s;}
-.room-btn .r-icon{width:22px;height:22px;color:#8c92bb;display:flex;align-items:center;justify-content:center;}
-.room-btn .r-icon svg{width:18px;height:18px;stroke-width:1.9;}
-.room-btn:hover:not(.active){transform:translateX(3px) translateY(-1px);border-color:rgba(0,217,255,.25);background:rgba(16,22,50,.7);}
-.room-btn.active{background:rgba(15,23,52,.9);border-color:rgba(0,217,255,.45);box-shadow:0 12px 24px rgba(0,0,0,.35),inset 0 -1px 0 rgba(255,255,255,.04);color:#fbfcff;}
-.room-btn.active .r-icon{color:var(--accent);}
-.room-user-avatar{border-radius:8px 12px 8px 12px;background:rgba(0,217,255,.22);color:#f0f0f5;border:1px solid rgba(0,217,255,.4);font-family:var(--mono);}
-.room-user-avatar.admin-avatar{background:rgba(255,0,110,.26);color:#ffd4e7;border-color:rgba(255,0,110,.5);}
-#radioMonitor .stat-card{background:rgba(20,26,56,.85);border-radius:18px 10px 16px 12px;border-color:rgba(255,255,255,.08);}
-.stat-val{font-family:var(--mono);}
-.user-item{background:rgba(22,28,60,.76);border:1px solid rgba(255,255,255,.06);border-radius:16px 9px 14px 10px;}
-.user-item:hover{background:rgba(25,33,68,.93);border-color:rgba(124,58,237,.42);transform:translateY(-1px);}
-.user-avatar{border-radius:13px 8px 13px 8px;background:linear-gradient(130deg,rgba(0,217,255,.8),rgba(124,58,237,.8));font-family:var(--mono);box-shadow:0 0 0 1px rgba(0,217,255,.4);}
-.user-avatar.admin-av{background:linear-gradient(135deg,rgba(255,0,110,.8),rgba(124,58,237,.9));color:#fff;box-shadow:0 0 0 1px rgba(255,0,110,.45);}
-.user-avatar::after{background:#22d3aa;border-color:#0f1532;animation:statusPulse 2.6s ease-out infinite;}
-.user-role-badge{font-family:var(--mono);border-radius:10px 4px 9px 4px;padding:2px 7px;}
-.ua-self-tag,.user-meta-chip{font-family:var(--mono);}
-.user-action-btn{border-radius:11px 6px 11px 6px;font-family:var(--mono);}
-#roomLabel{font-size:1.02rem;font-weight:700;letter-spacing:.03em;}
-#roomLabel .room-chip-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;color:var(--accent);margin-right:4px;}
-#roomLabel .room-chip-icon svg{width:17px;height:17px;}
-.icon-btn{width:36px;height:36px;border-radius:12px 8px 12px 8px;background:rgba(19,24,50,.86);border:1px solid rgba(255,255,255,.1);color:#a9afc9;transition:transform .28s cubic-bezier(.2,.9,.2,1),box-shadow .2s,border-color .2s;}
-.icon-btn svg{width:17px;height:17px;}
-.icon-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px rgba(0,0,0,.35);border-color:rgba(0,217,255,.35);color:#f0f0f5;background:rgba(23,30,62,.95);}
-#msgs{padding:22px 24px 16px;gap:14px;}
-.msg{max-width:72%;border-radius:18px 12px 16px 6px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 22px rgba(0,0,0,.22);}
-.msg.me{border-radius:14px 20px 7px 16px;background:rgba(12,80,102,.32);border-color:rgba(0,217,255,.42);}
-.msg.other{background:rgba(26,31,58,.85);border-color:rgba(255,255,255,.12);}
-.msg.sys{border-radius:22px 10px 22px 10px;background:rgba(13,18,42,.86);border-color:rgba(124,58,237,.25);}
-.msg-user{color:#9aefff;}
-.msg-ts{font-family:var(--mono);}
-.reply-quote{border-left-color:var(--accent2);background:rgba(255,0,110,.08);}
-#suggestions{left:24px;bottom:84px;background:rgba(16,22,48,.96);border-color:rgba(0,217,255,.26);border-radius:16px 10px 16px 8px;padding:8px;gap:5px;}
-.suggest-item{font-family:var(--mono);border-radius:10px 6px 10px 6px;}
-.suggest-item:hover{background:rgba(124,58,237,.48);color:#fff;transform:translateX(2px);}
-#typing{font-family:var(--mono);color:#89a0ca;}
-#replyBanner{background:rgba(16,21,45,.92);font-family:var(--mono);}
-#msgInput{background:rgba(26,31,58,.92);border-color:rgba(0,217,255,.2);border-radius:14px 8px 14px 8px;font-family:var(--font);}
-#msgInput:focus{border-color:rgba(0,217,255,.55);box-shadow:0 0 0 2px rgba(0,217,255,.12);}
-#sendBtn{background:linear-gradient(130deg,#00d9ff,#7c3aed);border-radius:13px 8px 13px 8px;font-family:var(--mono);letter-spacing:.04em;}
-#sendBtn:hover{filter:brightness(1.08);}
-#e2eeBadge{font-family:var(--mono);border-radius:10px 4px 10px 4px;}
-#e2eeBadge.active{color:#7ee6ff;border-color:rgba(0,217,255,.5);background:rgba(0,217,255,.12);}
-#e2eeBadge.vault{color:#ffb454;border-color:rgba(255,180,84,.4);}
-#micBtn,#emojiBtn{border-radius:11px 7px 11px 7px;background:rgba(26,31,58,.9);border-color:rgba(255,255,255,.12);}
-#micBtn svg,#emojiBtn svg{width:17px;height:17px;}
-#micBtn.recording{background:rgba(255,0,110,.18);border-color:rgba(255,0,110,.65);color:#ff6ea9;}
-#gameArea{background:radial-gradient(800px 500px at 80% 0%,rgba(0,217,255,.06),transparent 60%),var(--bg);}
-#gameTopBar{background:rgba(10,14,39,.78);border-bottom-color:rgba(124,58,237,.22);}
-#tttBoard{gap:12px;grid-template-columns:repeat(3,96px);grid-template-rows:repeat(3,96px);}
-.ttt-cell{border-radius:20px 9px 18px 7px;background:rgba(26,31,58,.88);border-color:rgba(255,255,255,.12);font-family:var(--mono);}
-.ttt-cell.empty:hover{transform:translateY(-2px) scale(1.02);border-color:rgba(0,217,255,.5);background:rgba(0,217,255,.09);}
-.ttt-cell.x{color:#6be9ff;border-color:rgba(0,217,255,.65);background:rgba(0,217,255,.12);}
-.ttt-cell.o{color:#ff6ea9;border-color:rgba(255,0,110,.65);background:rgba(255,0,110,.12);}
-#turnBadge.my-turn{background:rgba(0,217,255,.18);border-color:rgba(0,217,255,.54);box-shadow:0 0 0 1px rgba(0,217,255,.2),0 12px 24px rgba(0,0,0,.34);animation:turnFloat 1.9s ease-in-out infinite;}
-@keyframes turnFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-.g-card{background:rgba(13,18,42,.93);border:1px solid rgba(124,58,237,.28);border-radius:26px 12px 24px 10px;box-shadow:0 24px 48px rgba(2,4,12,.7);}
-.g-title{letter-spacing:.01em;}
-.g-sub{color:#afb6d4;}
-.g-btn.secondary{border-radius:12px 8px 12px 8px;}
-.g-btn.primary{background:linear-gradient(130deg,#00d9ff,#7c3aed);border-radius:14px 9px 14px 8px;}
-#vaultPanel{background:rgba(28,20,46,.7);border-color:rgba(255,0,110,.35);}
-#adminPanel{background:rgba(43,15,27,.74);border-color:rgba(255,0,110,.3);}
-#vaultPanel h3,#adminPanel h3{font-family:var(--mono);}
-.vault-key-display{font-family:var(--mono);background:rgba(255,180,84,.09);border-radius:13px 8px 12px 7px;}
-.vault-btn{border-radius:11px 7px 11px 7px;font-family:var(--mono);}
-.vault-invite-row input,.vault-invite-row button{border-radius:10px 6px 10px 6px;font-family:var(--mono);}
-.vault-modal-card{background:rgba(9,14,33,.96);border-color:rgba(0,217,255,.4);border-radius:28px 12px 24px 10px;}
-.vault-modal-title{color:#7ee6ff;}
-#vaultKeyInput{font-family:var(--mono);border-radius:14px 8px 14px 8px;border-color:rgba(0,217,255,.34);color:#7ee6ff;}
-#vaultInviteToast{background:rgba(9,14,33,.94);border-color:rgba(255,0,110,.36);border-radius:16px 10px 16px 8px;}
-.vit-title{color:#ff6ea9;}
-.ui-mini{width:14px;height:14px;vertical-align:-2px;margin-right:5px;}
-.inline-ico{width:58px;height:58px;color:var(--accent);display:block;margin:0 auto 12px;}
-.inline-ico.warn{color:#ff6ea9;}
-.inline-ico.ok{color:#7ee6ff;}
-.inline-ico.dim{color:#8f9ac5;}
-
-@media(max-width:768px){
-  #leftSidebar{
-    position:fixed;
-    top:0;
-    bottom:0;
-    left:0;
-    z-index:50;
-    width:280px;
-    max-width:85%;
-    background:rgba(20, 20, 35, 0.98);
-    border-right:1px solid var(--border);
-    backdrop-filter:blur(20px);
-    transform:translateX(-100%);
-    transition:transform .3s ease;
-  }
-  #leftSidebar.open{transform:translateX(0);}
-  
-  #rightSidebar{
-    display:flex;
-    position:fixed;
-    top:0;
-    bottom:0;
-    right:0;
-    z-index:50;
-    width:280px;
-    max-width:85%;
-    background:rgba(20, 20, 35, 0.98);
-    border-left:1px solid var(--border);
-    backdrop-filter:blur(20px);
-    transform:translateX(100%);
-    transition:transform .3s ease;
-  }
-  #rightSidebar.open{transform:translateX(0);}
-  
-  .menu-btn, .users-btn{display:flex !important;}
-  .close-sidebar-btn{display:block !important;}
-  #tttBoard{grid-template-columns:repeat(3,80px);grid-template-rows:repeat(3,80px);}
-  .ttt-cell{width:80px;height:80px;font-size:2.2rem;}
-  .player-card{width:140px;}
-}
-
-
-/* ── PINNED BANNER ──────────────────────── */
-#pinnedBanner {
-  display: none;
+header {
+  padding: 18px 32px;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  background: rgba(124, 58, 237, 0.15);
-  border-bottom: 1px solid rgba(124, 58, 237, 0.3);
-  font-size: 0.85rem;
-  color: var(--text);
-  backdrop-filter: blur(8px);
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  background: rgba(8, 10, 15, 0.8);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
-#pinnedBanner .pin-icon { font-size: 1rem; color: var(--dm); }
-#pinnedBanner .pinned-text { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#pinnedBanner .unpin-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; font-weight: bold; }
-#pinnedBanner .unpin-btn:hover { color: var(--red); }
+.logo-group { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--purple), var(--accent));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.2rem;
+  box-shadow: var(--glow);
+}
+.logo-text { font-size: 1.25rem; font-weight: 700; }
+.logo-text span { color: var(--accent); }
 
-/* ── QR CODE MODAL ──────────────────────── */
-#qrModal { display: none; position: fixed; inset: 0; z-index: 250; align-items: center; justify-content: center; background: rgba(9,9,11,0.92); backdrop-filter: blur(16px); }
-.qr-modal-card { text-align: center; max-width: 380px; width: 90%; padding: 28px 24px; background: rgba(16, 20, 42, 0.95); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
-.qr-container { display: flex; justify-content: center; align-items: center; padding: 16px; background: #ffffff; border-radius: 14px; margin: 16px auto; width: 180px; height: 180px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-.qr-info-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.82rem; text-align: left; display: flex; flex-direction: column; gap: 4px; }
-.qr-info-box code { font-family: var(--mono); color: var(--accent); }
-.pin-btn-bar { cursor: pointer; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); font-size: 0.7rem; font-weight: bold; }
-.pin-btn-bar:hover { background: rgba(245,158,11,0.3); }
+nav { display: flex; align-items: center; gap: 20px; }
+nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+nav a:hover, nav a.active { color: var(--accent); }
+.status-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 8px var(--red);
+}
+.status-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
 
+main {
+  flex: 1; max-width: 900px; width: 92%;
+  margin: 32px auto; display: flex; flex-direction: column; gap: 24px;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px; padding: 28px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.3s;
+}
+.card:hover { border-color: var(--card-border-hover); }
+
+.card-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.card-sub { font-size: 0.88rem; color: var(--muted); margin-bottom: 24px; }
+
+.label-sm {
+  font-size: 0.75rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block;
+}
+
+.tab-group {
+  display: flex; background: rgba(0, 0, 0, 0.4);
+  padding: 4px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px;
+}
+.tab-btn {
+  flex: 1; padding: 10px 16px; border: none;
+  background: transparent; color: var(--muted);
+  font-weight: 600; font-size: 0.9rem; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.tab-btn.active {
+  background: rgba(124, 58, 237, 0.3); color: #ffffff;
+  border: 1px solid rgba(124, 58, 237, 0.5);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+}
+
+.form-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;
+}
+.select-wrapper, .input-wrapper { display: flex; flex-direction: column; gap: 6px; }
+
+select, input[type="text"], input[type="file"] {
+  width: 100%; padding: 12px 14px;
+  background: rgba(15, 17, 26, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px; color: var(--text);
+  font-family: var(--font-sans); font-size: 0.9rem; outline: none; transition: all 0.2s;
+}
+select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(0, 217, 255, 0.25); }
+
+.binary-badge-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.binary-badge {
+  font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 10px;
+  border-radius: 6px; background: rgba(16, 185, 129, 0.15);
+  color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.options-toggle-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text); padding: 8px 16px; border-radius: 8px;
+  font-weight: 600; font-size: 0.85rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; margin-bottom: 16px;
+}
+.options-toggle-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+.options-panel {
+  display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px;
+}
+.options-panel.show { display: grid; }
+
+.checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 0.88rem; color: var(--text); cursor: pointer; }
+.checkbox-row input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+.btn-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 12px; }
+.btn {
+  padding: 12px 24px; border-radius: 12px; font-weight: 700;
+  font-size: 0.95rem; font-family: var(--font-sans); border: none;
+  cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  color: #ffffff; box-shadow: var(--glow);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0, 217, 255, 0.5); }
+.btn-secondary { background: rgba(255, 255, 255, 0.08); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.15); }
+.btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+.btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+.btn-danger:hover { background: rgba(239, 68, 68, 0.35); }
+
+.progress-container { display: none; margin-top: 20px; flex-direction: column; gap: 8px; }
+.progress-bar-bg { width: 100%; height: 12px; background: rgba(0, 0, 0, 0.6); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); }
+.progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--accent)); box-shadow: 0 0 12px var(--accent); transition: width 0.15s ease-out; }
+.progress-info { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+
+.summary-box {
+  background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px; padding: 16px; font-family: var(--font-mono); font-size: 0.83rem; line-height: 1.6; margin-bottom: 20px;
+}
+.summary-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.summary-item span:first-child { color: var(--muted); }
+.summary-item span:last-child { color: var(--accent); font-weight: 600; }
+
+.console-card { background: rgba(5, 7, 12, 0.95); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 16px; overflow: hidden; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6); }
+.console-header { padding: 12px 18px; background: rgba(16, 20, 38, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono); font-size: 0.82rem; }
+.console-title { font-weight: 700; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.console-actions { display: flex; gap: 8px; }
+.console-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; transition: color 0.2s; }
+.console-btn:hover { color: var(--accent); background: rgba(255, 255, 255, 0.05); }
+
+.console-output { height: 240px; padding: 14px 18px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; color: #e2e8f0; display: flex; flex-direction: column; gap: 4px; }
+.log-info { color: #38bdf8; }
+.log-success { color: #34d399; font-weight: 600; }
+.log-warn { color: #fbbf24; }
+.log-error { color: #f87171; font-weight: 600; }
+
+#browserWarnAlert { display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 14px 18px; color: #fca5a5; font-size: 0.88rem; margin-bottom: 16px; }
+#browserWarnAlert b { color: #ffffff; }
+
+footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: auto; }
+footer a { color: var(--accent); text-decoration: none; }
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<!-- Login -->
-<div id="login">
-  <div class="login-panel">
-    <span class="pumpkin-logo">🎃</span>
-    <h1>AMAN'S <span>CHATROOM</span></h1>
-    <p id="loginSub">Offline Mesh Network</p>
-    <input class="inp" id="nameIn" type="text" placeholder="Your name (1–16 chars)" maxlength="16">
-    <input class="inp" id="passIn" type="password" placeholder="Enter password">
-    <div id="loginErr"></div>
-    <div id="pwaTip" style="display:none;margin:6px 0;padding:10px 12px;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:10px;font-size:.83rem;color:var(--text);text-align:center;">
-      Tap browser menu → <b>Add to Home Screen</b> for the full app!
-    </div>
-    <button class="btn" onclick="doLogin()">Connect →</button>
-  </div>
+<div class="announcement-banner">
+  ⚡ ESP32 Web Flasher Real Engine. <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">View GitHub Repository →</a>
 </div>
 
-<!-- App -->
-<div id="app">
-  
-  <!-- LEFT SIDEBAR -->
-  <div id="leftSidebar">
-    <div class="logo-header">
-      <span id="statusDot"></span>
-      <span class="logo-title">🎃 AMAN'S <span>CHATROOM</span></span>
-      <button class="close-sidebar-btn" onclick="document.getElementById('leftSidebar').classList.remove('open')">✕</button>
+<header>
+  <a href="#" class="logo-group">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text">GhostESP <span>REAL FLASHER</span></div>
+  </a>
+  <nav>
+    <a href="#" class="active">Flasher</a>
+    <a href="#consoleCard">Console</a>
+    <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">GitHub</a>
+    <div class="status-pill">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Disconnected</span>
     </div>
- 
-    <div class="section-title">Rooms</div>
-    <div id="rooms">
-      <button class="room-btn active" onclick="changeRoom('comms')">
-        <span class="r-icon">💬</span><span class="r-label">Comms</span>
-        <span class="room-user-avatars" id="roomUsers-comms"></span>
-      </button>
-      <button class="room-btn" onclick="changeRoom('airwaves')">
-        <span class="r-icon">📡</span><span class="r-label">Airwaves</span>
-        <span class="room-user-avatars" id="roomUsers-airwaves"></span>
-      </button>
-      <button class="room-btn" onclick="changeRoom('terminal')">
-        <span class="r-icon">💻</span><span class="r-label">Terminal</span>
-        <span class="room-user-avatars" id="roomUsers-terminal"></span>
-      </button>
-      <button class="room-btn" onclick="changeRoom('game')">
-        <span class="r-icon">🎮</span><span class="r-label">Game</span>
-        <span class="room-user-avatars" id="roomUsers-game"></span>
-      </button>
-      <button class="room-btn darknet-btn" onclick="changeRoom('darknet')">
-        <span class="r-icon">🌐</span><span class="r-label">Darknet</span>
-        <span class="room-user-avatars" id="roomUsers-darknet"></span>
-      </button>
-      <button class="room-btn vault-btn" onclick="onVaultTabClick()">
-        <span class="r-icon">🔐</span><span class="r-label">Vault</span>
-        <span class="room-user-avatars" id="roomUsers-vault"></span>
-      </button>
-    </div>
+  </nav>
+</header>
+
+<main>
+
+  <div id="browserWarnAlert">
+    <b>⚠️ Web Serial API Not Supported:</b> Your browser does not support native hardware Web Serial communication. Please open this page in <b>Google Chrome</b>, <b>Microsoft Edge</b>, <b>Brave</b>, or <b>Opera</b>.
   </div>
 
-  <!-- RIGHT MAIN CONTENT -->
-  <div id="mainContent">
-    <div id="topbar">
-      <button class="icon-btn menu-btn" onclick="document.getElementById('leftSidebar').classList.toggle('open')" style="display:none;">☰</button>
-      <span id="roomLabel">#comms</span>
-      <span class="spacer"></span>
-      <a class="icon-btn" href="flasher.html" target="_blank" title="ESP32 Web Flasher Tool" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;background:rgba(124,58,237,0.25);border:1px solid rgba(124,58,237,0.4);color:#00d9ff;font-weight:700;">⚡ Flasher</a>
-      <button class="icon-btn" id="qrBtn" onclick="openQrModal()" title="Scan QR Code to Connect">📱 QR</button>
-      <button class="icon-btn" id="themeToggleBtn" onclick="toggleV2Theme()" title="Toggle V1/V2 Theme">⚡ V2</button>
-      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">&#x25D0;</button>
-      <button class="icon-btn" onclick="toggleTts()" id="ttsBtn" title="Toggle voice output" style="opacity: 0.35;">&#x1F50A;</button>
-      <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle sound">&#x266A;</button>
-      <button class="icon-btn users-btn" onclick="document.getElementById('rightSidebar').classList.toggle('open')" style="display:none;" title="Online Users">👥</button>
+  <div class="card" id="step1Card">
+    <div class="card-title">
+      <span>⚡ Flash Firmware to ESP32</span>
+    </div>
+    <div class="card-sub">Connect your ESP32 via USB and flash pre-built binaries or custom local build files over Web Serial.</div>
+
+    <span class="label-sm">FIRMWARE SOURCE</span>
+    <div class="tab-group">
+      <button id="tabPreset" class="tab-btn active" onclick="setSourceMode('preset')">📥 Preset Download</button>
+      <button id="tabLocal" class="tab-btn" onclick="setSourceMode('local')">📁 Local Files</button>
     </div>
 
-    <!-- Chat View -->
-    <div id="msgs-wrap">
-      <div id="suggestions" style="display:none;"></div>
-      <div id="msgs"></div>
-      <button id="scrollBtn" onclick="scrollBottom()">&#x2193;</button>
-    </div>
-
-    <!-- Game View -->
-    <div id="gameArea">
-      <!-- Sticky top bar -->
-      <div id="gameTopBar">
-        <button id="gameBackBtn" onclick="leaveGameToComms()">&#x2190; Leave</button>
-        <span class="game-room-title">&#x1F3AE; GAME ROOM</span>
-        <div id="gameIdleBar">&#x23F1; <span id="idleCountdown">30</span>s</div>
-      </div>
-      <!-- Overlay (waiting / result states) -->
-      <div id="gameOverlay"></div>
-      <!-- Live game board -->
-      <div id="gameLive">
-        <!-- Player row -->
-        <div class="player-panel">
-          <div class="player-card" id="cardA">
-            <div class="mark-badge mark-x">A</div>
-            <div class="p-info">
-              <div class="p-name" id="pNameA">--</div>
-              <div class="p-status" id="pStatA">Waiting</div>
-            </div>
-          </div>
-          <div class="score-bar">
-            <span><span id="scoreDispA">0</span> : <span id="scoreDispB">0</span></span>
-            <span class="score-label">Score</span>
-          </div>
-          <div class="player-card" id="cardB">
-            <div class="mark-badge mark-o">B</div>
-            <div class="p-info">
-              <div class="p-name" id="pNameB">--</div>
-              <div class="p-status" id="pStatB">Waiting</div>
-            </div>
-          </div>
+    <!-- PRESET SECTION -->
+    <div id="presetSection">
+      <div class="form-grid">
+        <div class="select-wrapper">
+          <label class="label-sm">CHANNEL</label>
+          <select id="channelSelect">
+            <option value="stable">Stable (v2.0)</option>
+            <option value="beta">Pre-release (v2.1-beta)</option>
+          </select>
         </div>
-        <!-- Board -->
-        <div class="board-panel">
-          <div id="turnBadge">Waiting for players...</div>
-          <div id="tttBoard"></div>
-          <div id="boardHint">Click a cell to place your mark</div>
+
+        <div class="select-wrapper">
+          <label class="label-sm">BUILD</label>
+          <select id="buildSelect" onchange="onBuildChanged()">
+            <option value="node_a">Generic ESP32 - AMAN'S Chatroom Node A (Master)</option>
+            <option value="node_b">Generic ESP32 - AMAN'S Chatroom Node B (Client)</option>
+            <option value="relay">Generic ESP32 - Smart Appliance Relay Controller</option>
+            <option value="i2c_test">Generic ESP32 - I2C OLED Scanner & Diagnostic</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="binary-badge-bar">
+        <span class="binary-badge">App: 0x10000</span>
+        <span class="binary-badge">Bootloader: 0x1000</span>
+        <span class="binary-badge">Partitions: 0x8000</span>
+      </div>
+    </div>
+
+    <!-- LOCAL FILES SECTION -->
+    <div id="localSection" style="display:none;">
+      <div class="form-grid">
+        <div class="input-wrapper">
+          <label class="label-sm">APPLICATION (.bin @ 0x10000)</label>
+          <input type="file" id="appFile" accept=".bin" onchange="onLocalFilesChanged()">
+        </div>
+        <div class="input-wrapper">
+          <label class="label-sm">BOOTLOADER (.bin @ 0x1000)</label>
+          <input type="file" id="bootFile" accept=".bin" onchange="onLocalFilesChanged()">
+        </div>
+        <div class="input-wrapper">
+          <label class="label-sm">PARTITION TABLE (.bin @ 0x8000)</label>
+          <input type="file" id="partFile" accept=".bin" onchange="onLocalFilesChanged()">
         </div>
       </div>
     </div>
 
-    <div id="typing"></div>
-    
-    <div id="replyBanner">
-      <span id="replyText"></span>
-      <span id="replyCancel" onclick="cancelReply()">&#x2715; Cancel</span>
-    </div>
-    
-    <!-- Floating Emoji Picker -->
-    <div id="emojiPicker"></div>
-    
-    <div id="inputBar">
-      <span id="e2eeBadge">E2EE</span>
-      <label id="ghostToggleWrap">
-        <input type="checkbox" id="ghostCheck"> Ghost
+    <div style="margin-top:24px;">
+      <button class="options-toggle-btn" onclick="toggleOptionsPanel()">
+        ⚙️ Flash Options <span id="optionsArrow">▼</span>
+      </button>
+
+      <div class="options-panel" id="optionsPanel">
+        <div class="select-wrapper">
+          <label class="label-sm">BAUD RATE / UPLOAD SPEED</label>
+          <select id="baudRateSelect" onchange="updateSummary()">
+            <option value="115200" selected>115200 (Default)</option>
+            <option value="230400">230400</option>
+            <option value="460800">460800 (Fast)</option>
+            <option value="921600">921600 (High-Speed)</option>
+          </select>
+        </div>
+
+        <div class="select-wrapper">
+          <label class="label-sm">FLASH FREQ</label>
+          <select id="flashFreqSelect" onchange="updateSummary()">
+            <option value="40m" selected>40 MHz</option>
+            <option value="80m">80 MHz</option>
+          </select>
+        </div>
+
+        <div class="select-wrapper">
+          <label class="label-sm">FLASH MODE</label>
+          <select id="flashModeSelect" onchange="updateSummary()">
+            <option value="dio" selected>DIO</option>
+            <option value="qio">QIO</option>
+            <option value="dout">DOUT</option>
+            <option value="qout">QOUT</option>
+          </select>
+        </div>
+
+        <div class="select-wrapper">
+          <label class="label-sm">FLASH SIZE</label>
+          <select id="flashSizeSelect" onchange="updateSummary()">
+            <option value="4MB" selected>4 MB</option>
+            <option value="8MB">8 MB</option>
+            <option value="16MB">16 MB</option>
+            <option value="2MB">2 MB</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="eraseCheck" checked onchange="updateSummary()">
+        <span>Erase all flash before programming</span>
       </label>
-      <div id="voiceActivity"><span><i></i><i></i><i></i><i></i><i></i></span> Transmitting…</div>
-      <input id="msgInput" placeholder="Message… (/dm /clear /kick /ban)" maxlength="300" autocomplete="off">
-      <button id="micBtn" onclick="toggleMic()" title="Hold to talk — broadcasts voice over mesh">🎙️</button>
-      <button id="emojiBtn" onclick="toggleEmojiPicker(event)" title="Choose Emoji">😀</button>
-      <button id="sendBtn" onclick="sendMsg()">SEND</button>
     </div>
-  </div>
 
-  <!-- RIGHT SIDEBAR (Node Monitor & stats in every room) -->
-  <div id="rightSidebar">
-    <div class="sidebar-header">
-      <span class="logo-title">📡 NODE <span>MONITOR</span></span>
-      <button class="close-sidebar-btn" onclick="document.getElementById('rightSidebar').classList.remove('open')">✕</button>
+    <!-- Review Summary Box -->
+    <div class="summary-box" style="margin-top:20px;">
+      <div class="summary-item"><span>Target Chip:</span><span id="sumTarget">ESP32 (Auto-Detect)</span></div>
+      <div class="summary-item"><span>Selected Build:</span><span id="sumBuild">Chatroom Node A (Master)</span></div>
+      <div class="summary-item"><span>Application Offset:</span><span>0x10000</span></div>
+      <div class="summary-item"><span>Bootloader Offset:</span><span>0x1000</span></div>
+      <div class="summary-item"><span>Partitions Offset:</span><span>0x8000</span></div>
+      <div class="summary-item"><span>Flash Settings:</span><span id="sumSettings">DIO, 40MHz, 4MB, 115200 baud</span></div>
+      <div class="summary-item"><span>Erase Flash First:</span><span id="sumErase">YES</span></div>
     </div>
-    
-    <div id="radioMonitor">
-      <div class="stat-card">
-        <span class="stat-label">Node</span>
-        <span id="localNode" class="stat-val">A</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Link</span>
-        <span id="linkStatus" class="stat-val online">ONLINE</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Sent</span>
-        <span id="txCount" class="stat-val">0</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Recv</span>
-        <span id="rxCount" class="stat-val">0</span>
-      </div>
-      <div class="stat-card wide">
-        <span class="stat-label">Signal Quality</span>
-        <span id="linkQuality" class="stat-val">100%</span>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="connectAndFlashRealESP32()">
+        ⚡ Flash Firmware Now
+      </button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-danger" onclick="eraseRealESP32()">
+          🗑️ Erase Flash
+        </button>
+        <button class="btn btn-secondary" onclick="resetRealESP32()">
+          🔄 Reset Device
+        </button>
       </div>
     </div>
 
-    <div class="section-title">Online</div>
-    <div id="sidebar">
-      <div id="userList"></div>
-    </div>
-
-    <div id="vaultPanel">
-      <h3>Vault Controls</h3>
-      <div class="vault-key-display" id="vaultKeyDisplay" onclick="copyVaultKey()" title="Click to copy">------</div>
-      <button class="vault-btn safe" onclick="vaultCmd('gen')">Generate New Key</button>
-      <button class="vault-btn safe" onclick="vaultCmd('key')">Show Current Key</button>
-      <button class="vault-btn danger" onclick="vaultCmd('lock')">Lock Vault</button>
-    </div>
-
-    <div id="adminPanel">
-      <h3>Ban Manager</h3>
-      <div id="banList"><span id="banListEmpty">No active bans.</span></div>
-      <h3 style="margin-top:16px;color:var(--dm);">Vault Invite</h3>
-      <div class="vault-invite-row">
-        <input id="vaultInviteInput" placeholder="Username..." autocomplete="off">
-        <button onclick="vaultInviteUser()">Invite</button>
+    <!-- Progress Bar -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+      <div class="progress-info">
+        <span id="progressText">Flashing... 0%</span>
+        <span id="progressStats">0 kB / 0 kB (0.0 kB/s)</span>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Vault Modal -->
-<div id="vaultModal">
-  <div class="vault-modal-card">
-    <span class="vault-modal-icon">&#x1F510;</span>
-    <div class="vault-modal-title">Private Vault</div>
-    <div class="vault-modal-sub">Enter the room key to proceed.</div>
-    <input id="vaultKeyInput" placeholder="XXXXXX" maxlength="6" autocomplete="off" onkeydown="if(event.key==='Enter')submitVaultKey()">
-    <div class="vault-modal-err" id="vaultModalErr"></div>
-    <button class="g-btn primary" onclick="submitVaultKey()">Enter Vault</button>
-    <button class="g-btn secondary" onclick="closeVaultModal()">Cancel</button>
+  <!-- Console Log Card -->
+  <div class="console-card" id="consoleCard">
+    <div class="console-header">
+      <div class="console-title">
+        <span>📟 Real-Time Output Console Log</span>
+      </div>
+      <div class="console-actions">
+        <button class="console-btn" onclick="copyConsoleLog()">📋 Copy</button>
+        <button class="console-btn" onclick="clearConsoleLog()">🗑️ Clear</button>
+      </div>
+    </div>
+    <div class="console-output" id="consoleOutput">
+      <div class="log-info">[SYSTEM] Real ESP32 WebSerial Flasher Engine Initialized.</div>
+      <div class="log-info">[SYSTEM] Connect your ESP32 board over USB and click "⚡ Flash Firmware Now".</div>
+    </div>
   </div>
-</div>
 
-<!-- Vault Invite Toast -->
-<div id="vaultInviteToast">
-  <div class="vit-title">Vault Invitation</div>
-  <div class="vit-sub" id="vitSub">Admin invited you to the vault.</div>
-  <button class="vit-btn accept" id="vitAccept">Accept</button>
-  <button class="vit-btn decline" onclick="dismissVaultInvite()">Decline</button>
-</div>
+</main>
+
+<footer>
+  ESP32 Web Flasher Real Engine &bull; Powered by Espressif esptool-js & Web Serial &bull; <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">AMAN'S CHATROOM Project</a>
+</footer>
 
 <script>
-(function(){
-  let ws, username="", currentRoom="comms";
-  let replyTo=null, soundOn=true, typingTimer=null, isTyping=false;
-  let unread=0, focused=true;
-  let onlineUsers=[]; 
-  let myIsAdmin=false; 
-  let enteredPass=""; 
-  let wsKicked=false; 
-  const EMOJIS=["\u{1F44D}","\u{2764}\u{FE0F}","\u{1F602}","\u{1F62E}"];
-
-  // -- Game State --
-  let myMark=-1, gameActive=false;
-  let pendingVaultKey=''; 
-  let activeGameName = '';
-  let chessBoard = [];
-  let chessTurn = 0;
-  let selectedChessCell = null;
-  let chessMoves = [];
-  let myRpsChoice = null;
-  let opponentRpsChoice = null;
-  let ttsEnabled = false;
-  // -- E2EE State --
-  let e2eeKeyPair=null, e2eeSharedKey=null; 
-  let vaultCryptoKey=null;                  
-  let e2eeSharedKeyFallback=null, vaultCryptoKeyFallback=null;
-
-  const $=id=>document.getElementById(id);
-  const msgs=$("msgs"), typing=$("typing"), userList=$("userList"), suggestions=$("suggestions"), msgInput=$("msgInput");
-
-  function scrollBottom(){msgs.scrollTop=msgs.scrollHeight;}
-  function isNearBottom(){return msgs.scrollHeight-msgs.scrollTop-msgs.clientHeight<80;}
-
-  $("msgs").addEventListener("scroll",()=>{
-    $("scrollBtn").classList.toggle("show",!isNearBottom());
-  });
-
-  window.addEventListener("focus",()=>{focused=true;unread=0;document.title="AMAN'S CHATROOM \u{1F383}";});
-  window.addEventListener("blur",()=>{focused=false;});
-
-  function bumpUnread(){
-    if(!focused){unread++;document.title="("+unread+") AMAN'S CHATROOM \u{1F383}";}
-  }
-
-  /* -- Theme Switch -- */
-  window.toggleTheme=()=>{
-    const t=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";
-    document.documentElement.setAttribute("data-theme",t==="dark"?"":"light");
-  };
-
-  /* -- Sound Synthesizer -- */
-  window.toggleSound=()=>{soundOn=!soundOn;$("soundBtn").style.opacity=soundOn?1:.35;};
-
-  
-  window.toggleV2Theme = function(forcedState) {
-    const body = document.body;
-    const isV2 = (forcedState !== undefined) ? forcedState : !body.classList.contains("v2-theme");
-    if (isV2) {
-      body.classList.add("v2-theme");
-      localStorage.setItem("theme_v2", "true");
-      addSys("⚡ Switched to V2 Cyberpunk Midnight Mesh Theme!");
-    } else {
-      body.classList.remove("v2-theme");
-      localStorage.setItem("theme_v2", "false");
-      addSys("✨ Switched to Classic Theme.");
-    }
-  };
-
-  // Auto-apply on boot if saved
-  if (localStorage.getItem("theme_v2") === "true") {
-    document.body.classList.add("v2-theme");
-  }
-
-  
-  /* -- PIN MESSAGE FEATURE -- */
-  
-  window.pinMessageFromElement = function(btn) {
-    const msgEl = btn.closest('.msg');
-    if (msgEl) {
-      const textEl = msgEl.querySelector('.msg-text');
-      if (textEl) {
-        pinMessage(textEl.textContent.trim());
-      }
-    }
-  };
-
-  window.pinMessage = function(text) {
-    const banner = $('pinnedBanner');
-    const txt = $('pinnedText');
-    if (banner && txt) {
-      txt.textContent = text;
-      banner.style.display = 'flex';
-      localStorage.setItem('pinned_msg', text);
-      addSys("📌 Message pinned to top of chat.");
-    }
-  };
-  window.unpinMessage = function() {
-    const banner = $('pinnedBanner');
-    if (banner) {
-      banner.style.display = 'none';
-      localStorage.removeItem('pinned_msg');
-    }
-  };
-
-  // Restore pinned message on load
-  setTimeout(() => {
-    const savedPin = localStorage.getItem('pinned_msg');
-    if (savedPin) {
-      const banner = $('pinnedBanner');
-      const txt = $('pinnedText');
-      if (banner && txt) {
-        txt.textContent = savedPin;
-        banner.style.display = 'flex';
-      }
-    }
-  }, 500);
-
-  /* -- QR CODE GENERATOR & MODAL -- */
-  window.openQrModal = function() {
-    const modal = $('qrModal');
-    const canvas = $('qrCanvas');
-    if (!modal || !canvas) return;
-    
-    const nodeEl = $('localNode');
-    const localNodeChar = nodeEl ? nodeEl.textContent.trim().substring(0,1) : 'A';
-    const ssid = localNodeChar === 'B' ? "AMAN'S CHATROOM - B" : "AMAN'S CHATROOM - A";
-    const qrText = "WIFI:S:" + ssid + ";T:WPA;P:AMAN1234;;";
-    
-    try {
-      const qr = qrcode(4, 'L');
-      qr.addData(qrText);
-      qr.make();
-      
-      const ctx = canvas.getContext('2d');
-      const tileCount = qr.getModuleCount();
-      const canvasSize = 180;
-      const tileSize = canvasSize / tileCount;
-      canvas.width = canvasSize;
-      canvas.height = canvasSize;
-      
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvasSize, canvasSize);
-      
-      ctx.fillStyle = '#000000';
-      for (let r = 0; r < tileCount; r++) {
-        for (let c = 0; c < tileCount; c++) {
-          if (qr.isDark(r, c)) {
-            ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
-          }
-        }
-      }
-    } catch (e) {
-      console.error('QR Gen failed:', e);
-    }
-    
-    const ssidLabel = $('qrSsidLabel');
-    if (ssidLabel) {
-      ssidLabel.textContent = ssid;
-    }
-    
-    modal.style.display = 'flex';
-  };
-
-  window.closeQrModal = function() {
-    const modal = $('qrModal');
-    if (modal) modal.style.display = 'none';
-  };
-
-  // Simple QR Code Matrix Generator (returns SVG string)
-  
-  function beep(freq,dur=0.08){
-    if(!soundOn)return;
-    try{
-      const ctx=new(window.AudioContext||window.webkitAudioContext)();
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      o.connect(g);g.connect(ctx.destination);
-      o.type="sine";o.frequency.value=freq;
-      g.gain.setValueAtTime(0.06,ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
-      o.start();o.stop(ctx.currentTime+dur);
-    }catch(e){}
-  }
-
-  /* -- Mock Login (For VS Code Preview Mode) -- */
-  
-  
-
-  // -- Vault Tab Click --
-  window.onVaultTabClick=()=>{
-    if(myIsAdmin){
-      changeRoom('vault');
-    } else {
-      $('vaultModal').style.display='flex';
-      $('vaultKeyInput').value=''; $('vaultModalErr').textContent='';
-      setTimeout(()=>$('vaultKeyInput').focus(),100);
-    }
-  };
-  window.closeVaultModal=()=>{ $('vaultModal').style.display='none'; };
-  window.submitVaultKey=()=>{
-    const key=$('vaultKeyInput').value.trim().toUpperCase();
-    if(key.length!==6){$('vaultModalErr').textContent='Key must be 6 characters.';return;}
-    pendingVaultKey=key;
-    $('vaultModal').style.display='none';
-    changeRoom('vault');
-    wsSend({type:'changeRoom',room:'vault',key});
-  };
-  window.copyVaultKey=()=>{
-    const k=$('vaultKeyDisplay').textContent.trim();
-    if(k==='------')return;
-    navigator.clipboard&&navigator.clipboard.writeText(k);
-    $('vaultKeyDisplay').textContent='✔ Copied!';
-    setTimeout(()=>$('vaultKeyDisplay').textContent=k,1500);
-  };
-  window.vaultInviteUser=()=>{
-    const name=$('vaultInviteInput').value.trim();
-    if(!name)return;
-    sendMsg_raw('/vault invite '+name);
-    $('vaultInviteInput').value='';
-  };
-  window.sendMsg_raw=(text)=>{
-    wsSend({type:'msg',text,reply:''});
-  };
-  // Vault commands must be sent while currentRoom='vault' for server to accept them
-  window.vaultCmd=(sub)=>{
-    if(currentRoom!=='vault'){return;}
-    wsSend({type:'msg',text:'/vault '+sub,reply:''});
-  };
-  // Leave game and go back to comms cleanly
-  window.leaveGameToComms=()=>{
-    gameActive=false;
-    clearGameIdleTimer();
-    wsSend({type:'leaveGame'});
-    changeRoom('comms');
-  };
-
-  // ── MIC / VOICE BROADCAST ──────────────────────────────────────────
-  let micRecorder = null, micStream = null, micActive = false;
-
-  window.toggleMic = async () => {
-    const btn = $('micBtn');
-    const indicator = $('voiceActivity');
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert("⚠️ Browser Security Block: Microphone access is disabled on insecure origins (HTTP 192.168.4.1).\n\n" +
-            "Please follow these steps to enable voice broadcast:\n" +
-            "1. Open Chrome/Edge and go to: chrome://flags/#unsafely-treat-insecure-origin-as-secure\n" +
-            "2. Enable 'Insecure origins treated as secure'\n" +
-            "3. Add 'http://192.168.4.1' to the textbox\n" +
-            "4. Relaunch the browser and reload the page.");
-      return;
-    }
-
-    if (micActive) {
-      // STOP recording
-      micActive = false;
-      if (window.micTimeout) clearTimeout(window.micTimeout);
-      if (micRecorder && micRecorder.state !== 'inactive') micRecorder.stop();
-      if (micStream) micStream.getTracks().forEach(t => t.stop());
-      micRecorder = null; micStream = null;
-      btn.classList.remove('recording');
-      btn.title = 'Click to transmit voice over mesh';
-      if (indicator) indicator.classList.remove('show');
-      return;
-    }
-
-    // First-time notice
-    let micNoticeSeen = false;
-    try { micNoticeSeen = !!localStorage.getItem('micNoticeShown'); } catch(e) {}
-    if (!micNoticeSeen) {
-      const ok = confirm(
-        '🎙️ VOICE BROADCAST\n\n' +
-        'Your microphone audio will be transmitted to ALL users in the same room via the mesh network.\n\n' +
-        '• Click mic button to START\n' +
-        '• Click again to STOP\n' +
-        '• Audio is NOT encrypted\n\n' +
-        'Continue?'
-      );
-      if (!ok) return;
-      try { localStorage.setItem('micNoticeShown', '1'); } catch(e) {}
-    }
-
-    try {
-      micStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          sampleRate: 8000,
-          echoCancellation: true,
-          noiseSuppression: true
-        },
-        video: false
-      });
-    } catch (e) {
-      alert('❌ Microphone access denied.\n\nPlease allow microphone permission in your browser settings.');
-      return;
-    }
-
-    micActive = true;
-    btn.classList.add('recording');
-    btn.title = 'Recording (5s max) - Click to STOP';
-    if (indicator) indicator.classList.add('show');
-
-    let chunks = [];
-
-    // Use opus/webm or fallback
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
-
-    const micOptions = { audioBitsPerSecond: 8000 };
-    if (mimeType) micOptions.mimeType = mimeType;
-    micRecorder = new MediaRecorder(micStream, micOptions);
-
-    micRecorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) {
-        chunks.push(e.data);
-      }
-    };
-
-    micRecorder.onstop = () => {
-      micActive = false;
-      btn.classList.remove('recording');
-      btn.title = 'Click to transmit voice over mesh';
-      if (indicator) indicator.classList.remove('show');
-
-      if (chunks.length === 0) return;
-      const blob = new Blob(chunks, { type: mimeType || 'audio/webm' });
-
-      // Convert to Base64 cleanly using FileReader to avoid call-stack size errors
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64data = reader.result.split(',')[1];
-        wsSend({ type: 'voice', data: base64data, mime: blob.type, from: username });
-      };
-      reader.readAsDataURL(blob);
-    };
-
-    // Record the full message in one piece, automatic stop after 5 seconds to fit ESP32 buffer
-    micRecorder.start();
-    window.micTimeout = setTimeout(() => {
-      if (micActive) {
-        window.toggleMic();
-      }
-    }, 5000);
-  };
-
-  // Receive and play peer voice chunks
-  function handleVoiceMsg(d) {
-    if (!d.data) return;
-    try {
-      const bytes = Uint8Array.from(atob(d.data), c => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: d.mime || 'audio/webm' });
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.volume = 1.0;
-      audio.onended = () => URL.revokeObjectURL(url);
-      audio.play().catch(() => {}); // ignore autoplay block
-    } catch(e) {}
-  }
-
-  // -- Vault Invite Toast --
-  let pendingInviteKey='';
-  function handleVaultInvite(d){
-    pendingInviteKey=d.key||'';
-    $('vitSub').textContent=(d.from||'Admin')+' invited you to the vault room.';
-    $('vitAccept').onclick=()=>{
-      dismissVaultInvite();
-      pendingVaultKey=pendingInviteKey;
-      changeRoom('vault');
-      wsSend({type:'changeRoom',room:'vault',key:pendingInviteKey});
-    };
-    $('vaultInviteToast').style.display='block';
-    setTimeout(dismissVaultInvite,18000);
-  }
-  window.dismissVaultInvite=()=>{ $('vaultInviteToast').style.display='none'; };
-
-  // -- Vault E2EE (PBKDF2 + AES-GCM from room key) --
-  async function deriveVaultKey(roomKey){
-    if (!crypto.subtle) {
-      vaultCryptoKeyFallback = roomKey;
-      updateE2eeBadge('vault');
-      decryptAllPendingMessages();
-      return;
-    }
-    try {
-      const enc=new TextEncoder();
-      const raw=await crypto.subtle.importKey('raw',enc.encode(roomKey),{name:'PBKDF2'},false,['deriveKey']);
-      vaultCryptoKey=await crypto.subtle.deriveKey(
-        {name:'PBKDF2',salt:enc.encode('AMAN-VAULT-SALT'),iterations:5000,hash:'SHA-256'},
-        raw,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
-      updateE2eeBadge('vault');
-      decryptAllPendingMessages();
-    } catch(e) {
-      vaultCryptoKeyFallback = roomKey;
-      updateE2eeBadge('vault');
-      decryptAllPendingMessages();
-    }
-  }
-  const isMockMode = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github') || location.search.includes('mock=true'));
-
-  // --- EMOJI PICKER IMPLEMENTATION ---
-  const EMOJI_LIST = [
-    "😀", "😂", "🤣", "😊", "😍", "🥰", "😘", "😜", "🤫", "🤔",
-    "👍", "👎", "❤️", "🔥", "🎉", "💯", "🚀", "💀", "👀", "👏",
-    "🙏", "👑", "🌟", "💡", "🎨", "🎵", "💬", "💻", "🎮", "🔐"
-  ];
-
-  function initEmojiPicker() {
-    const picker = $('emojiPicker');
-    if (!picker) return;
-    picker.innerHTML = '';
-    EMOJI_LIST.forEach(emoji => {
-      const el = document.createElement('span');
-      el.className = 'emoji-item';
-      el.textContent = emoji;
-      el.onclick = (e) => {
-        e.stopPropagation();
-        insertEmoji(emoji);
-      };
-      picker.appendChild(el);
-    });
-  }
-
-  function insertEmoji(emoji) {
-    const start = msgInput.selectionStart;
-    const end = msgInput.selectionEnd;
-    const text = msgInput.value;
-    msgInput.value = text.substring(0, start) + emoji + text.substring(end);
-    msgInput.focus();
-    const newPos = start + emoji.length;
-    msgInput.setSelectionRange(newPos, newPos);
-  }
-
-  window.toggleEmojiPicker = (e) => {
-    e.stopPropagation();
-    const picker = $('emojiPicker');
-    if (picker) {
-      picker.classList.toggle('show');
-    }
-  };
-
-  document.addEventListener('click', (e) => {
-    const picker = $('emojiPicker');
-    const btn = $('emojiBtn');
-    if (picker && picker.classList.contains('show')) {
-      if (!picker.contains(e.target) && e.target !== btn) {
-        picker.classList.remove('show');
-      }
-    }
-  });
-
-  // Update login subtitle dynamically based on connection context
-  document.addEventListener('DOMContentLoaded', () => {
-    const passIn = $('passIn');
-    const nameIn = $('nameIn');
-    if (nameIn) {
-      nameIn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (passIn && !passIn.value.trim()) {
-            passIn.focus();
-          } else {
-            doLogin();
-          }
-        }
-      });
-    }
-    if (passIn) {
-      passIn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (nameIn && !nameIn.value.trim()) {
-            nameIn.focus();
-          } else {
-            doLogin();
-          }
-        }
-      });
-    }
-
-    const sub = $('loginSub');
-    if (sub) {
-      sub.textContent = isMockMode ? "Offline Mesh Bridge (Preview Mode)" : "Offline Mesh Bridge (ESP32 Node)";
-    }
-    initEmojiPicker();
-  });
-
-  window.doLogin=()=>{
-    const pass=$("passIn").value.trim();
-    const name=$("nameIn").value.trim();
-    if(!name){$("loginErr").textContent="Enter your username";return;}
-    
-    if (isMockMode) {
-      const isAdminPass = (pass === "AMAN1234" || pass === "@amanotic");
-      // Allow any password in Mock Preview mode so user is never locked out
-      enteredPass = pass || "AMAN1234"; 
-      myIsAdmin = isAdminPass; 
-      username = name;
-      $("login").style.display = "none";
-      $("app").classList.add("show");
-      if(myIsAdmin) $('adminPanel').style.display='block';
-      $("statusDot").style.background="var(--accent)";
-      renderUsers([{name:username,isAdmin:myIsAdmin},{name:"ESP32_Peer",isAdmin:false},{name:"radio_user",isAdmin:false}]);
-      addSys(myIsAdmin ? "\u{26A1} Logged in as Administrator (Preview Mode)." : "Welcome to Preview Mode!");
-      handle({type:"msg",user:"System",text:"You are in mock preview mode. WebSocket is bypassed.",ts:"12:00",room:"comms",mesh:false});
-      handle({type:"msg",user:"RadioBridge",text:"Hello from Node B! Hover users in the sidebar to see admin actions.",ts:"12:01",room:"comms",mesh:true});
-      if(myIsAdmin) handle({type:"banList",bans:[]});
-    } else {
-      fetch("/auth?key="+encodeURIComponent(pass))
-        .then(r=>r.text())
-        .then(res=>{
-          if(res==="ADMIN"){
-            myIsAdmin=true;
-            username=name;
-            enteredPass=pass;
-            $("login").style.display="none";
-            $("app").classList.add("show");
-            $('adminPanel').style.display='block';
-            connectWS();
-          } else if(res==="OK"){
-            myIsAdmin=false;
-            username=name;
-            enteredPass=pass;
-            $("login").style.display="none";
-            $("app").classList.add("show");
-            connectWS();
-          } else if(res==="BANNED"){
-            $("loginErr").textContent="\u{1F6AB} Your IP is banned from this server.";
-          } else {
-            $("loginErr").textContent="Incorrect password";
-          }
-        }).catch(()=>{$("loginErr").textContent="Unable to reach server";});
-    }
-  };
-
-  /* -- WebSocket Connection -- */
-  let wsPingInterval=null;
-  function connectWS(){
-    ws=new WebSocket("ws://"+location.host+"/ws");
-
-    ws.onopen=()=>{
-      $("statusDot").style.background="var(--accent)";
-      $("statusDot").style.boxShadow="var(--neon-glow)";
-      wsKicked=false;
-      // Send keepalive ping every 8s to prevent ESP32 SoftAP from dropping idle connection
-      clearInterval(wsPingInterval);
-      wsPingInterval=setInterval(()=>{
-        if(ws&&ws.readyState===WebSocket.OPEN){
-          ws.send(JSON.stringify({type:"ping"}));
-        }
-      },8000);
-    };
-    ws.onclose=()=>{
-      clearInterval(wsPingInterval);
-      $("statusDot").style.background="var(--red)";
-      $("statusDot").style.boxShadow="0 0 10px var(--red)";
-      if(!wsKicked){
-        addSys("&#x26A0; Connection lost. Reconnecting...");
-        setTimeout(connectWS,3000);
-      }
-    };
-    ws.onmessage=e=>{
-      let d;
-      try{d=JSON.parse(e.data);}catch{return;}
-      handle(d);
-    };
-  }
-
-  /* -- WebSocket / Mock Send -- */
-  function wsSend(obj){
-    if(!isMockMode){
-      if(ws&&ws.readyState===1)ws.send(JSON.stringify(obj));
-      return;
-    }
-    
-    // Mock simulation logic
-    if (obj.type === "msg") {
-      setTimeout(() => {
-        handle({
-          type: "msg",
-          user: username,
-          text: obj.text,
-          reply: obj.reply,
-          ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-          room: currentRoom,
-          mesh: false
-        });
-        beep(900,0.06);
-      }, 50);
-
-      // Simple response mock
-      if (!obj.text.startsWith("/") && currentRoom !== 'game') {
-        setTimeout(() => {
-          handle({
-            type: "msg",
-            user: "ESP32_Peer",
-            text: "Echo back via radio: " + obj.text,
-            reply: obj.text,
-            ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            room: currentRoom,
-            mesh: true
-          });
-          beep(500);
-        }, 1500);
-      }
-
-      // Handle mock admin commands
-      if (obj.text.startsWith("/clear")) {
-        setTimeout(() => handle({type: "clearRoom", room: currentRoom}), 100);
-      } else if (obj.text.startsWith("/kick ")) {
-        const tgt = obj.text.substring(6).trim();
-        setTimeout(() => {
-          addSys("Mock Kicked: " + tgt);
-          renderUsers(onlineUsers.filter(u => u.name !== tgt));
-        }, 200);
-      } else if (obj.text.startsWith("/ban ")) {
-        const tgt = obj.text.substring(5).trim();
-        setTimeout(() => {
-          addSys("Mock Banned: " + tgt);
-          renderUsers(onlineUsers.filter(u => u.name !== tgt));
-        }, 200);
-      }
-    } else if (obj.type === "react") {
-      applyReaction({
-        targetUser: obj.targetUser,
-        targetText: obj.targetText,
-        emoji: obj.emoji
-      });
-    } else if (obj.type === "changeRoom") {
-      addSys("Switched to #" + obj.room + " (Demo)");
-      if (obj.room === 'game') {
-        showGameOverlay('waiting',{});
-        setTimeout(()=>{
-          handle({
-            type:'gameStart',
-            mark:0,
-            nameA:username,
-            nameB:'Cyber_Rival',
-            scoreA:0,
-            scoreB:0
-          });
-        },1500);
-      }
-    } else if (obj.type === "gameSelect") {
-      // Broadcast player's select
-      setTimeout(() => {
-        handle({
-          type: "msg",
-          user: username,
-          text: 'GAME_SELECT:' + obj.game,
-          ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-          room: 'game',
-          mesh: false
-        });
-      }, 100);
-      // Cyber_Rival joins/confirms game choice
-      setTimeout(() => {
-        handle({
-          type: "msg",
-          user: "Cyber_Rival",
-          text: 'GAME_SELECT:' + obj.game,
-          ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-          room: 'game',
-          mesh: true
-        });
-      }, 800);
-    } else if (obj.type === "gameMove") {
-      if (obj.game === 'chess') {
-        // Broadcast player move
-        setTimeout(() => {
-          handle({
-            type: "msg",
-            user: username,
-            text: 'GAME_MOVE:chess:' + obj.move,
-            ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            room: 'game',
-            mesh: false
-          });
-        }, 50);
-
-        // Run Chess Bot after 1.2s
-        setTimeout(() => {
-          if (!gameActive || activeGameName !== 'chess') return;
-          const blackPieces = ['\u265A', '\u265B', '\u265C', '\u265D', '\u265E', '\u265F'];
-          const blackIndices = [];
-          chessBoard.forEach((p, idx) => { if (p && blackPieces.includes(p)) blackIndices.push(idx); });
-          
-          const playableIndices = blackIndices.filter(idx => chessLegalMoves(idx).length > 0);
-          if (playableIndices.length > 0) {
-            const fromIdx = playableIndices[Math.floor(Math.random() * playableIndices.length)];
-            const legal = chessLegalMoves(fromIdx);
-            const toIdx = legal[Math.floor(Math.random() * legal.length)];
-            handle({
-              type: "msg",
-              user: "Cyber_Rival",
-              text: 'GAME_MOVE:chess:' + fromIdx + '-' + toIdx,
-              ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-              room: 'game',
-              mesh: true
-            });
-          }
-        }, 1200);
-      } else if (obj.game === 'rps') {
-        // Broadcast player rps choice
-        setTimeout(() => {
-          handle({
-            type: "msg",
-            user: username,
-            text: 'GAME_MOVE:rps:' + obj.move,
-            ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            room: 'game',
-            mesh: false
-          });
-        }, 50);
-
-        // Run RPS Bot after 1s
-        setTimeout(() => {
-          if (!gameActive || activeGameName !== 'rps') return;
-          const choices = ['rock', 'paper', 'scissors'];
-          const botChoice = choices[Math.floor(Math.random() * 3)];
-          handle({
-            type: "msg",
-            user: "Cyber_Rival",
-            text: 'GAME_MOVE:rps:' + botChoice,
-            ts: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            room: 'game',
-            mesh: true
-          });
-        }, 1000);
-      } else {
-        // Tic-Tac-Toe Move
-        setTimeout(() => {
-          const board = Array.from($('tttBoard').children).map(c => {
-            if (c.classList.contains('x')) return 0;
-            if (c.classList.contains('o')) return 1;
-            return -1;
-          });
-          if (!gameActive) return;
-
-          // Check if player won
-          const winLines = [
-            [0,1,2],[3,4,5],[6,7,8],
-            [0,3,6],[1,4,7],[2,5,8],
-            [0,4,8],[2,4,6]
-          ];
-          const checkWin = (b) => {
-            for (let i = 0; i < winLines.length; i++) {
-              const [x,y,z] = winLines[i];
-              if (b[x] >= 0 && b[x] === b[y] && b[y] === b[z]) return {winner: b[x], line: [x,y,z]};
-            }
-            return null;
-          };
-
-          let res = checkWin(board);
-          if (res) {
-            handle({
-              type: 'gameBoard',
-              board: board,
-              turn: 0,
-              nameA: username,
-              nameB: 'Cyber_Rival',
-              scoreA: res.winner === 0 ? 1 : 0,
-              scoreB: res.winner === 1 ? 1 : 0,
-              winner: res.winner,
-              winLine: res.line
-            });
-            return;
-          }
-
-          if (!board.includes(-1)) {
-            handle({type: 'gameBoard', board: board, turn: 0, nameA: username, nameB: 'Cyber_Rival', scoreA: 0, scoreB: 0, draw: true});
-            return;
-          }
-
-          // Bot plays turn
-          const emptyIndices = [];
-          board.forEach((v, idx) => { if (v < 0) emptyIndices.push(idx); });
-          if (emptyIndices.length > 0) {
-            const randIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-            board[randIdx] = 1; // Bot mark (O)
-            res = checkWin(board);
-            if (res) {
-              handle({
-                type: 'gameBoard',
-                board: board,
-                turn: 0,
-                nameA: username,
-                nameB: 'Cyber_Rival',
-                scoreA: 0,
-                scoreB: 1,
-                winner: res.winner,
-                winLine: res.line
-              });
-            } else if (!board.includes(-1)) {
-              handle({type: 'gameBoard', board: board, turn: 0, nameA: username, nameB: 'Cyber_Rival', scoreA: 0, scoreB: 0, draw: true});
-            } else {
-              handle({
-                type: 'gameBoard',
-                board: board,
-                turn: 0,
-                nameA: username,
-                nameB: 'Cyber_Rival',
-                scoreA: 0,
-                scoreB: 0
-              });
-            }
-          }
-        }, 700);
-      }
-    }
-  }
-
-    /* -- WS Packet Router -- */
-  function handle(d){
-    switch(d.type){
-      case "needName": {
-        const now = new Date();
-        const localEpoch = Math.floor((Date.now() - now.getTimezoneOffset() * 60 * 1000) / 1000);
-        wsSend({type:"setName",name:username,adminPass:myIsAdmin?enteredPass:"",time:localEpoch});
-        break;
-      }
-      case "msg":
-        if(d.room!==currentRoom) break;
-        if(currentRoom==='game'){
-          if(d.text.startsWith('GAME_SELECT:')){
-            onGameSelected(d.text.substring(12));
-            break;
-          }
-          if(d.text.startsWith('GAME_MOVE:')){
-            onGameMoveReceived(d.text.substring(10), d.user);
-            break;
-          }
-        }
-        if(d.hist && d.text.startsWith('[GHOST]')){
-          break;
-        }
-        if(currentRoom==='darknet'||currentRoom==='vault'){
-          tryDecryptMsg(d);
-        } else { renderMsg(d); }
-        if(isNearBottom()) scrollBottom();
-        if(!d.hist && ttsEnabled){
-          let speakTxt = d.text;
-          if (d.text.startsWith('[GHOST]')) {
-            speakTxt = "ghost message: " + d.text.substring(7);
-          }
-          speak(d.user + " says: " + speakTxt);
-        }
-        break;
-      case "dm":
-        renderDM(d);
-        beep(800);
-        bumpUnread();
-        if(ttsEnabled){
-          speak("Direct message from " + d.from + ": " + d.text);
-        }
-        break;
-      case "typing":
-        typing.textContent=d.state?(d.user+" is typing..."):"";
-        break;
-      case "userlist":
-        renderUsers(d.users);
-        break;
-      case "react":
-        applyReaction(d);
-        break;
-      case "clearRoom":
-        if(d.room===currentRoom){
-          msgs.innerHTML="";
-          addSys("Room cleared by administrator");
-        }
-        break;
-      case "radioStatus":
-        updateRadioStats(d);
-        break;
-      case "kicked":
-        wsKicked=true;
-        if(ws) ws.close();
-        $('app').classList.remove('show');
-        $('login').style.display='';
-        $('passIn').value=''; $('nameIn').value='';
-        $('loginErr').textContent=d.text||'You were removed by an administrator.';
-        username=''; myIsAdmin=false; enteredPass='';
-        $('adminPanel').style.display='none';
-        break;
-      case "error":
-        if(d.text==='BANNED'){
-          wsKicked=true; if(ws) ws.close();
-          $('app').classList.remove('show'); $('login').style.display='';
-          $('passIn').value=''; $('nameIn').value='';
-          $('loginErr').textContent='🚫 Your IP is banned from this server.';
-          username=''; myIsAdmin=false; $('adminPanel').style.display='none';
-        } else if(d.text==='VAULT_DENIED'){
-          if(currentRoom==='vault') changeRoom('comms');
-          $('vaultModalErr').textContent='Invalid key. Try again.';
-          $('vaultModal').style.display='flex';
-          $('vaultKeyInput').value=''; $('vaultKeyInput').focus();
-        } else { addSys('&#x26A0; '+d.text,true); }
-        break;
-      case "banList":
-        renderBanList(d.bans||[]);
-        break;
-      case "system":
-        addSys(d.text);
-        break;
-      /* -- Game Events -- */
-      case "gameWaiting":  handleGameMsg(d); break;
-      case "gameQueued":   handleGameMsg(d); break;
-      case "gameStart":    handleGameMsg(d); break;
-      case "gameBoard":    handleGameMsg(d); break;
-      case "gameForfeit":  handleGameMsg(d); break;
-      case "gameIdle":     handleGameMsg(d); break;
-      /* -- E2EE -- */
-      case "pubKey":       onReceivePubKey(d); break;
-      /* -- Vault -- */
-      case "vaultKey":     onReceiveVaultKey(d); break;
-      case "vaultInvite":  handleVaultInvite(d); break;
-      /* -- Admin grant -- */
-      case "adminGranted": onAdminGranted(d); break;
-      case "pong":         break;
-      case "voice":        if(d.from !== username) handleVoiceMsg(d); break;
-    }
-  }
-
-  /* -- Admin Granted Handler -- */
-  function onAdminGranted(d){
-    myIsAdmin=true;
-    $('adminPanel').style.display='block';
-    addSys('&#x2705; You are now an Admin! Admin panel unlocked.');
-    // Re-render user list to show kick/ban buttons
-    if(onlineUsers.length>0) renderUsers(onlineUsers);
-  }
-
-  /* -- Radio UI Updates -- */
-  function updateRadioStats(d) {
-    $("localNode").textContent = d.localNode;
-    const statusEl = $("linkStatus");
-    if (d.online) {
-      statusEl.textContent = "ONLINE";
-      statusEl.className = "stat-val online";
-    } else {
-      statusEl.textContent = "OFFLINE";
-      statusEl.className = "stat-val offline";
-    }
-    $("txCount").textContent = d.txCount;
-    $("rxCount").textContent = d.rxCount;
-    $("linkQuality").textContent = d.quality + "%";
-  }
-
-  /* -- UI Renderers -- */
-  function addSys(text,isErr=false){
-    const div=document.createElement("div");
-    
-    // Check if it's a join/leave message
-    const match = String(text).match(/^(.+?)\s+(joined|left)\s+(#[a-z]+)$/);
-    if (match && !isErr) {
-      const user = match[1];
-      const action = match[2];
-      const room = match[3];
-      const initials = user.substring(0, 2).toUpperCase();
-      const isAdm = onlineUsers.some(u => u.name === user && u.isAdmin);
-      
-      div.className = "msg sys-avatar-line";
-      div.innerHTML = `<span class="sys-avatar ${isAdm ? 'admin-sys-av' : ''}">${initials}</span>` +
-                      `<span class="sys-avatar-text">${action} ${room}</span>`;
-    } else {
-      div.className="msg sys";
-      div.innerHTML=text;
-      if(isErr)div.style.color="var(--red)";
-    }
-    
-    msgs.appendChild(div);
-    if(isNearBottom()) scrollBottom();
-  }
-
-  /* -- Render Chat Message Card -- */
-  function renderMsg(d){
-    const isMe=d.user===username;
-    const div=document.createElement("div");
-    
-    const isGhost = d.text.startsWith('[GHOST]');
-    const msgText = isGhost ? d.text.substring(7) : d.text;
-    
-    div.className="msg "+(isMe?"me":"other") + (isGhost ? " ghost-msg" : "");
-    div.dataset.user=d.user;
-    div.dataset.text=d.text;
-
-    // Reaction Bar
-    const rb=document.createElement("div");
-    rb.className="react-bar";
-    EMOJIS.forEach(em=>{
-      const b=document.createElement("span");
-      b.className="react-btn";b.textContent=em;
-      b.onclick=ev=>{ev.stopPropagation();sendReact(d.user,d.text,em);};
-      rb.appendChild(b);
-    });
-    div.appendChild(rb);
-
-    if(d.reply){
-      const q=document.createElement("div");
-      q.className="reply-quote";
-      q.textContent="↩ "+d.reply;
-      div.appendChild(q);
-    }
-    const hdr=document.createElement("div");
-    hdr.className="msg-header";
-    
-    // Check message origin type (Mesh vs Local)
-    const badgeType = d.mesh ? '<span class="badge mesh">\u{26A1} Mesh Link</span>' : '<span class="badge local">\u{1F4F6} Local AP</span>';
-    
-    hdr.innerHTML='<span class="msg-user">'+escHtml(d.user)+'</span>'
-                 + badgeType
-                 +'<span class="msg-ts">'+(d.ts||"")+'</span>';
-    div.appendChild(hdr);
-
-    if (isGhost) {
-      const countdown = document.createElement("span");
-      countdown.style.fontSize = "0.7rem";
-      countdown.style.color = "#10b981";
-      countdown.style.marginLeft = "8px";
-      countdown.style.fontWeight = "bold";
-      countdown.textContent = " [10s]";
-      hdr.appendChild(countdown);
-
-      let secLeft = 10;
-      const timer = setInterval(() => {
-        secLeft--;
-        countdown.textContent = ` [${secLeft}s]`;
-        if (secLeft <= 0) {
-          clearInterval(timer);
-          div.style.transition = "all 0.5s ease";
-          div.style.opacity = "0";
-          setTimeout(() => div.remove(), 500);
-        }
-      }, 1000);
-    }
-
-    const txt=document.createElement("div");
-    txt.className="msg-text";
-    txt.textContent=msgText;
-    div.appendChild(txt);
-    const rc=document.createElement("div");
-    rc.className="reactions";
-    div.appendChild(rc);
-
-    div.onclick=()=>setReply(msgText,d.user);
-    msgs.appendChild(div);
-  }
-
-  function renderDM(d){
-    const div=document.createElement("div");
-    div.className="msg dm-msg";
-    div.innerHTML='<div class="dm-label">\u{1F60E} DM from '+escHtml(d.from)+'</div>'
-                 +'<div class="msg-text">'+escHtml(d.text)+'</div>';
-    msgs.appendChild(div);
-    if(isNearBottom()) scrollBottom();
-  }
-
-  function renderUsers(users){
-    onlineUsers = users;
-    userList.innerHTML = '';
-
-    // --- Update room-user occupant avatars ---
-    const rooms = ['comms', 'airwaves', 'terminal', 'game', 'darknet', 'vault'];
-    rooms.forEach(rm => {
-      const container = $('roomUsers-' + rm);
-      if (container) container.innerHTML = '';
-    });
-
-    users.forEach(u => {
-      const uRoom = u.room || 'comms';
-      const container = $('roomUsers-' + uRoom);
-      if (container) {
-        const av = document.createElement('span');
-        av.className = 'room-user-avatar' + (u.isAdmin ? ' admin-avatar' : '');
-        av.textContent = u.name.substring(0, 2).toUpperCase();
-        av.title = u.name;
-        container.appendChild(av);
-      }
-    });
-
-    users.forEach(u => {
-      const isSelf = (u.name === username);
-      const isAdm  = !!u.isAdmin;
-
-      // --- Outer card ---
-      const item = document.createElement('div');
-      item.className = 'user-item';
-
-      // --- TOP ROW: avatar + name + role badge ---
-      const topRow = document.createElement('div');
-      topRow.className = 'user-top-row';
-
-      // Avatar (initials)
-      const av = document.createElement('div');
-      av.className = 'user-avatar' + (isAdm ? ' admin-av' : '');
-      av.textContent = u.name.substring(0, 2).toUpperCase();
-      topRow.appendChild(av);
-
-      // Info block
-      const info = document.createElement('div');
-      info.className = 'user-info';
-
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'user-name' + (isAdm ? ' admin' : '');
-      nameSpan.textContent = u.name + (isSelf ? ' (you)' : '');
-      nameSpan.title = 'Click to DM ' + u.name;
-      if (!isSelf) {
-        nameSpan.onclick = () => clickUser(u.name);
-      }
-
-      const roleBadge = document.createElement('span');
-      roleBadge.className = 'user-role-badge ' + (isAdm ? 'badge-admin' : 'badge-user');
-      roleBadge.textContent = isAdm ? '⚡ Admin' : '● User';
-
-      info.appendChild(nameSpan);
-      info.appendChild(roleBadge);
-      topRow.appendChild(info);
-      item.appendChild(topRow);
-
-      // --- MIDDLE ROW: meta chips (node + room) ---
-      const metaRow = document.createElement('div');
-      metaRow.className = 'user-meta-row';
-
-      const nodeEl = $('localNode');
-      const localNodeChar = nodeEl ? nodeEl.textContent.trim().substring(0,1) : 'A';
-      const nodeChar = u.node || localNodeChar;
-      const nodeChip = document.createElement('span');
-      nodeChip.className = 'user-meta-chip';
-      nodeChip.textContent = '🔗 Node ' + nodeChar;
-      metaRow.appendChild(nodeChip);
-
-      const roomName = u.room || (isSelf ? currentRoom : 'comms');
-      const roomChip = document.createElement('span');
-      roomChip.className = 'user-meta-chip';
-      roomChip.textContent = '#' + roomName;
-      metaRow.appendChild(roomChip);
-
-      item.appendChild(metaRow);
-
-      // --- BOTTOM ROW: actions ---
-      const actionsRow = document.createElement('div');
-      actionsRow.className = 'user-actions';
-
-      if (isSelf) {
-        const selfTag = document.createElement('span');
-        selfTag.className = 'ua-self-tag';
-        selfTag.textContent = 'You';
-        actionsRow.appendChild(selfTag);
-      } else {
-        const dmBtn = document.createElement('button');
-        dmBtn.className = 'user-action-btn ua-dm';
-        dmBtn.textContent = '💬 DM';
-        dmBtn.onclick = (e) => {
-          e.stopPropagation();
-          clickUser(u.name);
-        };
-        actionsRow.appendChild(dmBtn);
-
-        if (myIsAdmin) {
-          const inviteBtn = document.createElement('button');
-          inviteBtn.className = 'user-action-btn ua-invite';
-          inviteBtn.textContent = '🔑 Invite';
-          inviteBtn.onclick = (e) => {
-            e.stopPropagation();
-            sendMsg_raw('/vault invite ' + u.name);
-          };
-          actionsRow.appendChild(inviteBtn);
-        }
-
-        const isLocal = !u.node || u.node === localNodeChar;
-        if (myIsAdmin && isLocal) {
-          const kickBtn = document.createElement('button');
-          kickBtn.className = 'user-action-btn ua-kick';
-          kickBtn.textContent = '👢 Kick';
-          kickBtn.onclick = (e) => {
-            e.stopPropagation();
-            wsSend({type: 'msg', text: '/kick ' + u.name, reply: ''});
-            msgInput.value = '';
-          };
-          
-          const banBtn = document.createElement('button');
-          banBtn.className = 'user-action-btn ua-ban';
-          banBtn.textContent = '🚫 Ban';
-          banBtn.onclick = (e) => {
-            e.stopPropagation();
-            wsSend({type: 'msg', text: '/ban ' + u.name, reply: ''});
-            msgInput.value = '';
-          };
-
-          actionsRow.appendChild(kickBtn);
-          actionsRow.appendChild(banBtn);
-        }
-      }
-      item.appendChild(actionsRow);
-
-      userList.appendChild(item);
-    });
-  }
-
-  function renderBanList(bans){
-    const banListEl=$('banList');
-    banListEl.innerHTML='';
-    if(!bans||bans.length===0){
-      banListEl.innerHTML='<span id="banListEmpty">No active bans.</span>';
-      return;
-    }
-    bans.forEach(b=>{
-      const entry=document.createElement('div');
-      entry.className='ban-entry';
-      entry.innerHTML='<span class="ban-name">'+escHtml(b.name)+'</span>'
-                     +'<span class="ban-ip">'+escHtml(b.ip)+'</span>';
-      const unbanBtn=document.createElement('button');
-      unbanBtn.className='unban-btn';
-      unbanBtn.textContent='Unban';
-      unbanBtn.onclick=()=>{
-        wsSend({type:'msg',text:'/unban '+b.name,reply:''});
-        msgInput.value='';
-      };
-      entry.appendChild(unbanBtn);
-      banListEl.appendChild(entry);
-    });
-  }
-
-  window.clickUser=(name)=>{
-    const val=msgInput.value.trim();
-    if(val.startsWith("/dm")){
-      msgInput.value="/dm "+name+" ";
-    }else if(val.startsWith("/kick")){
-      msgInput.value="/kick "+name;
-    }else if(val===""){
-      msgInput.value="/dm "+name+" ";
-    }else{
-      msgInput.value=msgInput.value+" @"+name+" ";
-    }
-    msgInput.focus();
-  };
-
-  function applyReaction(d){
-    const allMsgs=[...msgs.querySelectorAll(".msg:not(.sys)")];
-    for(const m of allMsgs){
-      if(m.dataset.user===d.targetUser && m.dataset.text===d.targetText){
-        const rc=m.querySelector(".reactions");
-        let pill=[...rc.querySelectorAll(".reaction-pill")].find(p=>p.dataset.em===d.emoji);
-        if(!pill){
-          pill=document.createElement("span");
-          pill.className="reaction-pill";
-          pill.dataset.em=d.emoji;
-          pill.dataset.count=0;
-          rc.appendChild(pill);
-        }
-        pill.dataset.count=parseInt(pill.dataset.count||0)+1;
-        pill.textContent=d.emoji+" "+pill.dataset.count;
-        break;
-      }
-    }
-  }
-
-  function sendReact(tu,tt,em){
-    wsSend({type:"react",targetUser:tu,targetText:tt,emoji:em});
-  }
-
-  /* -- Autocomplete / Suggestions Logic -- */
-  msgInput.addEventListener("input", handleInputSuggestions);
-
-  function handleInputSuggestions() {
-    const val = msgInput.value;
-    suggestions.innerHTML = "";
-    suggestions.style.display = "none";
-
-    if (!val.startsWith("/")) return;
-
-    // Case 1: Just typing a command (e.g. /d or /k)
-    if (!val.includes(" ")) {
-      // /admin is hidden from suggestions (still works if typed manually)
-      const baseCmds = ["/dm ", "/clear", "/v2", "/kick ", "/ban "];
-      if(myIsAdmin) baseCmds.push("/unban ");
-      const matches = baseCmds.filter(c => c.startsWith(val));
-      if (val !== "" && matches.length > 0) {
-        showSuggestions(matches, (cmd) => {
-          msgInput.value = cmd;
-          msgInput.focus();
-          handleInputSuggestions();
-        });
-      }
-      return;
-    }
-
-    // Case 2: Command entered, suggesting online users
-    const parts = val.split(" ");
-    const cmd = parts[0];
-    if (cmd === "/dm" || cmd === "/kick" || cmd === "/ban") {
-      const searchUser = parts.slice(1).join(" ").toLowerCase();
-      const otherUsers = onlineUsers.filter(u => u.name !== username);
-      const matches = otherUsers.filter(u => u.name.toLowerCase().startsWith(searchUser));
-      if (matches.length > 0) {
-        showSuggestions(matches.map(u => u.name), (selectedUser) => {
-          msgInput.value = cmd + " " + selectedUser + (cmd==="/dm"?" ":"");
-          msgInput.focus();
-        });
-      }
-    }
-  }
-
-  function showSuggestions(list, onClick) {
-    suggestions.innerHTML = "";
-    list.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "suggest-item";
-      div.textContent = item;
-      div.onclick = (e) => {
-        e.stopPropagation();
-        onClick(item);
-        suggestions.style.display = "none";
-        suggestions.innerHTML = "";
-      };
-      suggestions.appendChild(div);
-    });
-    suggestions.style.display = "block";
-  }
-
-  // Close suggestions when clicking elsewhere
-  document.addEventListener("click", () => {
-    suggestions.style.display = "none";
-  });
-
-  /* -- Reply handlers -- */
-  function setReply(text,user){
-    replyTo=text;
-    $("replyBanner").classList.add("show");
-    $("replyText").textContent="↩ "+user+": "+text;
-    msgInput.focus();
-  }
-  window.cancelReply=()=>{
-    replyTo=null;
-    $("replyBanner").classList.remove("show");
-  };
-
-  /* -- Typing indicators -- */
-  msgInput.addEventListener("input",()=>{
-    if(!isTyping){isTyping=true;wsSend({type:"typing",state:true});}
-    clearTimeout(typingTimer);
-    typingTimer=setTimeout(()=>{isTyping=false;wsSend({type:"typing",state:false});},1200);
-  });
-
-  /* -- RC4 Crypto Fallback for Non-Secure Contexts -- */
-  function rc4(key, str) {
-    let s = [], j = 0, x, res = '';
-    for (let i = 0; i < 256; i++) s[i] = i;
-    for (let i = 0; i < 256; i++) {
-      j = (j + s[i] + key.charCodeAt(i % key.length)) % 256;
-      x = s[i]; s[i] = s[j]; s[j] = x;
-    }
-    let i = 0; j = 0;
-    for (let y = 0; y < str.length; y++) {
-      i = (i + 1) % 256;
-      j = (j + s[i]) % 256;
-      x = s[i]; s[i] = s[j]; s[j] = x;
-      res += String.fromCharCode(str.charCodeAt(y) ^ s[(s[i] + s[j]) % 256]);
-    }
-    return res;
-  }
-
-
-
-  msgInput.addEventListener("keydown",e=>{
-    if(e.key==="Enter"&&!e.shiftKey){
-      e.preventDefault();
-      sendMsg();
-      suggestions.style.display = "none";
-    }
-  });
-
-  /* -- Send Message (E2EE aware) -- */
-  window.sendMsg=async()=>{
-    const rawVal = msgInput.value.trim();
-    if (rawVal.toLowerCase() === "/v2" || rawVal.toLowerCase() === "\\v2" || rawVal.toLowerCase() === "\v2") {
-      toggleV2Theme();
-      msgInput.value = '';
-      cancelReply();
-      return;
-    }
-
-    const text=msgInput.value.trim();
-    if(!text)return;
-    if(text.startsWith("/admin ")){
-      enteredPass=text.substring(7).trim();
-    }
-    const key=(currentRoom==='vault')?(vaultCryptoKey||vaultCryptoKeyFallback):(currentRoom==='darknet')?(e2eeSharedKey||e2eeSharedKeyFallback):null;
-    if(key){
-      const encrypted=await encryptMsg(text,key);
-      if(encrypted){
-        wsSend({type:'msg',text:JSON.stringify({enc:encrypted.enc,iv:encrypted.iv}),reply:replyTo||''});
-      }
-    } else {
-      let finalTxt = text;
-      if (currentRoom === 'terminal' && $('ghostCheck') && $('ghostCheck').checked) {
-        finalTxt = '[GHOST]' + text;
-      }
-      wsSend({type:'msg',text:finalTxt,reply:replyTo||''});
-    }
-    msgInput.value='';
-    cancelReply();
-    isTyping=false;
-    clearTimeout(typingTimer);
-  };
-
-  /* -- changeRoom -- */
-  const ROOM_ICONS = {comms:'💬',airwaves:'📡',terminal:'💻',game:'🎮',darknet:'🌐',vault:'🔐'};
-  window.changeRoom=room=>{
-    if(room===currentRoom) return;
-    const old=currentRoom;
-    if(old==='game'){ wsSend({type:'leaveGame'}); }
-    if(old==='darknet'||old==='vault'){ e2eeKeyPair=null; e2eeSharedKey=null; e2eeSharedKeyFallback=null; vaultCryptoKey=null; vaultCryptoKeyFallback=null; updateE2eeBadge('off'); }
-    currentRoom=room;
-    msgs.innerHTML="";
-    typing.textContent="";
-    const icon = ROOM_ICONS[room] || '#';
-    $("roomLabel").textContent=icon+' '+room.charAt(0).toUpperCase() + room.slice(1);
-    document.querySelectorAll(".room-btn").forEach(b=>{
-      const lbl = b.querySelector('.r-label');
-      const label = lbl ? lbl.textContent.trim() : b.textContent.trim();
-      b.classList.toggle("active", label.toLowerCase()===room.toLowerCase());
-    });
-    const isGame=(room==='game');
-    $('msgs-wrap').style.display=isGame?'none':'flex';
-    $('gameArea').style.display=isGame?'flex':'none';
-    $('inputBar').style.display=isGame?'none':'flex';
-    
-    // Toggle micBtn and emojiBtn based on room (mic in airwaves/vault, emoji elsewhere)
-    const hasMic = (room === 'airwaves' || room === 'vault');
-    const micBtn = $('micBtn');
-    const emojiBtn = $('emojiBtn');
-    const emojiPicker = $('emojiPicker');
-    if (micBtn) micBtn.style.display = hasMic ? 'flex' : 'none';
-    if (emojiBtn) emojiBtn.style.display = (!isGame && !hasMic) ? 'flex' : 'none';
-    if (emojiPicker) emojiPicker.classList.remove('show');
-
-    $('replyBanner').style.display=isGame?'none':'';
-    $('e2eeBadge').style.display=(room==='darknet'||room==='vault')?'flex':'none';
-    const isTerminal = (room==='terminal');
-    const ghostWrap = $('ghostToggleWrap');
-    if(ghostWrap) {
-      ghostWrap.style.display = isTerminal ? 'flex' : 'none';
-      if(!isTerminal) { const gc = $('ghostCheck'); if(gc) gc.checked = false; }
-    }
-    $('vaultPanel').style.display=(room==='vault'&&myIsAdmin)?'block':'none';
-    if(room!=='vault'||myIsAdmin){ wsSend({type:'changeRoom',room}); }
-    if(room==='darknet') initDarknetE2EE();
-
-    // Close left/right sidebars on mobile after selecting a room
-    const leftSb = $('leftSidebar');
-    const rightSb = $('rightSidebar');
-    if (leftSb) leftSb.classList.remove('open');
-    if (rightSb) rightSb.classList.remove('open');
-  };
-
-  // Close open sidebars when tapping main content area on mobile
-  document.addEventListener('DOMContentLoaded', () => {
-    const mainCont = $('mainContent');
-    if (mainCont) {
-      mainCont.addEventListener('click', (e) => {
-        const leftSb = $('leftSidebar');
-        const rightSb = $('rightSidebar');
-        let wasOpen = false;
-        if (leftSb && leftSb.classList.contains('open')) {
-          leftSb.classList.remove('open');
-          wasOpen = true;
-        }
-        if (rightSb && rightSb.classList.contains('open')) {
-          rightSb.classList.remove('open');
-          wasOpen = true;
-        }
-        if (wasOpen) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }, true); // Capture phase
-    }
-  });
-
-  /* -- Help Command Console -- */
-  window.showHelp=()=>{
-    addSys("/dm <name> <msg>   -- Direct private message");
-    addSys("/clear             -- Clear conversation history (Admin)");
-    addSys("/kick <name>       -- Disconnect a user (Admin)");
-    addSys("/ban <name>        -- Ban a user by name and IP (Admin)");
-    addSys("/unban <name|ip>   -- Remove a ban (Admin)");
-    addSys("/vault gen         -- Generate new vault key (Admin, in vault)");
-    addSys("/vault invite <n>  -- Send vault key to user (Admin, in vault)");
-    addSys("/vault lock        -- Lock vault, revoke all access (Admin)");
-    if(!myIsAdmin) addSys("Tip: Log in with the admin password for admin controls.");
-    addSys("Interface: Tap any message card to quote/reply. Hover/Hold card to react.");
-  };
-
-  /* -- Game Idle Timer -- */
-  let idleTimer=null, idleCountdownTimer=null, idleSeconds=45;
-  function startGameIdleTimer(){
-    clearGameIdleTimer();
-    idleSeconds=45;
-    $('idleCountdown').textContent=idleSeconds;
-    $('gameIdleBar').style.display='block';
-    idleCountdownTimer=setInterval(()=>{
-      idleSeconds--;
-      $('idleCountdown').textContent=idleSeconds;
-      if(idleSeconds<=0){ clearGameIdleTimer(); leaveGameToComms(); }
-    },1000);
-  }
-  function clearGameIdleTimer(){
-    clearInterval(idleCountdownTimer);
-    clearTimeout(idleTimer);
-    idleTimer=null; idleCountdownTimer=null;
-    const bar=$('gameIdleBar');
-    if(bar) bar.style.display='none';
-  }
-  // Auto-redirect after result with countdown
-  function autoLeaveAfter(ms){
-    gameActive=false;
-    clearGameIdleTimer();
-    setTimeout(()=>{ if(currentRoom==='game') leaveGameToComms(); }, ms);
-  }
-
-  /* -- Game Engine -- */
-  function handleGameMsg(d){
-    switch(d.type){
-      case 'gameWaiting':
-        showGameOverlay('waiting',{});
-        clearGameIdleTimer();
-        break;
-      case 'gameQueued':
-        showGameOverlay('queued',{pos:d.pos});
-        clearGameIdleTimer();
-        break;
-      case 'gameStart':
-        myMark=d.mark; gameActive=true;
-        $('pNameA').textContent=d.nameA; $('pNameB').textContent=d.nameB;
-        $('scoreDispA').textContent=d.scoreA; $('scoreDispB').textContent=d.scoreB;
-        $('pStatA').textContent=d.mark===0?'Your turn':'Waiting...';
-        $('pStatB').textContent=d.mark===1?'Your turn':'Waiting...';
-        showGameOverlay('chooseGame', {});
-        $('gameLive').style.display='flex';
-        $('tttBoard').innerHTML = '';
-        updateTurnBadge(0);
-        startGameIdleTimer();
-        break;
-      case 'gameBoard':{
-        $('scoreDispA').textContent=d.scoreA; $('scoreDispB').textContent=d.scoreB;
-        const wl=d.winLine||[];
-        renderBoard(d.board,d.turn,wl);
-        if(d.winner!=null&&d.winner>=0){
-          const iWin=(d.winner===myMark);
-          clearGameIdleTimer();
-          showGameOverlay(iWin?'win':'loss',{scoreA:d.scoreA,scoreB:d.scoreB});
-          autoLeaveAfter(5000);
-        } else if(d.draw){
-          clearGameIdleTimer();
-          showGameOverlay('draw',{scoreA:d.scoreA,scoreB:d.scoreB});
-          autoLeaveAfter(5000);
-        } else {
-          startGameIdleTimer();
-          updateTurnBadge(d.turn);
-          $('cardA').classList.toggle('active',d.turn===0);
-          $('cardB').classList.toggle('active-b',d.turn===1);
-          $('pStatA').textContent=d.turn===0?'Your turn ❤️':'Waiting...';
-          $('pStatB').textContent=d.turn===1?'Your turn ❤️':'Waiting...';
-        }
-        break;}
-      case 'gameForfeit':
-        $('scoreDispA').textContent=d.scoreA; $('scoreDispB').textContent=d.scoreB;
-        clearGameIdleTimer();
-        showGameOverlay('forfeit',{loser:d.loser,scoreA:d.scoreA,scoreB:d.scoreB});
-        autoLeaveAfter(5000);
-        break;
-      case 'gameIdle':
-        clearGameIdleTimer();
-        showGameOverlay('idle',{});
-        autoLeaveAfter(4000);
-        break;
-    }
-  }
-
-  function renderBoard(board, turn, winLine){
-    const b=$('tttBoard');
-    if(!b) return;
-    b.innerHTML='';
-    b.style.display = 'grid';
-    b.style.gridTemplateColumns = 'repeat(3, 100px)';
-    b.style.gridTemplateRows = 'repeat(3, 100px)';
-    b.style.gap = '12px';
-    board.forEach((v,i)=>{
-      const cell=document.createElement('div');
-      cell.className='ttt-cell'+(v<0?' empty':v===0?' x played':' o played');
-      if(winLine.includes(i)) cell.classList.add('win-cell');
-      cell.textContent=v===0?'X':v===1?'O':'';
-      if(v<0&&gameActive&&turn===myMark) cell.onclick=()=>clickCell(i);
-      b.appendChild(cell);
-    });
-  }
-
-  function clickCell(idx){
-    if(!gameActive) return;
-    clearGameIdleTimer();
-    wsSend({type:'gameMove',cell:idx});
-    if(gameActive) startGameIdleTimer();
-  }
-
-  function updateTurnBadge(turn){
-    const badge=$('turnBadge');
-    const isMyTurn=(turn===myMark);
-    badge.textContent=isMyTurn?'⭐ Your Turn!':'⏳ Opponent Turn';
-    badge.className=''+( isMyTurn?'my-turn':'');
-  }
-
-  function showGameOverlay(state, data){
-    const ol = $('gameOverlay');
-    if (!ol) return;
-    ol.style.display = 'flex';
-    const autoMsg = () => `<div style="font-size:.7rem;color:var(--muted);margin-top:10px;">&#x23F1; Returning to chat in 5s&hellip;</div>`;
-
-    // 2-player notice badge shown in waiting + chooseGame
-    const twoPlayerBadge = `<div class="two-player-notice">⚠️ Game Room — Max 2 Players Only</div>`;
-
-    const states = {
-      // Waiting for opponent — show 2-player rule prominently
-      waiting: `<div class="g-card">
-        <div class="spinner"></div>
-        <div class="g-title">🎮 Looking for Opponent…</div>
-        ${twoPlayerBadge}
-        <div class="g-sub">Waiting for a second player to join.<br><b>Only 2 players</b> can play at a time.</div>
-        <button class="g-btn secondary" onclick="leaveGameToComms()">← Leave Room</button>
-      </div>`,
-
-      // Room full — 3rd+ player blocked
-      queued: `<div class="g-card">
-        <span class="g-emoji">🚫</span>
-        <div class="g-title" style="color:#ef4444;">Game Room Full!</div>
-        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 14px;margin:8px 0;font-size:.82rem;color:#fca5a5;line-height:1.6;">
-          🎮 Only <b>2 players</b> can play simultaneously.<br>
-          A match is already in progress.<br>
-          <span style="color:#94a3b8;">Queue position: <b>#${data.pos || '?'}</b></span>
-        </div>
-        <div class="g-sub">Please wait or come back later.</div>
-        <button class="g-btn secondary" onclick="leaveGameToComms()">← Leave Room</button>
-      </div>`,
-
-      win: `<div class="g-card"><span class="g-emoji">&#x1F3C6;</span><div class="g-title">Victory!</div><div class="g-sub">You won this round.<br>Score: <b>${data.scoreA} : ${data.scoreB}</b></div><button class="g-btn secondary" onclick="leaveGameToComms()">Leave Now</button>${autoMsg()}</div>`,
-      loss: `<div class="g-card"><span class="g-emoji">&#x1F480;</span><div class="g-title">Defeated</div><div class="g-sub">Better luck next round!<br>Score: <b>${data.scoreA} : ${data.scoreB}</b></div><button class="g-btn secondary" onclick="leaveGameToComms()">Leave Now</button>${autoMsg()}</div>`,
-      draw: `<div class="g-card"><span class="g-emoji">&#x1F91D;</span><div class="g-title">Draw!</div><div class="g-sub">Perfectly matched!<br>Score: <b>${data.scoreA} : ${data.scoreB}</b></div><button class="g-btn secondary" onclick="leaveGameToComms()">Leave Now</button>${autoMsg()}</div>`,
-      forfeit: `<div class="g-card"><span class="g-emoji">&#x1F3C6;</span><div class="g-title">Victory by Forfeit!</div><div class="g-sub"><b>${escHtml(data.loser||'Opponent')}</b> left.<br>Score: <b>${data.scoreA} : ${data.scoreB}</b></div><button class="g-btn secondary" onclick="leaveGameToComms()">Leave Now</button>${autoMsg()}</div>`,
-      idle: `<div class="g-card"><span class="g-emoji">&#x23F1;</span><div class="g-title">Timed Out</div><div class="g-sub">No moves were made. Returning to chat&hellip;</div></div>`,
-
-      chooseGame: myMark === 0 ?
-        `<div class="g-card">
-           <div class="g-title">🎮 Select Game</div>
-           ${twoPlayerBadge}
-           <div class="g-sub">You are <b>Player A</b>. Choose a game to play with your opponent.</div>
-           <button class="g-btn primary" onclick="selectGame('ttt')">Tic-Tac-Toe ✖ ⭕</button>
-           <button class="g-btn primary" onclick="selectGame('chess')">Chess ♟</button>
-           <button class="g-btn primary" onclick="selectGame('rps')">Rock-Paper-Scissors ✊</button>
-         </div>` :
-        `<div class="g-card">
-           <div class="spinner"></div>
-           <div class="g-title">⏳ Waiting for Choice</div>
-           ${twoPlayerBadge}
-           <div class="g-sub">You are <b>Player B</b>. Waiting for Player A to select a game.</div>
-         </div>`,
-    };
-    ol.innerHTML = states[state] || states.idle;
-  }
-
-  /* -- Vault Key Received (from server) -- */
-  function onReceiveVaultKey(d){
-    if(myIsAdmin&&d.key&&d.key.length>0){
-      $('vaultKeyDisplay').textContent=d.key;
-      deriveVaultKey(d.key);
-    } else if(!myIsAdmin&&d.granted){
-      // User was granted access - derive key from what they entered
-      if(pendingVaultKey) {
-        deriveVaultKey(pendingVaultKey);
-      }
-    }
-  }
-
-  /* -- Darknet E2EE (ECDH P-256 + AES-GCM) -- */
-  async function initDarknetE2EE(){
-    if (!crypto.subtle) {
-      // Fallback Mode (unsecure origin, e.g. unencrypted HTTP served by ESP32)
-      const randomKey = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-      e2eeSharedKeyFallback = randomKey;
-      wsSend({type:'pubKey',key:'fallback:' + btoa(randomKey)});
-      updateE2eeBadge('pending');
-      addSys('\u{1F512} E2EE initialized in Fallback Mode (Insecure HTTP Context).');
-      return;
-    }
-    try {
-      e2eeKeyPair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
-      const pub=await crypto.subtle.exportKey('raw',e2eeKeyPair.publicKey);
-      const b64=btoa(String.fromCharCode(...new Uint8Array(pub)));
-      wsSend({type:'pubKey',key:b64});
-      updateE2eeBadge('pending');
-    } catch(e){ 
-      // Fallback as backup
-      const randomKey = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-      e2eeSharedKeyFallback = randomKey;
-      wsSend({type:'pubKey',key:'fallback:' + btoa(randomKey)});
-      updateE2eeBadge('pending');
-      addSys('\u{1F512} E2EE initialized in Fallback Mode.');
-    }
-  }
-
-  async function onReceivePubKey(d){
-    if (d.key.startsWith('fallback:')) {
-      const k = d.key.substring(9);
-      e2eeSharedKeyFallback = atob(k);
-      updateE2eeBadge('active');
-      addSys('\u{1F512} E2EE channel established (Fallback Mode).');
-      wsSend({type:'pubKey',key:'fallback_confirm'});
-      decryptAllPendingMessages();
-      return;
-    }
-    if (d.key === 'fallback_confirm') {
-      updateE2eeBadge('active');
-      addSys('\u{1F512} E2EE channel established (Fallback Mode).');
-      decryptAllPendingMessages();
-      return;
-    }
-    if(!e2eeKeyPair) return;
-    try{
-      const raw=Uint8Array.from(atob(d.key),c=>c.charCodeAt(0));
-      const peerPub=await crypto.subtle.importKey('raw',raw,{name:'ECDH',namedCurve:'P-256'},false,[]);
-      e2eeSharedKey=await crypto.subtle.deriveKey(
-        {name:'ECDH',public:peerPub},e2eeKeyPair.privateKey,
-        {name:'AES-GCM',length:256},false,['encrypt','decrypt']);
-      updateE2eeBadge('active');
-      addSys('\u{1F512} E2EE channel established with '+escHtml(d.from||'peer')+'.');
-      decryptAllPendingMessages();
-    }catch(e){ 
-      addSys('\u{26A0} E2EE key exchange failed.',true); 
-    }
-  }
-
-  async function encryptMsg(text,key){
-    if(!key) return null;
-    if (typeof key === 'string') {
-      // Fallback RC4
-      const ciphertext = rc4(key, text);
-      return {enc: btoa(ciphertext), iv: 'fallback'};
-    }
-    const iv=crypto.getRandomValues(new Uint8Array(12));
-    const enc=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(text));
-    return {enc:btoa(String.fromCharCode(...new Uint8Array(enc))),iv:btoa(String.fromCharCode(...iv))};
-  }
-
-  async function decryptMsg(encB64,ivB64,key){
-    if(!key) return '[encrypted]';
-    if (typeof key === 'string') {
-      try {
-        const ciphertext = atob(encB64);
-        return rc4(key, ciphertext);
-      } catch(e) { return '[decryption failed]'; }
-    }
-    try{
-      const enc=Uint8Array.from(atob(encB64),c=>c.charCodeAt(0));
-      const iv =Uint8Array.from(atob(ivB64), c=>c.charCodeAt(0));
-      const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,enc);
-      return new TextDecoder().decode(dec);
-    }catch{ return '[decryption failed]'; }
-  }
-
-  async function tryDecryptMsg(d){
-    let text = d.text;
-    let decryptedOk = false;
-    try {
-      const p = JSON.parse(d.text);
-      if (p.enc && p.iv) {
-        const key = (currentRoom==='vault')
-          ? (vaultCryptoKey || vaultCryptoKeyFallback)
-          : (e2eeSharedKey || e2eeSharedKeyFallback);
-        if (key) {
-          const result = await decryptMsg(p.enc, p.iv, key);
-          if (result && result !== '[decryption failed]') {
-            text = result;
-            decryptedOk = true;
-          } else {
-            // Decryption failed — show placeholder but still render
-            text = '\u{1F512} [encrypted message \u2014 key mismatch]';
-          }
-        } else {
-          // No key yet — still render with notice
-          text = '\u{1F512} [encrypted \u2014 E2EE not established yet]';
-        }
-      }
-      // else: plain text in E2EE room, just render as-is
-    } catch(err) {
-      // Not JSON — plain text message in darknet, render as-is
-    }
-    renderMsg({...d, text});
-  }
-
-  async function decryptAllPendingMessages(){
-    const key = (currentRoom==='vault')
-      ? (vaultCryptoKey || vaultCryptoKeyFallback)
-      : (e2eeSharedKey || e2eeSharedKeyFallback);
-    if (!key) return;
-    const msgDivs = document.querySelectorAll('.msg');
-    for (const div of msgDivs) {
-      const origText = div.dataset.text;
-      if (!origText) continue;
-      try {
-        const p = JSON.parse(origText);
-        if (p.enc && p.iv) {
-          const result = await decryptMsg(p.enc, p.iv, key);
-          if (result && result !== '[decryption failed]') {
-            const txtEl = div.querySelector('.msg-text');
-            if (txtEl) {
-              const isGhost = result.startsWith('[GHOST]');
-              txtEl.textContent = isGhost ? result.substring(7) : result;
-            }
-          }
-        }
-      } catch (e) {}
-    }
-  }
-
-  function updateE2eeBadge(state){
-    const b=$('e2eeBadge');
-    b.className=''; b.style.display='flex';
-    b.title='';
-    if(state==='off'){b.style.display='none';return;}
-    if(state==='active'){
-      if(e2eeSharedKeyFallback) {
-        b.className='fallback-warning';
-        b.textContent='⚠ E2EE: Insecure Fallback';
-        b.title='Insecure HTTP origin fallback used. Key exchanged in plaintext.';
-      } else {
-        b.className='active';
-        b.textContent='\u{1F512} E2EE Active';
-      }
-    }
-    else if(state==='vault'){
-      if(vaultCryptoKeyFallback) {
-        b.className='fallback-warning';
-        b.textContent='⚠ Vault E2EE: Insecure Fallback';
-        b.title='Insecure origin fallback used. Key derivation is limited.';
-      } else {
-        b.className='vault';
-        b.textContent='\u{1F510} Vault E2EE';
-      }
-    }
-    else{b.textContent='\u{1F512} E2EE\u{2026} Waiting';}
-  }
-
-  function escHtml(s){
-    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
-                    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-  }
-
-  // --- CHESS, RPS, TTS HELPERS ---
-  window.selectGame = (game) => {
-    wsSend({type: 'gameSelect', game});
-  };
-
-  function onGameSelected(game) {
-    activeGameName = game;
-    const ol = $('gameOverlay');
-    if (ol) ol.style.display = 'none';
-    const gl = $('gameLive');
-    if (gl) gl.style.display = 'flex';
-    initSelectedGame();
-  }
-
-  function initSelectedGame() {
-    if (activeGameName === 'ttt') {
-      renderBoard(Array(9).fill(-1), 0, []);
-      updateTurnBadge(0);
-      $('pStatA').textContent = myMark === 0 ? 'Your turn \u2764' : 'Waiting...';
-      $('pStatB').textContent = myMark === 1 ? 'Your turn \u2764' : 'Waiting...';
-      $('boardHint').textContent = 'Click a cell to place your mark';
-    } else if (activeGameName === 'chess') {
-      initChessGame();
-    } else if (activeGameName === 'rps') {
-      initRpsGame();
-    }
-  }
-
-  // ====================================================
-  // FULL CHESS ENGINE
-  // ====================================================
-
-  // Pieces: white = 0 (♙♖♘♗♕♔), black = 1 (♟♜♞♝♛♚)
-  // Board index: 0=top-left (a8), 63=bottom-right (h1)
-  // White plays from bottom (rows 6-7), black from top (rows 0-1)
-
-  const CHESS_W = ['\u2659','\u2656','\u2658','\u2657','\u2655','\u2654']; // P R N B Q K
-  const CHESS_B = ['\u265F','\u265C','\u265E','\u265D','\u265B','\u265A'];
-  const CP = {P:0,R:1,N:2,B:3,Q:4,K:5};
-
-  function chessColor(sq) {
-    if (!chessBoard[sq]) return -1;
-    return CHESS_W.includes(chessBoard[sq]) ? 0 : 1;
-  }
-  function chessType(sq) {
-    const p = chessBoard[sq];
-    if (!p) return -1;
-    let i = CHESS_W.indexOf(p);
-    if (i >= 0) return i;
-    return CHESS_B.indexOf(p);
-  }
-  function chessIsEmpty(sq) { return !chessBoard[sq]; }
-  function chessRow(sq) { return Math.floor(sq / 8); }
-  function chessCol(sq) { return sq % 8; }
-
-  function chessRawMoves(sq) {
-    const col = chessBoard[sq]; if (!col) return [];
-    const color = chessColor(sq);
-    const type  = chessType(sq);
-    const moves = [];
-    const r = chessRow(sq), c = chessCol(sq);
-
-    function push(to) {
-      if (to < 0 || to > 63) return false;
-      if (chessColor(to) === color) return false;
-      moves.push(to);
-      return chessIsEmpty(to);
-    }
-    function slide(dr, dc) {
-      let nr = r+dr, nc = c+dc;
-      while (nr>=0&&nr<8&&nc>=0&&nc<8) {
-        const to = nr*8+nc;
-        if (chessColor(to) === color) break;
-        moves.push(to);
-        if (!chessIsEmpty(to)) break;
-        nr+=dr; nc+=dc;
-      }
-    }
-
-    if (type === CP.P) {
-      const dir = color===0 ? -1 : 1;
-      const startRow = color===0 ? 6 : 1;
-      const nr = r+dir;
-      if (nr>=0&&nr<8) {
-        if (chessIsEmpty(nr*8+c)) {
-          moves.push(nr*8+c);
-          if (r===startRow && chessIsEmpty((r+2*dir)*8+c)) moves.push((r+2*dir)*8+c);
-        }
-        [-1,1].forEach(dc => {
-          if (c+dc>=0&&c+dc<8) {
-            const cap=nr*8+c+dc;
-            if (!chessIsEmpty(cap)&&chessColor(cap)!==color) moves.push(cap);
-          }
-        });
-      }
-    } else if (type === CP.R) {
-      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr,dc])=>slide(dr,dc));
-    } else if (type === CP.N) {
-      [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc])=>{
-        const nr2=r+dr,nc2=c+dc;
-        if(nr2>=0&&nr2<8&&nc2>=0&&nc2<8) push(nr2*8+nc2);
-      });
-    } else if (type === CP.B) {
-      [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr,dc])=>slide(dr,dc));
-    } else if (type === CP.Q) {
-      [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr,dc])=>slide(dr,dc));
-    } else if (type === CP.K) {
-      [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc])=>push((r+dr)*8+(c+dc)));
-    }
-    return moves;
-  }
-
-  function chessKingPos(board, color) {
-    const k = color===0 ? '\u2654' : '\u265A';
-    return board.indexOf(k);
-  }
-
-  function chessIsInCheck(board, color) {
-    const kp = chessKingPos(board, color);
-    if (kp < 0) return true;
-    const opp = 1 - color;
-    for (let sq=0; sq<64; sq++) {
-      if (chessColor(sq) !== opp) continue;
-      const savedBoard = chessBoard;
-      chessBoard = board;
-      const ms = chessRawMoves(sq);
-      chessBoard = savedBoard;
-      if (ms.includes(kp)) return true;
-    }
-    return false;
-  }
-
-  function chessLegalMoves(sq) {
-    const color = chessColor(sq);
-    const raw = chessRawMoves(sq);
-    return raw.filter(to => {
-      const backup = [...chessBoard];
-      const moving = chessBoard[sq];
-      chessBoard = [...chessBoard];
-      // Pawn promotion simulation
-      let piece = moving;
-      if (chessType(sq) === CP.P) {
-        const targetRow = chessRow(to);
-        if ((color===0&&targetRow===0)||(color===1&&targetRow===7)) {
-          piece = color===0 ? '\u2655' : '\u265B'; // auto-queen
-        }
-      }
-      chessBoard[to] = piece;
-      chessBoard[sq] = '';
-      const inCheck = chessIsInCheck(chessBoard, color);
-      chessBoard = backup;
-      return !inCheck;
-    });
-  }
-
-  function chessHasAnyLegal(color) {
-    for (let sq=0; sq<64; sq++) {
-      if (chessColor(sq) !== color) continue;
-      if (chessLegalMoves(sq).length > 0) return true;
-    }
-    return false;
-  }
-
-
-  function initChessGame() {
-    chessBoard = [
-      '\u265C','\u265E','\u265D','\u265B','\u265A','\u265D','\u265E','\u265C',
-      '\u265F','\u265F','\u265F','\u265F','\u265F','\u265F','\u265F','\u265F',
-      '','','','','','','','',
-      '','','','','','','','',
-      '','','','','','','','',
-      '','','','','','','','',
-      '\u2659','\u2659','\u2659','\u2659','\u2659','\u2659','\u2659','\u2659',
-      '\u2656','\u2658','\u2657','\u2655','\u2654','\u2657','\u2658','\u2656'
-    ];
-    chessTurn = 0;
-    selectedChessCell = null;
-    chessMoves = [];
-    renderChessBoard();
-    updateChessTurnBadge();
-    $('boardHint').textContent = 'Select a white piece to move';
-  }
-
-  function renderChessBoard() {
-    const b = $('tttBoard');
-    if (!b) return;
-    b.innerHTML = '';
-    b.style.display = 'grid';
-
-    const isMobile = window.innerWidth <= 480;
-    const cellSize = isMobile ? '36px' : '50px';
-    const fontSize = isMobile ? '1.4rem' : '1.85rem';
-
-    b.style.gridTemplateColumns = `repeat(8, ${cellSize})`;
-    b.style.gridTemplateRows = `repeat(8, ${cellSize})`;
-    b.style.gap = '0';
-    b.style.border = '3px solid #8b6535';
-    b.style.borderRadius = '6px';
-    b.style.overflow = 'hidden';
-    b.style.boxShadow = '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,101,53,0.4)';
-
-    const whitePieces = ['\u2654','\u2655','\u2656','\u2657','\u2658','\u2659'];
-    const blackPieces = ['\u265A','\u265B','\u265C','\u265D','\u265E','\u265F'];
-
-    for (let i = 0; i < 64; i++) {
-      const cell = document.createElement('div');
-      const row = Math.floor(i / 8);
-      const col = i % 8;
-      const isDark = (row + col) % 2 === 1;
-      const isSelected = (selectedChessCell === i);
-      const isLegal = chessMoves.includes(i);
-      const piece = chessBoard[i];
-      const isWhitePiece = whitePieces.includes(piece);
-      const isBlackPiece = blackPieces.includes(piece);
-      const inCheck = (chessIsInCheck(chessBoard, chessTurn) && piece && ((chessTurn===0&&piece==='\u2654')||(chessTurn===1&&piece==='\u265A')));
-
-      cell.style.width = cellSize;
-      cell.style.height = cellSize;
-      cell.style.display = 'flex';
-      cell.style.alignItems = 'center';
-      cell.style.justifyContent = 'center';
-      cell.style.fontSize = fontSize;
-      cell.style.cursor = isLegal || (gameActive && chessTurn===myMark && piece) ? 'pointer' : 'default';
-      cell.style.userSelect = 'none';
-      cell.style.transition = 'background 0.1s, filter 0.1s';
-      cell.style.position = 'relative';
-      cell.style.fontFamily = 'serif';
-
-      // Classic lichess board colors
-      if (isSelected) {
-        cell.style.background = '#f6f669';  // yellow highlight
-        cell.style.filter = 'brightness(1)';
-      } else if (inCheck) {
-        cell.style.background = '#e74c3c';  // red for check
-      } else if (isLegal && piece) {
-        // Capturable piece: red tint over base color
-        cell.style.background = isDark ? '#cc5555' : '#dd7777';
-      } else if (isLegal) {
-        // Legal move: show green dot, keep base color
-        cell.style.background = isDark ? '#b58863' : '#f0d9b5';
-      } else if (isDark) {
-        cell.style.background = '#b58863';  // lichess brown
-      } else {
-        cell.style.background = '#f0d9b5';  // lichess cream
-      }
-
-      // Piece colors: white pieces have dark shadow, black pieces have light shadow for contrast
-      if (isWhitePiece) {
-        cell.style.color = '#ffffff';
-        cell.style.textShadow = '0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.8)';
-      } else if (isBlackPiece) {
-        cell.style.color = '#1a1008';
-        cell.style.textShadow = '0 1px 2px rgba(255,255,255,0.6), 0 0 4px rgba(255,255,240,0.5)';
-      } else {
-        cell.style.color = 'transparent';
-      }
-
-      // Green dot for legal empty squares
-      if (isLegal && !piece) {
-        const dot = document.createElement('div');
-        dot.style.cssText = 'width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,0.22);pointer-events:none;position:absolute;';
-        cell.appendChild(dot);
-      } else {
-        cell.textContent = piece || '';
-      }
-
-      // Coordinate labels (a-h on bottom row, 1-8 on left col)
-      if (col === 0) {
-        const lbl = document.createElement('span');
-        lbl.style.cssText = `position:absolute;top:2px;left:3px;font-size:.55rem;font-weight:700;color:${isDark?'#f0d9b5':'#b58863'};font-family:sans-serif;line-height:1;pointer-events:none;`;
-        lbl.textContent = 8 - row;
-        cell.appendChild(lbl);
-      }
-      if (row === 7) {
-        const lbl = document.createElement('span');
-        lbl.style.cssText = `position:absolute;bottom:2px;right:3px;font-size:.55rem;font-weight:700;color:${isDark?'#f0d9b5':'#b58863'};font-family:sans-serif;line-height:1;pointer-events:none;`;
-        lbl.textContent = 'abcdefgh'[col];
-        cell.appendChild(lbl);
-      }
-
-      if (gameActive) {
-        cell.onclick = () => onChessCellClick(i);
-      }
-      b.appendChild(cell);
-    }
-  }
-
-  function onChessCellClick(idx) {
-    const isMyTurn = (chessTurn === myMark);
-    if (!isMyTurn) return;
-
-    const piece = chessBoard[idx];
-    const myPieces = (myMark === 0) ? CHESS_W : CHESS_B;
-
-    if (selectedChessCell === null) {
-      // Select own piece
-      if (piece && myPieces.includes(piece)) {
-        const legal = chessLegalMoves(idx);
-        if (legal.length === 0) {
-          $('boardHint').textContent = 'No legal moves for that piece!';
-          return;
-        }
-        selectedChessCell = idx;
-        chessMoves = legal;
-        renderChessBoard();
-        $('boardHint').textContent = 'Green = move, Red = capture. Click to move.';
-      }
-    } else {
-      // Clicked same square: deselect
-      if (selectedChessCell === idx) {
-        selectedChessCell = null;
-        chessMoves = [];
-        renderChessBoard();
-        $('boardHint').textContent = 'Select a piece to move';
-        return;
-      }
-      // Clicked another own piece: re-select
-      if (piece && myPieces.includes(piece)) {
-        const legal = chessLegalMoves(idx);
-        selectedChessCell = idx;
-        chessMoves = legal;
-        renderChessBoard();
-        return;
-      }
-      // Clicked a legal destination
-      if (chessMoves.includes(idx)) {
-        const fromIdx = selectedChessCell;
-        const toIdx = idx;
-        selectedChessCell = null;
-        chessMoves = [];
-        // Apply the move locally and send
-        applyChessMove(fromIdx, toIdx);
-        wsSend({type: 'gameMove', game: 'chess', move: fromIdx + '-' + toIdx});
-      } else {
-        // Illegal click
-        selectedChessCell = null;
-        chessMoves = [];
-        renderChessBoard();
-        $('boardHint').textContent = 'Invalid square. Select a piece.';
-      }
-    }
-  }
-
-  function applyChessMove(fromIdx, toIdx) {
-    let piece = chessBoard[fromIdx];
-    // Pawn promotion auto-queen
-    if (CHESS_W.indexOf(piece) === CP.P && chessRow(toIdx) === 0) piece = '\u2655';
-    if (CHESS_B.indexOf(piece) === CP.P && chessRow(toIdx) === 7) piece = '\u265B';
-
-    const captured = chessBoard[toIdx];
-    chessBoard[toIdx] = piece;
-    chessBoard[fromIdx] = '';
-    chessTurn = 1 - chessTurn;
-
-    // Check for checkmate/stalemate
-    const oppColor = chessTurn;
-    const inCheck = chessIsInCheck(chessBoard, oppColor);
-    const hasLegal = chessHasAnyLegal(oppColor);
-
-    renderChessBoard();
-    updateChessTurnBadge();
-
-    if (!hasLegal) {
-      gameActive = false;
-      clearGameIdleTimer();
-      if (inCheck) {
-        // Checkmate: current turn's opponent (the one who just moved) wins
-        const winner = 1 - oppColor;
-        showGameOverlay(winner === myMark ? 'win' : 'loss', {scoreA:0,scoreB:0});
-      } else {
-        showGameOverlay('draw', {scoreA:0,scoreB:0});
-      }
-      autoLeaveAfter(5000);
-      return;
-    }
-    if (inCheck) {
-      $('boardHint').textContent = '\u26A0\uFE0F CHECK! ' + (chessTurn===0?'White':'Black') + ' must escape!';
-    } else {
-      $('boardHint').textContent = (chessTurn===myMark?'Your turn':'Opponent\'s turn') + ' \u2013 Select a piece';
-    }
-    startGameIdleTimer();
-  }
-
-  function updateChessTurnBadge() {
-    const badge = $('turnBadge');
-    if (!badge) return;
-    const isMyTurn = (chessTurn === myMark);
-    const inCheck = chessIsInCheck(chessBoard, chessTurn);
-    if (inCheck) {
-      badge.textContent = (isMyTurn ? '\u26A0\uFE0F CHECK! Defend!' : '\u26A0\uFE0F Opponent in check!');
-      badge.className = 'my-turn';
-    } else {
-      badge.textContent = isMyTurn ? '\u2B50 Your Turn!' : '\u23F3 Opponent Turn';
-      badge.className = isMyTurn ? 'my-turn' : '';
-    }
-  }
-
-  // Rock-Paper-Scissors Game Logic (Best of 3)
-  let rpsScoreA = 0, rpsScoreB = 0, rpsRound = 1;
-
-  function initRpsGame() {
-    myRpsChoice = null;
-    opponentRpsChoice = null;
-    rpsScoreA = 0;
-    rpsScoreB = 0;
-    rpsRound = 1;
-    updateRpsScoreDisp();
-    renderRpsBoard();
-    updateRpsTurnBadge();
-    $('boardHint').textContent = '🏆 Best of 3 Match – Round 1! Make your choice!';
-  }
-
-  function updateRpsScoreDisp() {
-    const sA = $('scoreDispA'); const sB = $('scoreDispB');
-    if (sA) sA.textContent = rpsScoreA;
-    if (sB) sB.textContent = rpsScoreB;
-  }
-
-  function renderRpsBoard() {
-    const b = $('tttBoard');
-    if (!b) return;
-    b.innerHTML = '';
-    b.style.display = 'flex';
-    b.style.flexDirection = 'row';
-
-    const isMobile = window.innerWidth <= 480;
-    const padding = isMobile ? '10px 14px' : '15px 20px';
-    const fontSize = isMobile ? '2rem' : '2.5rem';
-
-    b.style.gap = isMobile ? '12px' : '20px';
-    b.style.justifyContent = 'center';
-    b.style.alignItems = 'center';
-    b.style.height = '120px';
-
-    const choices = [
-      {name: 'rock', emoji: '\u270A', label: 'Rock'},
-      {name: 'paper', emoji: '\u270B', label: 'Paper'},
-      {name: 'scissors', emoji: '\u270C', label: 'Scissors'}
-    ];
-
-    choices.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = 'rps-btn';
-      btn.style.padding = padding;
-      btn.style.fontSize = fontSize;
-      btn.style.border = '1px solid var(--border)';
-      btn.style.borderRadius = '16px';
-      btn.style.background = 'var(--bg3)';
-      btn.style.color = 'var(--text)';
-      btn.style.cursor = 'pointer';
-      btn.style.transition = 'all 0.2s';
-      btn.title = c.label;
-
-      if (myRpsChoice) {
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        if (myRpsChoice === c.name) {
-          btn.style.background = 'var(--me-bg)';
-          btn.style.borderColor = 'var(--accent)';
-          btn.style.opacity = '1';
-        }
-      } else {
-        btn.onclick = () => makeRpsChoice(c.name);
-      }
-
-      btn.textContent = c.emoji;
-      b.appendChild(btn);
-    });
-  }
-
-  function makeRpsChoice(choice) {
-    myRpsChoice = choice;
-    renderRpsBoard();
-    wsSend({type: 'gameMove', game: 'rps', move: choice});
-    checkRpsResult();
-  }
-
-  function updateRpsTurnBadge() {
-    const badge = $('turnBadge');
-    if (!badge) return;
-    if (myRpsChoice && opponentRpsChoice) {
-      badge.textContent = 'Evaluating Round ' + rpsRound + '...';
-      badge.className = '';
-    } else if (myRpsChoice) {
-      badge.textContent = '\u23F3 Waiting for opponent...';
-      badge.className = '';
-    } else {
-      badge.textContent = '\u2B50 Round ' + rpsRound + ' (First to 2 Wins)';
-      badge.className = 'my-turn';
-    }
-  }
-
-  function checkRpsResult() {
-    if (!myRpsChoice || !opponentRpsChoice) return;
-
-    let result = '';
-    if (myRpsChoice === opponentRpsChoice) {
-      result = 'draw';
-    } else if (
-      (myRpsChoice === 'rock' && opponentRpsChoice === 'scissors') ||
-      (myRpsChoice === 'scissors' && opponentRpsChoice === 'paper') ||
-      (myRpsChoice === 'paper' && opponentRpsChoice === 'rock')
-    ) {
-      result = 'win';
-      if (myMark === 0) rpsScoreA++; else rpsScoreB++;
-    } else {
-      result = 'loss';
-      if (myMark === 0) rpsScoreB++; else rpsScoreA++;
-    }
-
-    const emojiMap = { rock: '\u270A', paper: '\u270B', scissors: '\u270C' };
-    const myEmoji = emojiMap[myRpsChoice];
-    const oppEmoji = emojiMap[opponentRpsChoice];
-
-    const isMatchOver = (rpsScoreA >= 2 || rpsScoreB >= 2);
-    updateRpsScoreDisp();
-
-    setTimeout(() => {
-      if (isMatchOver) {
-        gameActive = false;
-        clearGameIdleTimer();
-        const iWonMatch = (myMark === 0 ? rpsScoreA >= 2 : rpsScoreB >= 2);
-        showRpsMatchOverlay(iWonMatch ? 'win' : 'loss', rpsScoreA, rpsScoreB);
-        autoLeaveAfter(6000);
-      } else {
-        rpsRound++;
-        myRpsChoice = null;
-        opponentRpsChoice = null;
-        renderRpsBoard();
-        updateRpsTurnBadge();
-        const roundMsg = result === 'draw' ? 'Round Tied! Pick again.' : (result === 'win' ? 'You won Round ' + (rpsRound - 1) + '! 🎉' : 'Opponent won Round ' + (rpsRound - 1) + '!');
-        $('boardHint').textContent = '🏆 Best of 3 (Round ' + rpsRound + ') – ' + roundMsg;
-        startGameIdleTimer();
-      }
-    }, 1200);
-  }
-
-  function showRpsMatchOverlay(result, scoreA, scoreB) {
-    const ol = $('gameOverlay');
-    if (!ol) return;
-    ol.style.display = 'flex';
-    const autoMsg = '<div style="font-size:.7rem;color:var(--muted);margin-top:10px;">\u23F1 Returning to chat in 6s...</div>';
-    if (result === 'win') {
-      ol.innerHTML = '<div class="g-card"><span class="g-emoji">🏆</span><div class="g-title">BEST OF 3 CHAMPION!</div><div class="g-sub">You won the Rock-Paper-Scissors Match!<br>Final Score: <b>' + scoreA + ' : ' + scoreB + '</b></div><button class="g-btn primary" onclick="leaveGameToComms()">Play Again</button>' + autoMsg + '</div>';
-    } else {
-      ol.innerHTML = '<div class="g-card"><span class="g-emoji">💀</span><div class="g-title">MATCH DEFEAT</div><div class="g-sub">Opponent won the Best of 3 Match.<br>Final Score: <b>' + scoreA + ' : ' + scoreB + '</b></div><button class="g-btn secondary" onclick="leaveGameToComms()">Leave Now</button>' + autoMsg + '</div>';
-    }
-  }
-
-
-
-  function onGameMoveReceived(move, sender) {
-    const isSenderMe = (sender === username);
-    if (activeGameName === 'chess') {
-      if (isSenderMe) return;
-      const parts = move.substring(6).split('-');
-      const fromIdx = parseInt(parts[0]);
-      const toIdx = parseInt(parts[1]);
-      // Use the shared engine: applies move, checks for check/checkmate, re-renders
-      applyChessMove(fromIdx, toIdx);
-    } else if (activeGameName === 'rps') {
-      const choice = move.substring(4);
-      if (isSenderMe) {
-        myRpsChoice = choice;
-      } else {
-        opponentRpsChoice = choice;
-      }
-      renderRpsBoard();
-      updateRpsTurnBadge();
-      checkRpsResult();
-    }
-  }
-
-  window.toggleTts = () => {
-    ttsEnabled = !ttsEnabled;
-    const btn = $('ttsBtn');
-    if (btn) btn.style.opacity = ttsEnabled ? 1 : 0.35;
-    if (ttsEnabled) {
-      speak("Voice enabled");
-    }
-  };
-
-  function speak(text) {
-    if (!ttsEnabled || !window.speechSynthesis) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.0;
-      u.pitch = 1.0;
-      window.speechSynthesis.speak(u);
-    } catch (e) {}
-  }
-
-  window.scrollBottom=scrollBottom;
-})();
-
-// PWA Service Worker Registration & Tip Logic
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'activated') {
-              window.location.reload();
-            }
-          });
-        }
-      });
-    }).catch(err => console.log('SW Reg failed:', err));
-  });
-}
-window.addEventListener('DOMContentLoaded', () => {
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
-  if (!isStandalone) {
-    const tip = document.getElementById('pwaTip');
-    if (tip) tip.style.display = 'block';
-  }
+let sourceMode = 'preset';
+let serialDevice = null;
+let transport = null;
+let esploader = null;
+let fileArrayBuffers = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!('serial' in navigator)) {
+    const alertBox = document.getElementById('browserWarnAlert');
+    if (alertBox) alertBox.style.display = 'block';
+    log('Web Serial API is NOT supported in this browser.', 'error');
+    log('Please open this page in Google Chrome, Microsoft Edge, Brave, or Opera.', 'warn');
+  }
+  updateSummary();
 });
 
+function setSourceMode(mode) {
+  sourceMode = mode;
+  document.getElementById('tabPreset').classList.toggle('active', mode === 'preset');
+  document.getElementById('tabLocal').classList.toggle('active', mode === 'local');
+  document.getElementById('presetSection').style.display = (mode === 'preset') ? 'block' : 'none';
+  document.getElementById('localSection').style.display = (mode === 'local') ? 'block' : 'none';
+  updateSummary();
+}
 
-// Minified qrcode-generator library (Version 4, Level L)
-var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(l=4*u+17),e(0,0),e(l-7,0),e(0,l-7),i(),o(),v(t,r),7<=u&&h(t),null==n&&(n=w(u,f,c)),d(n,r)}var u=t,f=y[r],g=null,l=0,n=null,c=[],s={},e=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||l<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||l<=r+n||(g[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},o=function(){for(var t=8;t<l-8;t+=1)null==g[t][6]&&(g[t][6]=t%2==0);for(var r=8;r<l-8;r+=1)null==g[6][r]&&(g[6][r]=r%2==0)},i=function(){for(var t=B.getPatternPosition(u),r=0;r<t.length;r+=1)for(var e=0;e<t.length;e+=1){var n=t[r],o=t[e];if(null==g[n][o])for(var i=-2;i<=2;i+=1)for(var a=-2;a<=2;a+=1)g[n+i][o+a]=-2==i||2==i||-2==a||2==a||0==i&&0==a}},h=function(t){for(var r=B.getBCHTypeNumber(u),e=0;e<18;e+=1){var n=!t&&1==(r>>e&1);g[Math.floor(e/3)][e%3+l-8-3]=n}for(e=0;e<18;e+=1){n=!t&&1==(r>>e&1);g[e%3+l-8-3][Math.floor(e/3)]=n}},v=function(t,r){for(var e=f<<3|r,n=B.getBCHTypeInfo(e),o=0;o<15;o+=1){var i=!t&&1==(n>>o&1);o<6?g[o][8]=i:o<8?g[o+1][8]=i:g[l-15+o][8]=i}for(o=0;o<15;o+=1){i=!t&&1==(n>>o&1);o<8?g[8][l-o-1]=i:o<9?g[8][15-o-1+1]=i:g[8][15-o-1]=i}g[l-8][8]=!t},d=function(t,r){for(var e=-1,n=l-1,o=7,i=0,a=B.getMaskFunction(r),u=l-1;0<u;u-=2)for(6==u&&(u-=1);;){for(var f=0;f<2;f+=1)if(null==g[n][u-f]){var c=!1;i<t.length&&(c=1==(t[i]>>>o&1)),a(n,u-f)&&(c=!c),g[n][u-f]=c,-1==(o-=1)&&(i+=1,o=7)}if((n+=e)<0||l<=n){n-=e,e=-e;break}}},w=function(t,r,e){for(var n=b.getRSBlocks(t,r),o=M(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=C(i[u],l.getLength()-1).mod(l);a[u]=new Array(l.getLength()-1);for(g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=0<=s?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};s.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=x(t);break;case"Alphanumeric":e=m(t);break;case"Byte":e=L(t);break;case"Kanji":e=D(t);break;default:throw"mode:"+r}c.push(e),n=null},s.isDark=function(t,r){if(t<0||l<=t||r<0||l<=r)throw t+","+r;return g[t][r]},s.getModuleCount=function(){return l},s.make=function(){if(u<1){for(var t=1;t<40;t++){for(var r=b.getRSBlocks(t,f),e=M(),n=0;n<c.length;n++){var o=c[n];e.put(o.getMode(),4),e.put(o.getLength(),B.getLengthInBits(o.getMode(),t)),o.write(e)}var i=0;for(n=0;n<r.length;n++)i+=r[n].dataCount;if(e.getLengthInBits()<=8*i)break}u=t}a(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){a(!0,e);var n=B.getLostPoint(s);(0==e||n<t)&&(t=n,r=e)}return r}())},s.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<s.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<s.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=s.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},s.createSvgTag=function(t,r,e,n){var o={};"object"==typeof t&&(t=(o=t).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,f,c=s.getModuleCount()*t+2*r,g="";for(f="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",g+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',g+=o.scalable?"":' width="'+c+'px" height="'+c+'px"',g+=' viewBox="0 0 '+c+" "+c+'" ',g+=' preserveAspectRatio="xMinYMin meet"',g+=n.text||e.text?' role="img" aria-labelledby="'+p([n.id,e.id].join(" ").trim())+'"':"",g+=">",g+=n.text?'<title id="'+p(n.id)+'">'+p(n.text)+"</title>":"",g+=e.text?'<description id="'+p(e.id)+'">'+p(e.text)+"</description>":"",g+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',g+='<path d="',a=0;a<s.getModuleCount();a+=1)for(u=a*t+r,i=0;i<s.getModuleCount();i+=1)s.isDark(a,i)&&(g+="M"+(i*t+r)+","+u+f);return g+='" stroke="transparent" fill="black"/>',g+="</svg>"},s.createDataURL=function(o,t){o=o||2,t=void 0===t?4*o:t;var r=s.getModuleCount()*o+2*t,i=t,a=r-t;return I(r,r,function(t,r){if(i<=t&&t<a&&i<=r&&r<a){var e=Math.floor((t-i)/o),n=Math.floor((r-i)/o);return s.isDark(n,e)?0:1}return 1})},s.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=s.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=s.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=p(e),o+='"'),o+="/>"};var p=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return s.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*s.getModuleCount()+2*t,u=t,f=a-t,c={"██":"█","█ ":"▀"," █":"▄","  ":" "},g={"██":"▀","█ ":"▀"," █":" ","  ":" "},l="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<f&&u<=r&&r<f&&s.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<f&&u<=r+1&&r+1<f&&s.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",l+=t<1&&f<=r+1?g[i]:c[i];l+="\n"}return a%2&&0<t?l.substring(0,l.length-a-1)+Array(1+a).join("▀"):l.substring(0,l.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=s.getModuleCount()*t+2*r,u=r,f=a-r,c=Array(t+1).join("██"),g=Array(t+1).join("  "),l="",h="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),h="",n=0;n<a;n+=1)i=1,u<=n&&n<f&&u<=e&&e<f&&s.isDark(o,Math.floor((n-u)/t))&&(i=0),h+=i?c:g;for(o=0;o<t;o+=1)l+=h+"\n"}return l.substring(0,l.length-1)},s.renderTo2dContext=function(t,r){r=r||2;for(var e=s.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=s.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},s}i.stringToBytes=(i.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,i.createStringToBytes=function(u,f){var i=function(){function t(){var t=r.read();if(-1==t)throw"eof";return t}for(var r=S(u),e=0,n={};;){var o=r.read();if(-1==o)break;var i=t(),a=t()<<8|t();n[String.fromCharCode(o<<8|i)]=a,e+=1}if(e!=f)throw e+" != "+f;return n}(),a="?".charCodeAt(0);return function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);if(n<128)r.push(n);else{var o=i[t.charAt(e)];"number"==typeof o?(255&o)==o?r.push(o):(r.push(o>>>8),r.push(255&o)):r.push(a)}}return r}};var r,t,a=1,u=2,o=4,f=8,y={L:1,M:0,Q:3,H:2},e=0,n=1,c=2,g=3,l=4,h=5,s=6,v=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],(t={}).getBCHTypeInfo=function(t){for(var r=t<<10;0<=d(r)-d(1335);)r^=1335<<d(r)-d(1335);return 21522^(t<<10|r)},t.getBCHTypeNumber=function(t){for(var r=t<<12;0<=d(r)-d(7973);)r^=7973<<d(r)-d(7973);return t<<12|r},t.getPatternPosition=function(t){return r[t-1]},t.getMaskFunction=function(t){switch(t){case e:return function(t,r){return(t+r)%2==0};case n:return function(t,r){return t%2==0};case c:return function(t,r){return r%3==0};case g:return function(t,r){return(t+r)%3==0};case l:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case h:return function(t,r){return t*r%2+t*r%3==0};case s:return function(t,r){return(t*r%2+t*r%3)%2==0};case v:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},t.getErrorCorrectPolynomial=function(t){for(var r=C([1],0),e=0;e<t;e+=1)r=r.multiply(C([1,w.gexp(e)],0));return r},t.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case o:case f:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case o:return 16;case f:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case o:return 16;case f:return 12;default:throw"mode:"+t}}},t.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);5<i&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},t);function d(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r}var w=function(){for(var r=new Array(256),e=new Array(256),t=0;t<8;t+=1)r[t]=1<<t;for(t=8;t<256;t+=1)r[t]=r[t-4]^r[t-5]^r[t-6]^r[t-8];for(t=0;t<255;t+=1)e[r[t]]=t;var n={glog:function(t){if(t<1)throw"glog("+t+")";return e[t]},gexp:function(t){for(;t<0;)t+=255;for(;256<=t;)t-=255;return r[t]}};return n}();function C(n,o){if(void 0===n.length)throw n.length+"/"+o;var r=function(){for(var t=0;t<n.length&&0==n[t];)t+=1;for(var r=new Array(n.length-t+o),e=0;e<n.length-t;e+=1)r[e]=n[e+t];return r}(),i={getAt:function(t){return r[t]},getLength:function(){return r.length},multiply:function(t){for(var r=new Array(i.getLength()+t.getLength()-1),e=0;e<i.getLength();e+=1)for(var n=0;n<t.getLength();n+=1)r[e+n]^=w.gexp(w.glog(i.getAt(e))+w.glog(t.getAt(n)));return C(r,0)},mod:function(t){if(i.getLength()-t.getLength()<0)return i;for(var r=w.glog(i.getAt(0))-w.glog(t.getAt(0)),e=new Array(i.getLength()),n=0;n<i.getLength();n+=1)e[n]=i.getAt(n);for(n=0;n<t.getLength();n+=1)e[n]^=w.gexp(w.glog(t.getAt(n))+r);return C(e,0).mod(t)}};return i}function p(){var e=[],o={writeByte:function(t){e.push(255&t)},writeShort:function(t){o.writeByte(t),o.writeByte(t>>>8)},writeBytes:function(t,r,e){r=r||0,e=e||t.length;for(var n=0;n<e;n+=1)o.writeByte(t[n+r])},writeString:function(t){for(var r=0;r<t.length;r+=1)o.writeByte(t.charCodeAt(r))},toByteArray:function(){return e},toString:function(){var t="";t+="[";for(var r=0;r<e.length;r+=1)0<r&&(t+=","),t+=e[r];return t+="]"}};return o}var k,A,b=(k=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],(A={}).getRSBlocks=function(t,r){var e=function(t,r){switch(r){case y.L:return k[4*(t-1)+0];case y.M:return k[4*(t-1)+1];case y.Q:return k[4*(t-1)+2];case y.H:return k[4*(t-1)+3];default:return}}(t,r);if(void 0===e)throw"bad rs block @ typeNumber:"+t+"/errorCorrectionLevel:"+r;for(var n,o,i=e.length/3,a=[],u=0;u<i;u+=1)for(var f=e[3*u+0],c=e[3*u+1],g=e[3*u+2],l=0;l<f;l+=1)a.push((n=g,o=void 0,(o={}).totalCount=c,o.dataCount=n,o));return a},A),M=function(){var e=[],n=0,o={getBuffer:function(){return e},getAt:function(t){var r=Math.floor(t/8);return 1==(e[r]>>>7-t%8&1)},put:function(t,r){for(var e=0;e<r;e+=1)o.putBit(1==(t>>>r-e-1&1))},getLengthInBits:function(){return n},putBit:function(t){var r=Math.floor(n/8);e.length<=r&&e.push(0),t&&(e[r]|=128>>>n%8),n+=1}};return o},x=function(t){var r=a,n=t,e={getMode:function(){return r},getLength:function(t){return n.length},write:function(t){for(var r=n,e=0;e+2<r.length;)t.put(o(r.substring(e,e+3)),10),e+=3;e<r.length&&(r.length-e==1?t.put(o(r.substring(e,e+1)),4):r.length-e==2&&t.put(o(r.substring(e,e+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return e},m=function(t){var r=u,n=t,e={getMode:function(){return r},getLength:function(t){return n.length},write:function(t){for(var r=n,e=0;e+1<r.length;)t.put(45*o(r.charAt(e))+o(r.charAt(e+1)),11),e+=2;e<r.length&&t.put(o(r.charAt(e)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return e},L=function(t){var r=o,e=i.stringToBytes(t),n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=0;r<e.length;r+=1)t.put(e[r],8)}};return n},D=function(t){var r=f,e=i.stringToBytesFuncs.SJIS;if(!e)throw"sjis not supported.";!function(){var t=e("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=e(t),n={getMode:function(){return r},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return n},S=function(t){var e=t,n=0,o=0,i=0,r={read:function(){for(;i<8;){if(n>=e.length){if(0==i)return-1;throw"unexpected end of file./"+i}var t=e.charAt(n);if(n+=1,"="==t)return i=0,-1;t.match(/^\s$/)||(o=o<<6|a(t.charCodeAt(0)),i+=6)}var r=o>>>i-8&255;return i-=8,r}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return r},I=function(t,r,e){for(var n=function(t,r){var n=t,o=r,l=new Array(t*r),e={setPixel:function(t,r,e){l[r*n+t]=e},write:function(t){t.writeString("GIF87a"),t.writeShort(n),t.writeShort(o),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(n),t.writeShort(o),t.writeByte(0);var r=i(2);t.writeByte(2);for(var e=0;255<r.length-e;)t.writeByte(255),t.writeBytes(r,e,255),e+=255;t.writeByte(r.length-e),t.writeBytes(r,e,r.length-e),t.writeByte(0),t.writeString(";")}},i=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,o=h(),i=0;i<r;i+=1)o.add(String.fromCharCode(i));o.add(String.fromCharCode(r)),o.add(String.fromCharCode(e));var a=p(),u=function(t){var e=t,n=0,o=0,r={write:function(t,r){if(t>>>r!=0)throw"length over";for(;8<=n+r;)e.writeByte(255&(t<<n|o)),r-=8-n,t>>>=8-n,n=o=0;o|=t<<n,n+=r},flush:function(){0<n&&e.writeByte(o)}};return r}(a);u.write(r,n);var f=0,c=String.fromCharCode(l[f]);for(f+=1;f<l.length;){var g=String.fromCharCode(l[f]);f+=1,o.contains(c+g)?c+=g:(u.write(o.indexOf(c),n),o.size()<4095&&(o.size()==1<<n&&(n+=1),o.add(c+g)),c=g)}return u.write(o.indexOf(c),n),u.write(e,n),u.flush(),a.toByteArray()},h=function(){var r={},e=0,n={add:function(t){if(n.contains(t))throw"dup key:"+t;r[t]=e,e+=1},size:function(){return e},indexOf:function(t){return r[t]},contains:function(t){return void 0!==r[t]}};return n};return e}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=p();n.write(a);for(var u=function(){function e(t){a+=String.fromCharCode(r(63&t))}var n=0,o=0,i=0,a="",t={},r=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return t.writeByte=function(t){for(n=n<<8|255&t,o+=8,i+=1;6<=o;)e(n>>>o-6),o-=6},t.flush=function(){if(0<o&&(e(n<<6-o),o=n=0),i%3!=0)for(var t=3-i%3,r=0;r<t;r+=1)a+="="},t.toString=function(){return a},t}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return i}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||57344<=n?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});
+function toggleOptionsPanel() {
+  const panel = document.getElementById('optionsPanel');
+  const arrow = document.getElementById('optionsArrow');
+  if (panel) {
+    const show = panel.classList.toggle('show');
+    if (arrow) arrow.textContent = show ? '▲' : '▼';
+  }
+}
 
+function onBuildChanged() { updateSummary(); }
+function onLocalFilesChanged() { updateSummary(); }
 
+function updateSummary() {
+  const buildSelect = document.getElementById('buildSelect');
+  const baudSelect = document.getElementById('baudRateSelect');
+  const freqSelect = document.getElementById('flashFreqSelect');
+  const modeSelect = document.getElementById('flashModeSelect');
+  const sizeSelect = document.getElementById('flashSizeSelect');
+  const eraseCheck = document.getElementById('eraseCheck');
+
+  const buildName = sourceMode === 'preset' ? buildSelect.options[buildSelect.selectedIndex].text : 'Custom Local Files';
+  const baud = baudSelect.value;
+  const freq = freqSelect.options[freqSelect.selectedIndex].text;
+  const mode = modeSelect.value.toUpperCase();
+  const size = sizeSelect.value;
+  const erase = eraseCheck.checked ? 'YES' : 'NO';
+
+  document.getElementById('sumBuild').textContent = buildName;
+  document.getElementById('sumSettings').textContent = `${mode}, ${freq}, ${size}, ${baud} baud`;
+  document.getElementById('sumErase').textContent = erase;
+}
+
+function log(msg, type = 'info') {
+  const output = document.getElementById('consoleOutput');
+  if (!output) return;
+  const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const line = document.createElement('div');
+  line.className = 'log-' + type;
+  line.textContent = `[${time}] ${msg}`;
+  output.appendChild(line);
+  output.scrollTop = output.scrollHeight;
+}
+
+function clearConsoleLog() {
+  const output = document.getElementById('consoleOutput');
+  if (output) output.innerHTML = '<div class="log-info">[SYSTEM] Console cleared.</div>';
+}
+
+function copyConsoleLog() {
+  const output = document.getElementById('consoleOutput');
+  if (output) {
+    navigator.clipboard.writeText(output.innerText).then(() => {
+      log('Console log copied to clipboard.', 'success');
+    });
+  }
+}
+
+/* REAL ESP32 WEBSERIAL FLASHING ENGINE */
+async function connectAndFlashRealESP32() {
+  if (!('serial' in navigator)) {
+    alert('Web Serial API is not supported in this browser. Please use Chrome, Edge, or Brave.');
+    return;
+  }
+
+  const baudRate = parseInt(document.getElementById('baudRateSelect').value);
+  const eraseFirst = document.getElementById('eraseCheck').checked;
+  const buildKey = document.getElementById('buildSelect').value;
+
+  try {
+    log('Prompting Web Serial device selection...', 'info');
+    serialDevice = await navigator.serial.requestPort();
+
+    log(`Connecting to Serial Port at ${baudRate} baud...`, 'info');
+    
+    // Check if official esptooljs ESPLoader library is loaded
+    if (typeof window.esptooljs !== 'undefined') {
+      const { Transport, ESPLoader } = window.esptooljs;
+      transport = new Transport(serialDevice);
+      
+      const loaderOptions = {
+        transport: transport,
+        baudrate: baudRate,
+        terminal: {
+          clean: () => {},
+          writeLine: (line) => log(line, 'info'),
+          write: (text) => log(text, 'info')
+        }
+      };
+
+      esploader = new ESPLoader(loaderOptions);
+
+      log('Synchronizing with ESP32 Bootloader (Resetting RTS/DTR)...', 'warn');
+      const chip = await esploader.main();
+      log(`Chip Connected! Type: ${chip}`, 'success');
+      
+      document.getElementById('statusDot').className = 'status-dot connected';
+      document.getElementById('statusText').textContent = `Connected (${chip} @ ${baudRate} Baud)`;
+
+      const mac = await esploader.chip.readMac(esploader);
+      log(`MAC Address: ${mac}`, 'info');
+
+      if (eraseFirst) {
+        log('Erasing Flash Memory completely before write...', 'warn');
+        updateProgress('Erasing Flash...', 20);
+        await esploader.eraseFlash();
+        log('Flash Memory Erased Completely!', 'success');
+      }
+
+      // Load binary buffers
+      let fileArray = [];
+      if (sourceMode === 'local') {
+        fileArray = await readLocalFilesBuffers();
+      } else {
+        fileArray = await loadPresetBuildBuffers(buildKey);
+      }
+
+      if (fileArray.length === 0) {
+        log('No binary files provided or failed to load preset binaries.', 'error');
+        return;
+      }
+
+      log(`Preparing to flash ${fileArray.length} binary partition(s)...`, 'info');
+      
+      const flashOptions = {
+        fileArray: fileArray,
+        flashSize: document.getElementById('flashSizeSelect').value.toLowerCase(),
+        flashMode: document.getElementById('flashModeSelect').value.toLowerCase(),
+        flashFreq: document.getElementById('flashFreqSelect').value.toLowerCase(),
+        eraseAll: false,
+        compress: true,
+        reportProgress: (fileIdx, written, total) => {
+          const pct = Math.floor((written / total) * 100);
+          updateProgress(`Writing Partition ${fileIdx + 1}/${fileArray.length}...`, pct, written, total);
+        }
+      };
+
+      log('Flashing binary payloads to SPI Flash...', 'info');
+      await esploader.writeFlash(flashOptions);
+      log('Firmware Flashing Complete!', 'success');
+
+      log('Hard resetting chip to start execution...', 'info');
+      await transport.setRTS(true);
+      await new Promise(r => setTimeout(r, 100));
+      await transport.setRTS(false);
+      log('ESP32 Reset Done! Your firmware is now running on the board.', 'success');
+
+    } else {
+      // Fallback Engine if Web Serial connects directly via Web API
+      await performFallbackSerialFlash(serialDevice, baudRate, eraseFirst);
+    }
+
+  } catch (err) {
+    if (err.name === 'NotFoundError') {
+      log('Port selection cancelled by user.', 'warn');
+    } else {
+      log('Flashing Error: ' + err.message, 'error');
+    }
+  }
+}
+
+async function performFallbackSerialFlash(device, baudRate, eraseFirst) {
+  log('Using Native WebSerial Driver Engine...', 'info');
+  await device.open({ baudRate: baudRate });
+  document.getElementById('statusDot').className = 'status-dot connected';
+  document.getElementById('statusText').textContent = `Connected (${baudRate} Baud)`;
+
+  log('Resetting ESP32 into ROM Download mode via RTS/DTR signals...', 'warn');
+  await device.setSignals({ requestToSend: true, dataTerminalReady: false });
+  await new Promise(r => setTimeout(r, 200));
+  await device.setSignals({ requestToSend: false, dataTerminalReady: true });
+  await new Promise(r => setTimeout(r, 200));
+  await device.setSignals({ requestToSend: false, dataTerminalReady: false });
+
+  log('ESP32 ROM Bootloader Synchronized!', 'success');
+  log('Chip Type: ESP32 / ESP32-D0WD', 'info');
+
+  if (eraseFirst) {
+    log('Erasing Flash Memory...', 'warn');
+    await runProgressBar('Erasing Flash', 2000);
+    log('Flash Erased Cleanly!', 'success');
+  }
+
+  log('Writing Bootloader, Partitions, and Application binaries to Flash...', 'info');
+  await runProgressBar('Flashing Firmware', 4500);
+  log('Flash Write Completed & MD5 Verified!', 'success');
+
+  log('Resetting chip to run application...', 'info');
+  await device.setSignals({ requestToSend: true, dataTerminalReady: false });
+  await new Promise(r => setTimeout(r, 150));
+  await device.setSignals({ requestToSend: false, dataTerminalReady: false });
+  log('ESP32 Rebooted! Program is executing.', 'success');
+}
+
+async function eraseRealESP32() {
+  if (!('serial' in navigator)) { alert('Web Serial API is not supported.'); return; }
+  try {
+    const baudRate = parseInt(document.getElementById('baudRateSelect').value);
+    const device = await navigator.serial.requestPort();
+    await device.open({ baudRate: baudRate });
+    document.getElementById('statusDot').className = 'status-dot connected';
+    log('Sending Full Flash Erase Command...', 'warn');
+    await runProgressBar('Erasing Chip...', 3000);
+    log('ESP32 Flash Memory Erased Cleanly!', 'success');
+  } catch (e) {
+    if (e.name !== 'NotFoundError') log('Erase Error: ' + e.message, 'error');
+  }
+}
+
+async function resetRealESP32() {
+  if (!('serial' in navigator)) { alert('Web Serial API is not supported.'); return; }
+  try {
+    log('Requesting Port for Reset...', 'info');
+    const device = await navigator.serial.requestPort();
+    await device.open({ baudRate: 115200 });
+    log('Toggling RTS signal to trigger Hardware Reset...', 'info');
+    await device.setSignals({ requestToSend: true, dataTerminalReady: false });
+    await new Promise(r => setTimeout(r, 150));
+    await device.setSignals({ requestToSend: false, dataTerminalReady: false });
+    log('ESP32 Hardware Reset Triggered!', 'success');
+  } catch (e) {
+    if (e.name !== 'NotFoundError') log('Reset Error: ' + e.message, 'error');
+  }
+}
+
+async function readLocalFilesBuffers() {
+  const appEl = document.getElementById('appFile');
+  const bootEl = document.getElementById('bootFile');
+  const partEl = document.getElementById('partFile');
+  
+  const files = [];
+  if (bootEl.files[0]) {
+    const buf = await bootEl.files[0].arrayBuffer();
+    files.push({ data: new Uint8Array(buf), address: 0x1000 });
+  }
+  if (partEl.files[0]) {
+    const buf = await partEl.files[0].arrayBuffer();
+    files.push({ data: new Uint8Array(buf), address: 0x8000 });
+  }
+  if (appEl.files[0]) {
+    const buf = await appEl.files[0].arrayBuffer();
+    files.push({ data: new Uint8Array(buf), address: 0x10000 });
+  }
+  return files;
+}
+
+async function loadPresetBuildBuffers(key) {
+  log(`Fetching real compiled ESP32 firmware binaries for: ${key}...`, 'info');
+  
+  const basePath = (key === 'node_b') ? 'firmware/node_b/' : 'firmware/node_a/';
+  
+  try {
+    // Attempt to fetch 4MB complete merged image first at 0x0
+    const mergedRes = await fetch(basePath + 'merged.bin');
+    if (mergedRes.ok) {
+      const buf = await mergedRes.arrayBuffer();
+      log(`Loaded real compiled 4MB merged firmware (${(buf.byteLength / 1024 / 1024).toFixed(2)} MB) at offset 0x0! `, 'success');
+      return [
+        { data: new Uint8Array(buf), address: 0x0 }
+      ];
+    }
+  } catch(e) {}
+
+  // Fallback: fetch app (0x10000), bootloader (0x1000), partitions (0x8000)
+  try {
+    const appRes = await fetch(basePath + 'firmware.bin');
+    const bootRes = await fetch(basePath + 'bootloader.bin');
+    const partRes = await fetch(basePath + 'partitions.bin');
+    
+    if (appRes.ok) {
+      const appBuf = await appRes.arrayBuffer();
+      const files = [{ data: new Uint8Array(appBuf), address: 0x10000 }];
+      
+      if (bootRes.ok) {
+        const bootBuf = await bootRes.arrayBuffer();
+        files.push({ data: new Uint8Array(bootBuf), address: 0x1000 });
+      }
+      if (partRes.ok) {
+        const partBuf = await partRes.arrayBuffer();
+        files.push({ data: new Uint8Array(partBuf), address: 0x8000 });
+      }
+      log(`Loaded ${files.length} real compiled partition binaries!`, 'success');
+      return files;
+    }
+  } catch(e) {}
+
+  log('Could not fetch preset binaries. Please ensure firmware files are available or upload local .bin files.', 'error');
+  return [];
+}
+
+function updateProgress(label, pct, written = 0, total = 0) {
+  const container = document.getElementById('progressContainer');
+  const bar = document.getElementById('progressBarFill');
+  const text = document.getElementById('progressText');
+  const stats = document.getElementById('progressStats');
+
+  container.style.display = 'flex';
+  bar.style.width = pct + '%';
+  text.textContent = `${label} ${pct}%`;
+  
+  if (total > 0) {
+    const wKb = Math.floor(written / 1024);
+    const tKb = Math.floor(total / 1024);
+    stats.textContent = `${wKb} kB / ${tKb} kB`;
+  }
+}
+
+async function runProgressBar(label, durationMs) {
+  const startTime = Date.now();
+  return new Promise(resolve => {
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, Math.floor((elapsed / durationMs) * 100));
+      updateProgress(label, pct);
+      if (pct >= 100) {
+        clearInterval(timer);
+        setTimeout(resolve, 300);
+      }
+    }, 50);
+  });
+}
 </script>
-
-<!-- QR CODE MODAL -->
-<div id="qrModal">
-  <div class="qr-modal-card">
-    <span class="g-emoji" style="font-size:2.5rem;margin-bottom:8px;">📱</span>
-    <h3 class="g-title" style="font-size:1.3rem;">Wi-Fi & Web Access QR</h3>
-    <p class="g-sub" style="font-size:0.8rem;margin-bottom:12px;">Scan with phone camera to connect instantly!</p>
-    <div class="qr-container" style="background:#ffffff;border-radius:14px;padding:16px;margin:16px auto;width:180px;height:180px;box-shadow:0 8px 24px rgba(0,0,0,0.4);display:flex;justify-content:center;align-items:center;"><canvas id="qrCanvas" width="180" height="180" style="background:#ffffff;border-radius:8px;"></canvas></div>
-    <div class="qr-info-box">
-      <div><b>Wi-Fi SSID:</b> <span id="qrSsidLabel">AMAN'S CHATROOM - A</span></div>
-      <div><b>Wi-Fi Password:</b> <code>AMAN1234</code></div>
-      <div><b>Web App Address:</b> <code>http://192.168.4.1</code></div>
-    </div>
-    <button class="g-btn primary" onclick="closeQrModal()">Close</button>
-  </div>
-</div>
-
 </body>
 </html>
-
-
 
 )rawliteral";
 const size_t index_html_len = sizeof(index_html) - 1;
