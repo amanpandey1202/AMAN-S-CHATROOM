@@ -1097,7 +1097,7 @@ body.bw-theme .room-btn.active {
 }
 
 /* ── DEFINITIVE BUTTON RULE ── */
-.btn, #sendBtn, .flash-topbar-btn {
+.btn, #sendBtn {
   background: rgba(0, 240, 255, 0.10) !important;
   border: 1px solid rgba(0, 240, 255, 0.45) !important;
   color: #00f0ff !important;
@@ -1110,7 +1110,7 @@ body.bw-theme .room-btn.active {
   transition: all 0.18s ease-in-out !important;
 }
 
-.btn:hover, #sendBtn:hover, .flash-topbar-btn:hover {
+.btn:hover, #sendBtn:hover {
   background: rgba(0, 240, 255, 0.22) !important;
   border-color: #00f0ff !important;
   color: #ffffff !important;
@@ -1132,11 +1132,6 @@ body.bw-theme .room-btn.active {
 @keyframes neonAuraPulse {
   0% { box-shadow: 0 0 10px rgba(0,240,255,0.4), 0 0 20px rgba(0,240,255,0.2); }
   100% { box-shadow: 0 0 18px rgba(0,240,255,0.7), 0 0 36px rgba(0,240,255,0.4); }
-}
-
-.flash-sidebar-card {
-  border: 1.5px solid #00f0ff !important;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
 }
 
 /* Vault Invite Row */
@@ -1306,8 +1301,7 @@ body.purple-theme .room-btn.active {
 }
 
 body.purple-theme .btn,
-body.purple-theme #sendBtn,
-body.purple-theme .flash-topbar-btn {
+body.purple-theme #sendBtn {
   background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
   color: #ffffff !important;
   border: none !important;

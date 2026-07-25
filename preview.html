@@ -661,52 +661,6 @@ body.bw-theme .room-btn.active {
 }
 .icon-btn:hover{background:rgba(255, 255, 255, 0.12);color:#f1f5f9;border-color:rgba(255, 255, 255, 0.12);}
 
-/* ── FLASH ESP32 BUTTON ─── */
-.flash-topbar-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:7px 14px;border-radius:9px;
-  background:linear-gradient(135deg,#00f0ff22,#ffffff22);
-  border:1px solid #00f0ff88;
-  color:#00f0ff;
-  font-family:var(--font);font-size:.82rem;font-weight:700;
-  cursor:pointer;letter-spacing:.5px;
-  text-decoration:none;
-  transition:all .2s;
-  animation:flashPulse 2.5s ease-in-out infinite;
-  white-space:nowrap;
-}
-.flash-topbar-btn:hover{
-  background:linear-gradient(135deg,#00f0ff44,#ffffff44);
-  box-shadow:0 0 18px #00f0ff66;
-  color:#fff;
-  border-color:#00f0ff;
-}
-@keyframes flashPulse{
-  0%,100%{box-shadow:0 0 6px #00f0ff44;}
-  50%{box-shadow:0 0 18px #00f0ffaa,0 0 32px #ffffff66;}
-}
-
-/* ── FLASH SIDEBAR CARD ─── */
-.flash-sidebar-card{
-  margin:12px 10px 16px;
-  padding:12px 14px;
-  border-radius:12px;
-  background:linear-gradient(135deg,rgba(0,240,255,0.08),rgba(255, 255, 255, 0.12));
-  border:1px solid rgba(0,240,255,0.35);
-  text-decoration:none;
-  display:flex;align-items:center;gap:10px;
-  transition:all .2s;
-  animation:flashPulse 2.5s ease-in-out infinite;
-}
-.flash-sidebar-card:hover{
-  background:linear-gradient(135deg,rgba(0,240,255,0.18),rgba(255, 255, 255, 0.12));
-  box-shadow:0 0 20px rgba(0,240,255,0.3);
-  border-color:#00f0ff;
-}
-.flash-sidebar-card .flash-icon{font-size:1.4rem;flex-shrink:0;}
-.flash-sidebar-card .flash-label{display:flex;flex-direction:column;gap:2px;}
-.flash-sidebar-card .flash-title{font-size:.82rem;font-weight:800;color:#00f0ff;letter-spacing:.5px;}
-.flash-sidebar-card .flash-sub{font-size:.68rem;color:#64748b;letter-spacing:.3px;}
 
 /* ── MESSAGES ──────────────────────────── */
 #msgs-wrap{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;}
@@ -1242,7 +1196,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(255, 255, 
   box-shadow: 0 0 14px rgba(0, 240, 255, 0.5) !important;
 }
 
-.btn, #sendBtn, .flash-topbar-btn {
+.btn, #sendBtn {
   background: rgba(0, 240, 255, 0.10) !important;
   border: 1px solid rgba(0, 240, 255, 0.45) !important;
   color: #00f0ff !important;
@@ -1255,7 +1209,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(255, 255, 
   transition: all 0.18s ease-in-out !important;
 }
 
-.btn:hover, #sendBtn:hover, .flash-topbar-btn:hover {
+.btn:hover, #sendBtn:hover {
   background: rgba(0, 240, 255, 0.22) !important;
   border-color: #00f0ff !important;
   color: #ffffff !important;
@@ -1279,14 +1233,8 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(255, 255, 
   100% { box-shadow: 0 0 18px rgba(0,240,255,0.7), 0 0 36px rgba(0,240,255,0.4); }
 }
 
-/* HIGH-INTENSITY AMBIENT NEON GLOW BUTTONS — now replaced by unified rule above */
-
-.flash-sidebar-card {
-  border: 1.5px solid #00f0ff !important;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
-}
-
 /* ELECTRIC CYAN TEXT & BUTTON REFINEMENTS — now replaced by unified rule above */
+
 
 /* Vault Invite Input & Button */
 
@@ -1450,8 +1398,7 @@ body.purple-theme .room-btn.active {
 }
 
 body.purple-theme .btn,
-body.purple-theme #sendBtn,
-body.purple-theme .flash-topbar-btn {
+body.purple-theme #sendBtn {
   background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
   color: #ffffff !important;
   border: none !important;
