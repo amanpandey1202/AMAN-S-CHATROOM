@@ -96,3 +96,15 @@ Since the ESP32 server runs over unsecure HTTP, modern browsers block microphone
 3. In the text box, enter your node IP: `http://192.168.4.1`
 4. Click **Relaunch** to restart the browser.
 5. Re-open `http://192.168.4.1/`, go to the `#airwaves` room, and press the Microphone button to communicate!
+
+
+## ⚡ ESP32 Web Flasher (Browser Firmware Flashing)
+
+Flash your ESP32 boards directly from Google Chrome, Microsoft Edge, Brave, or Opera without installing Python or esptool!
+
+🔗 **[Open ESP32 Web Flasher (GitHub Live Demo)](https://htmlpreview.github.io/?https://github.com/amanpandey1202/AMAN-S-CHATROOM/blob/main/flasher.html)**
+
+### Flasher Features:
+- 📥 **Preset Builds & Local File Flashing**: Upload custom `.bin` files or select Node A, Node B, and Relay Controller builds.
+- ⚙️ **Configurable Speed & Options**: Select Baud Rate (`115200`, `230400`, `460800`, `921600`), Flash Frequency (`40MHz`, `80MHz`), Flash Size, and Reset method.
+- 📟 **Live Console Terminal**: View real-time progress (0%–100%), transfer rates (`kB/s`), MAC address, and chip ID.

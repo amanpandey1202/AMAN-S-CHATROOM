@@ -1097,6 +1097,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(124,58,237
       <button class="icon-btn menu-btn" onclick="document.getElementById('leftSidebar').classList.toggle('open')" style="display:none;">☰</button>
       <span id="roomLabel">#comms</span>
       <span class="spacer"></span>
+      <a class="icon-btn" href="flasher.html" target="_blank" title="ESP32 Web Flasher Tool" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;background:rgba(124,58,237,0.25);border:1px solid rgba(124,58,237,0.4);color:#00d9ff;font-weight:700;">⚡ Flasher</a>
       <button class="icon-btn" id="qrBtn" onclick="openQrModal()" title="Scan QR Code to Connect">📱 QR</button>
       <button class="icon-btn" id="themeToggleBtn" onclick="toggleV2Theme()" title="Toggle V1/V2 Theme">⚡ V2</button>
       <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">&#x25D0;</button>
