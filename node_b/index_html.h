@@ -1402,9 +1402,7 @@ body.purple-theme .logo-title {
   text-shadow: 0 0 8px rgba(99, 102, 241, 0.5) !important;
 }
 
-body.purple-theme #dotTerrain {
-  opacity: 0.15 !important;
-}
+
 
 /* ── VAULT INVITE ROW FRAME FIX ── */
 .vault-invite-row {
@@ -1455,6 +1453,48 @@ body.purple-theme .vault-invite-row button {
   background: rgba(99, 102, 241, 0.2) !important;
   border-color: #6366f1 !important;
   color: #ffffff !important;
+}
+
+
+
+/* ── ALWAYS VISIBLE 1:1 GHOSTESP DOTTED TERRAIN CANVAS ── */
+#dotTerrain {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background: #000000 !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+/* Translucent Frosted Glass Sidebars & Topbar so Dot Terrain shines through everywhere */
+#leftSidebar, #rightSidebar, #topbar, #inputBar, .login-panel {
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+body.purple-theme #leftSidebar,
+body.purple-theme #rightSidebar {
+  background: rgba(15, 18, 28, 0.78) !important;
+}
+
+body.purple-theme #topbar,
+body.purple-theme #inputBar {
+  background: rgba(15, 18, 28, 0.82) !important;
+}
+
+body:not(.purple-theme) #leftSidebar,
+body:not(.purple-theme) #rightSidebar {
+  background: rgba(8, 12, 22, 0.82) !important;
+}
+
+body:not(.purple-theme) #topbar,
+body:not(.purple-theme) #inputBar {
+  background: rgba(8, 12, 22, 0.85) !important;
 }
 
 </style>
