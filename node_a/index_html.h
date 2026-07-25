@@ -143,7 +143,7 @@ body.bw-theme .room-btn.active {
 .inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255, 255, 255, 0.12);}
 .btn{
   width:100%;padding:13px;
-  background:linear-gradient(135deg,#00f0ff,#7c3aed) !important;
+  background:linear-gradient(135deg,#00f0ff,#0077ff) !important;
   border:none;border-radius:10px;
   color:#ffffff !important;font-weight:800;font-size:.95rem;font-family:var(--font);
   cursor:pointer;box-shadow:0 0 16px rgba(0,240,255,0.4);
@@ -704,7 +704,7 @@ body.bw-theme .room-btn.active {
 #msgInput{flex:1;background:#0a0a0a;border:1px solid rgba(255,255,255,0.08);color:var(--text);padding:12px 16px;border-radius:12px;font-family:var(--font);font-size:.93rem;outline:none;transition:border-color .2s;}
 #msgInput:focus{border-color:rgba(255, 255, 255, 0.12);}
 #sendBtn{
-  background:linear-gradient(135deg,#00f0ff,#7c3aed) !important;
+  background:linear-gradient(135deg,#00f0ff,#0077ff) !important;
   color:#ffffff !important;
   border:none;border-radius:12px;padding:12px 22px;
   font-family:var(--font);font-weight:800;font-size:.9rem;
@@ -995,6 +995,120 @@ body.bw-theme .room-btn.active {
 .qr-info-box code { font-family: var(--mono); color: var(--accent); }
 .pin-btn-bar { cursor: pointer; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); font-size: 0.7rem; font-weight: bold; }
 .pin-btn-bar:hover { background: rgba(245,158,11,0.3); }
+
+
+
+/* ── UNIFIED FLASH ESP32 CYAN NEON THEME (100% PURPLE-FREE) ── */
+:root {
+  --bg: #000000;
+  --bg2: rgba(8, 12, 22, 0.94);
+  --bg3: rgba(10, 16, 30, 0.92);
+  --border: rgba(0, 240, 255, 0.25);
+  --border-glow: rgba(0, 240, 255, 0.45);
+  --accent: #00f0ff;
+  --accent2: #38bdf8;
+  --text: #ffffff;
+  --muted: #94a3b8;
+  --me-bg: rgba(0, 240, 255, 0.12);
+  --other-bg: rgba(255, 255, 255, 0.04);
+  --sys: rgba(8, 12, 22, 0.9);
+}
+
+#leftSidebar {
+  background: rgba(8, 12, 22, 0.94) !important;
+  border-right: 1px solid rgba(0, 240, 255, 0.25) !important;
+}
+
+#rightSidebar {
+  background: rgba(8, 12, 22, 0.94) !important;
+  border-left: 1px solid rgba(0, 240, 255, 0.25) !important;
+}
+
+#topbar, #inputBar, .sidebar-header, .logo-header {
+  background: rgba(8, 12, 22, 0.92) !important;
+  border-color: rgba(0, 240, 255, 0.2) !important;
+}
+
+.stat-card, .user-item, #adminPanel, #vaultPanel, .qr-modal-card, .login-panel, .g-card, .vault-modal-card {
+  background: rgba(10, 16, 30, 0.92) !important;
+  border: 1px solid rgba(0, 240, 255, 0.25) !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.12) !important;
+}
+
+.stat-card:hover, .user-item:hover {
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3) !important;
+}
+
+.room-btn {
+  border: 1px solid transparent;
+}
+
+.room-btn:hover {
+  border-color: rgba(0, 240, 255, 0.3) !important;
+  background: rgba(0, 240, 255, 0.06) !important;
+}
+
+.room-btn.active {
+  background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(0,140,255,0.15)) !important;
+  border: 1px solid #00f0ff !important;
+  color: #00f0ff !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.3) !important;
+}
+
+.icon-btn, #qrBtn, #themeToggleBtn, #ttsBtn, #soundBtn {
+  background: rgba(0, 240, 255, 0.08) !important;
+  border: 1px solid rgba(0, 240, 255, 0.3) !important;
+  color: #00f0ff !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+
+.icon-btn:hover {
+  background: rgba(0, 240, 255, 0.22) !important;
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.user-avatar {
+  background: rgba(0, 240, 255, 0.15) !important;
+  border: 1px solid #00f0ff !important;
+  color: #00f0ff !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
+}
+
+.user-avatar.admin-av {
+  background: rgba(0, 240, 255, 0.25) !important;
+  border: 1px solid #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.5) !important;
+}
+
+.btn, #sendBtn, .flash-topbar-btn {
+  background: linear-gradient(135deg, #00f0ff, #0077ff) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.45) !important;
+  transition: all 0.2s !important;
+}
+
+.btn:hover, #sendBtn:hover, .flash-topbar-btn:hover {
+  background: linear-gradient(135deg, #00f0ff, #38bdf8) !important;
+  box-shadow: 0 0 26px rgba(0, 240, 255, 0.75) !important;
+  transform: translateY(-1px);
+}
+
+.msg.me {
+  background: rgba(0, 240, 255, 0.14) !important;
+  border: 1px solid rgba(0, 240, 255, 0.3) !important;
+}
+
+.msg-user, #roomLabel, .logo-title {
+  color: #00f0ff !important;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.4) !important;
+}
 
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
