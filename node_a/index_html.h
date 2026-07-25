@@ -1011,7 +1011,7 @@ body.bw-theme .room-btn.active {
     <div id="pwaTip" style="display:none;margin:6px 0;padding:10px 12px;background:rgba(255, 255, 255, 0.12);border:1px solid rgba(255, 255, 255, 0.12);border-radius:10px;font-size:.83rem;color:var(--text);text-align:center;">
       Tap browser menu → <b>Add to Home Screen</b> for the full app!
     </div>
-    <button class="btn" onclick="doLogin()">Connect →</button>
+    <button class="btn" style="background: linear-gradient(135deg, #00f0ff, #7c3aed) !important; color: #ffffff !important; box-shadow: 0 0 20px rgba(0, 240, 255, 0.5) !important;" onclick="doLogin()">Connect →</button>
   </div>
 </div>
 
@@ -1136,7 +1136,7 @@ body.bw-theme .room-btn.active {
       <input id="msgInput" placeholder="Message… (/dm /clear /kick /ban)" maxlength="300" autocomplete="off">
       <button id="micBtn" onclick="toggleMic()" title="Hold to talk — broadcasts voice over mesh">🎙️</button>
       <button id="emojiBtn" onclick="toggleEmojiPicker(event)" title="Choose Emoji">😀</button>
-      <button id="sendBtn" onclick="sendMsg()">SEND</button>
+      <button id="sendBtn" style="background: linear-gradient(135deg, #00f0ff, #7c3aed) !important; color: #ffffff !important; box-shadow: 0 0 16px rgba(0, 240, 255, 0.4) !important;" onclick="sendMsg()">SEND</button>
     </div>
   </div>
 
