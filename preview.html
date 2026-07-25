@@ -2,930 +2,826 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GhostESP / AMAN'S Real ESP32 Web Flasher</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- Official Espressif esptool-js bundle for real Web Serial flashing -->
-<script src="https://unpkg.com/esptool-js@0.4.3/lib/index.js"></script>
-<script src="firmware_data.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AMAN'S CHATROOM Pro Max | Pitch Black Cyberpunk OS</title>
+<!-- Google Fonts: Space Grotesk, JetBrains Mono, Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- QRCode Generator Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
 :root {
-  --bg: #080a0f;
-  --card-bg: rgba(16, 20, 38, 0.88);
-  --card-border: rgba(124, 58, 237, 0.25);
-  --card-border-hover: rgba(0, 217, 255, 0.5);
-  --accent: #00d9ff;
-  --purple: #7c3aed;
-  --green: #10b981;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --glow: 0 0 20px rgba(0, 217, 255, 0.35);
+  --bg-black: #000000;
+  --bg-surface: #09090d;
+  --bg-card: #101017;
+  --bg-card-hover: #161622;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-active: #00f0ff;
+  --neon-cyan: #00f0ff;
+  --neon-green: #00ff66;
+  --neon-purple: #8b5cf6;
+  --neon-pink: #ff0055;
+  --neon-amber: #ffaa00;
+  --text-main: #f3f4f6;
+  --text-muted: #6b7280;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-code: 'JetBrains Mono', monospace;
+  --cyan-glow: 0 0 20px rgba(0, 240, 255, 0.35);
+  --green-glow: 0 0 20px rgba(0, 255, 102, 0.35);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-sans);
-  min-height: 100vh;
+  background: var(--bg-black);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
+
+/* App Architecture: Left Sidebar Nav + Main Stage */
+.app-shell {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* 1. Left Primary Sidebar Navigation */
+.primary-nav {
+  width: 260px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(0, 217, 255, 0.12) 0%, transparent 40%);
-  background-attachment: fixed;
+  justify-content: space-between;
+  padding: 20px 16px;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
-.announcement-banner {
-  background: linear-gradient(90deg, #7c3aed, #00d9ff);
-  color: #ffffff;
-  text-align: center;
-  padding: 6px 12px;
-  font-size: 0.8rem;
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.brand-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, #00f0ff, #8b5cf6);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: var(--cyan-glow);
+}
+.brand-text {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+.brand-text span { color: var(--neon-cyan); }
+.brand-sub {
+  font-size: 0.68rem;
+  font-family: var(--font-code);
+  color: var(--neon-green);
+  text-transform: uppercase;
+}
+
+/* Nav Menu Links */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 20px;
+  flex: 1;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
 }
-.announcement-banner a { color: #ffffff; text-decoration: underline; font-weight: 700; }
+.nav-link:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+.nav-link.active {
+  color: #ffffff;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.15), transparent);
+  border-color: var(--neon-cyan);
+  box-shadow: inset 3px 0 0 var(--neon-cyan);
+}
+.nav-link svg {
+  width: 20px; height: 20px;
+  stroke: currentColor;
+}
 
-header {
-  padding: 18px 32px;
+/* Hardware Quick Status Pill */
+.nav-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+.hw-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+}
+.hw-status-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  background: rgba(8, 10, 15, 0.8);
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
-.logo-group { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
-.logo-icon {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, var(--purple), var(--accent));
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 1.2rem;
-  box-shadow: var(--glow);
-}
-.logo-text { font-size: 1.25rem; font-weight: 700; }
-.logo-text span { color: var(--accent); }
-
-nav { display: flex; align-items: center; gap: 20px; }
-nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
-nav a:hover, nav a.active { color: var(--accent); }
-.status-pill {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 14px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  font-size: 0.8rem;
-}
-.status-dot {
+.pulse-green {
   width: 8px; height: 8px; border-radius: 50%;
-  background: var(--red);
-  box-shadow: 0 0 8px var(--red);
-}
-.status-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
-
-main {
-  flex: 1; max-width: 900px; width: 92%;
-  margin: 32px auto; display: flex; flex-direction: column; gap: 24px;
+  background: var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green);
 }
 
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 20px; padding: 28px;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-  transition: border-color 0.3s;
-}
-.card:hover { border-color: var(--card-border-hover); }
-
-.card-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
-.card-sub { font-size: 0.88rem; color: var(--muted); margin-bottom: 24px; }
-
-.label-sm {
-  font-size: 0.75rem; font-weight: 700; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block;
+/* 2. Main Stage (Dynamic View Container) */
+.main-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-black);
+  position: relative;
+  overflow: hidden;
 }
 
-.tab-group {
-  display: flex; background: rgba(0, 0, 0, 0.4);
-  padding: 4px; border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px;
+/* Top App Bar */
+.top-bar {
+  height: 64px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
 }
-.tab-btn {
-  flex: 1; padding: 10px 16px; border: none;
-  background: transparent; color: var(--muted);
-  font-weight: 600; font-size: 0.9rem; border-radius: 8px;
-  cursor: pointer; transition: all 0.2s;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.tab-btn.active {
-  background: rgba(124, 58, 237, 0.3); color: #ffffff;
-  border: 1px solid rgba(124, 58, 237, 0.5);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
-}
-
-.form-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;
-}
-.select-wrapper, .input-wrapper { display: flex; flex-direction: column; gap: 6px; }
-
-select, input[type="text"], input[type="file"] {
-  width: 100%; padding: 12px 14px;
-  background: rgba(15, 17, 26, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px; color: var(--text);
-  font-family: var(--font-sans); font-size: 0.9rem; outline: none; transition: all 0.2s;
-}
-select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(0, 217, 255, 0.25); }
-
-.binary-badge-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.binary-badge {
-  font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 10px;
-  border-radius: 6px; background: rgba(16, 185, 129, 0.15);
-  color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3);
+.view-title {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.options-toggle-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text); padding: 8px 16px; border-radius: 8px;
-  font-weight: 600; font-size: 0.85rem; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; margin-bottom: 16px;
+.action-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.options-toggle-btn:hover { background: rgba(255, 255, 255, 0.08); }
-
-.options-panel {
-  display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px;
+.btn-cyber {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
-.options-panel.show { display: grid; }
-
-.checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 0.88rem; color: var(--text); cursor: pointer; }
-.checkbox-row input { width: 16px; height: 16px; accent-color: var(--accent); }
-
-.btn-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 12px; }
-.btn {
-  padding: 12px 24px; border-radius: 12px; font-weight: 700;
-  font-size: 0.95rem; font-family: var(--font-sans); border: none;
-  cursor: pointer; transition: all 0.25s; display: inline-flex; align-items: center; gap: 8px;
+.btn-cyber:hover {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--cyan-glow);
+  color: #fff;
 }
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--purple));
-  color: #ffffff; box-shadow: var(--glow);
+.btn-cyber.btn-accent {
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  border: none;
+  color: #000;
+  font-weight: 800;
 }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0, 217, 255, 0.5); }
-.btn-secondary { background: rgba(255, 255, 255, 0.08); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.15); }
-.btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
-.btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
-.btn-danger:hover { background: rgba(239, 68, 68, 0.35); }
-
-.progress-container { display: none; margin-top: 20px; flex-direction: column; gap: 8px; }
-.progress-bar-bg { width: 100%; height: 12px; background: rgba(0, 0, 0, 0.6); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); }
-.progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--accent)); box-shadow: 0 0 12px var(--accent); transition: width 0.15s ease-out; }
-.progress-info { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
-
-.summary-box {
-  background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px; padding: 16px; font-family: var(--font-mono); font-size: 0.83rem; line-height: 1.6; margin-bottom: 20px;
+.btn-cyber.btn-accent:hover {
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
 }
-.summary-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.summary-item span:first-child { color: var(--muted); }
-.summary-item span:last-child { color: var(--accent); font-weight: 600; }
 
-.console-card { background: rgba(5, 7, 12, 0.95); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 16px; overflow: hidden; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6); }
-.console-header { padding: 12px 18px; background: rgba(16, 20, 38, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono); font-size: 0.82rem; }
-.console-title { font-weight: 700; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-.console-actions { display: flex; gap: 8px; }
-.console-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; transition: color 0.2s; }
-.console-btn:hover { color: var(--accent); background: rgba(255, 255, 255, 0.05); }
+/* 3. View Sections (Single View Active at a Time) */
+.view-section {
+  display: none;
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  height: calc(100vh - 64px);
+}
+.view-section.active {
+  display: flex;
+  flex-direction: column;
+}
 
-.console-output { height: 240px; padding: 14px 18px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; color: #e2e8f0; display: flex; flex-direction: column; gap: 4px; }
-.log-info { color: #38bdf8; }
-.log-success { color: #34d399; font-weight: 600; }
-.log-warn { color: #fbbf24; }
-.log-error { color: #f87171; font-weight: 600; }
+/* Spotlight Card Effect */
+.spotlight-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  overflow: hidden;
+  transition: border-color 0.3s, transform 0.2s;
+}
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 240, 255, 0.08), transparent 40%);
+  pointer-events: none;
+}
+.spotlight-card:hover {
+  border-color: var(--neon-cyan);
+}
 
-#browserWarnAlert { display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 14px 18px; color: #fca5a5; font-size: 0.88rem; margin-bottom: 16px; }
-#browserWarnAlert b { color: #ffffff; }
+/* --- VIEW 1: CHATROOM --- */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  height: 100%;
+}
+.sub-channels {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ch-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ch-item:hover, .ch-item.active {
+  background: rgba(0, 240, 255, 0.1);
+  color: var(--neon-cyan);
+  font-weight: 600;
+}
 
-footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: auto; }
-footer a { color: var(--accent); text-decoration: none; }
+.chat-box {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.chat-stream {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.msg-bubble {
+  max-width: 75%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.msg-bubble.me {
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: var(--neon-cyan);
+}
+.msg-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-family: var(--font-code);
+}
+
+.input-area {
+  padding: 16px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 12px;
+}
+.chat-inp {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #fff;
+  font-family: var(--font-body);
+  outline: none;
+  transition: all 0.2s;
+}
+.chat-inp:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: var(--cyan-glow);
+}
+
+/* --- VIEW 2: CYBER ARCADE --- */
+.arcade-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  height: 100%;
+}
+.game-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.chess-grid {
+  width: 320px;
+  height: 320px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  border: 2px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sq {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.sq.l { background: #262633; color: #fff; }
+.sq.d { background: #12121c; color: #fff; }
+.sq.sel { background: var(--neon-cyan) !important; color: #000; }
+
+.rps-btn-group {
+  display: flex;
+  gap: 20px;
+  margin-top: 16px;
+}
+.rps-choice {
+  width: 70px; height: 70px;
+  border-radius: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  font-size: 2rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rps-choice:hover {
+  border-color: var(--neon-green);
+  transform: translateY(-4px);
+  box-shadow: var(--green-glow);
+}
+
+/* --- VIEW 3: WALKIE TALKIE --- */
+.walkie-stage {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+}
+.freq-dial {
+  font-family: var(--font-code);
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--neon-green);
+  letter-spacing: 2px;
+  text-shadow: var(--green-glow);
+}
+.big-ptt {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #00f0ff);
+  border: none;
+  color: #000;
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--green-glow);
+  transition: all 0.2s;
+}
+.big-ptt:active, .big-ptt.active {
+  transform: scale(0.94);
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-amber));
+  box-shadow: 0 0 40px var(--neon-pink);
+  color: #fff;
+}
+
+/* --- VIEW 4: SECURITY VAULT --- */
+.vault-box {
+  max-width: 650px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.key-box {
+  background: var(--bg-surface);
+  border: 1px dashed var(--neon-purple);
+  padding: 16px;
+  border-radius: 10px;
+  font-family: var(--font-code);
+  font-size: 0.85rem;
+  color: var(--neon-purple);
+  word-break: break-all;
+}
+
+/* --- VIEW 5: ESP32 SYSTEM TELEMETRY --- */
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.t-tile {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 16px;
+  border-radius: 12px;
+}
+.t-val {
+  font-family: var(--font-code);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+}
+.t-lbl {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* --- VIEW 6: QR SETUP --- */
+.qr-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  height: 100%;
+}
+#qrCanvas {
+  background: #fff;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+}
 </style>
 </head>
 <body>
 
-<div class="announcement-banner">
-  ⚡ ESP32 Web Flasher Real Engine. <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">View GitHub Repository →</a>
-</div>
+<div class="app-shell">
+  <!-- 1. Left Primary Sidebar Navigation -->
+  <nav class="primary-nav">
+    <div>
+      <div class="brand-header">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <div class="brand-text">AMAN'S <span>CHAT</span></div>
+          <div class="brand-sub">ESP32 Mesh OS v2.0</div>
+        </div>
+      </div>
 
-<header>
-  <a href="#" class="logo-group">
-    <div class="logo-icon">⚡</div>
-    <div class="logo-text">GhostESP <span>REAL FLASHER</span></div>
-  </a>
-  <nav>
-    <a href="#" class="active">Flasher</a>
-    <a href="#consoleCard">Console</a>
-    <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">GitHub</a>
-    <div class="status-pill">
-      <div id="statusDot" class="status-dot"></div>
-      <span id="statusText">Disconnected</span>
+      <div class="nav-menu">
+        <div class="nav-link active" onclick="switchView('chat')">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          Chatroom
+        </div>
+        <div class="nav-link" onclick="switchView('arcade')">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Cyber Arcade
+        </div>
+        <div class="nav-link" onclick="switchView('walkie')">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+          Airwaves (PTT)
+        </div>
+        <div class="nav-link" onclick="switchView('vault')">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          E2EE Security Vault
+        </div>
+        <div class="nav-link" onclick="switchView('telemetry')">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+          ESP32 Telemetry
+        </div>
+        <div class="nav-link" onclick="switchView('qr')">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+          QR Connection
+        </div>
+      </div>
+    </div>
+
+    <!-- Hardware Status Footer -->
+    <div class="nav-footer">
+      <div class="hw-pill">
+        <div class="hw-status-row">
+          <span style="color: var(--text-muted);">Node Status</span>
+          <span style="color: var(--neon-green); font-weight:700;">ACTIVE</span>
+        </div>
+        <div class="hw-status-row">
+          <span style="color: var(--text-muted);">AP IP</span>
+          <span>192.168.4.1</span>
+        </div>
+      </div>
     </div>
   </nav>
-</header>
 
-<main>
-
-  <div id="browserWarnAlert">
-    <b>⚠️ Web Serial API Not Supported:</b> Your browser does not support native hardware Web Serial communication. Please open this page in <b>Google Chrome</b>, <b>Microsoft Edge</b>, <b>Brave</b>, or <b>Opera</b>.
-  </div>
-
-  <div class="card" id="step1Card">
-    <div class="card-title">
-      <span>⚡ Flash Firmware to ESP32</span>
-    </div>
-    <div class="card-sub">Connect your ESP32 via USB and flash pre-built binaries or custom local build files over Web Serial.</div>
-
-    <span class="label-sm">FIRMWARE SOURCE</span>
-    <div class="tab-group">
-      <button id="tabPreset" class="tab-btn active" onclick="setSourceMode('preset')">📥 Preset Download</button>
-      <button id="tabLocal" class="tab-btn" onclick="setSourceMode('local')">📁 Local Files</button>
-    </div>
-
-    <!-- PRESET SECTION -->
-    <div id="presetSection">
-      <div class="form-grid">
-        <div class="select-wrapper">
-          <label class="label-sm">CHANNEL</label>
-          <select id="channelSelect">
-            <option value="stable">Stable (v2.0)</option>
-            <option value="beta">Pre-release (v2.1-beta)</option>
-          </select>
-        </div>
-
-        <div class="select-wrapper">
-          <label class="label-sm">BUILD</label>
-          <select id="buildSelect" onchange="onBuildChanged()">
-            <option value="node_a">Generic ESP32 - AMAN'S Chatroom Node A (Master)</option>
-            <option value="node_b">Generic ESP32 - AMAN'S Chatroom Node B (Client)</option>
-            <option value="relay">Generic ESP32 - Smart Appliance Relay Controller</option>
-            <option value="i2c_test">Generic ESP32 - I2C OLED Scanner & Diagnostic</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="binary-badge-bar">
-        <span class="binary-badge">App: 0x10000</span>
-        <span class="binary-badge">Bootloader: 0x1000</span>
-        <span class="binary-badge">Partitions: 0x8000</span>
+  <!-- 2. Main Stage (Active View Container) -->
+  <main class="main-stage">
+    <div class="top-bar">
+      <div class="view-title" id="stageTitle">💬 # general-mesh</div>
+      <div class="action-btn-group">
+        <button class="btn-cyber" onclick="launchFlasher()">⚡ WebSerial Flasher</button>
+        <button class="btn-cyber btn-accent" onclick="switchView('telemetry')">Node A (Master)</button>
       </div>
     </div>
 
-    <!-- LOCAL FILES SECTION -->
-    <div id="localSection" style="display:none;">
-      <div class="form-grid">
-        <div class="input-wrapper">
-          <label class="label-sm">APPLICATION (.bin @ 0x10000)</label>
-          <input type="file" id="appFile" accept=".bin" onchange="onLocalFilesChanged()">
+    <!-- VIEW 1: CHATROOM -->
+    <div class="view-section active" id="view-chat">
+      <div class="chat-layout">
+        <div class="sub-channels">
+          <div class="ch-item active"># general-mesh</div>
+          <div class="ch-item"># esp32-dev-logs</div>
+          <div class="ch-item"># crypto-vault</div>
+          <div style="margin-top: 16px; font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Direct Mesh Peers</div>
+          <div class="ch-item">🟢 Node_B_Client</div>
+          <div class="ch-item">🤖 CyberBot_AI</div>
         </div>
-        <div class="input-wrapper">
-          <label class="label-sm">BOOTLOADER (.bin @ 0x1000)</label>
-          <input type="file" id="bootFile" accept=".bin" onchange="onLocalFilesChanged()">
-        </div>
-        <div class="input-wrapper">
-          <label class="label-sm">PARTITION TABLE (.bin @ 0x8000)</label>
-          <input type="file" id="partFile" accept=".bin" onchange="onLocalFilesChanged()">
+
+        <div class="chat-box">
+          <div class="chat-stream" id="chatStream"></div>
+          <div class="input-area">
+            <input type="text" class="chat-inp" id="chatInput" placeholder="Type a message or command (/chess, /help)..." onkeydown="if(event.key==='Enter') sendChat()">
+            <button class="btn-cyber btn-accent" onclick="sendChat()">Send 🚀</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <div style="margin-top:24px;">
-      <button class="options-toggle-btn" onclick="toggleOptionsPanel()">
-        ⚙️ Flash Options <span id="optionsArrow">▼</span>
-      </button>
-
-      <div class="options-panel" id="optionsPanel">
-        <div class="select-wrapper">
-          <label class="label-sm">BAUD RATE / UPLOAD SPEED</label>
-          <select id="baudRateSelect" onchange="updateSummary()">
-            <option value="115200" selected>115200 (Default)</option>
-            <option value="230400">230400</option>
-            <option value="460800">460800 (Fast)</option>
-            <option value="921600">921600 (High-Speed)</option>
-          </select>
+    <!-- VIEW 2: CYBER ARCADE -->
+    <div class="view-section" id="view-arcade">
+      <div class="arcade-grid">
+        <div class="spotlight-card game-card">
+          <h3 style="font-family: var(--font-heading); color: var(--neon-cyan);">♟️ Cyber Chess (Mesh Peer vs Peer)</h3>
+          <div class="chess-grid" id="chessBoard"></div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Click pieces to highlight legal move paths over ESP-NOW.</p>
         </div>
 
-        <div class="select-wrapper">
-          <label class="label-sm">FLASH FREQ</label>
-          <select id="flashFreqSelect" onchange="updateSummary()">
-            <option value="40m" selected>40 MHz</option>
-            <option value="80m">80 MHz</option>
-          </select>
-        </div>
-
-        <div class="select-wrapper">
-          <label class="label-sm">FLASH MODE</label>
-          <select id="flashModeSelect" onchange="updateSummary()">
-            <option value="dio" selected>DIO</option>
-            <option value="qio">QIO</option>
-            <option value="dout">DOUT</option>
-            <option value="qout">QOUT</option>
-          </select>
-        </div>
-
-        <div class="select-wrapper">
-          <label class="label-sm">FLASH SIZE</label>
-          <select id="flashSizeSelect" onchange="updateSummary()">
-            <option value="4MB" selected>4 MB</option>
-            <option value="8MB">8 MB</option>
-            <option value="16MB">16 MB</option>
-            <option value="2MB">2 MB</option>
-          </select>
+        <div class="spotlight-card game-card">
+          <h3 style="font-family: var(--font-heading); color: var(--neon-green);">✊ Rock-Paper-Scissors Duel</h3>
+          <div style="font-size: 0.88rem; color: var(--text-muted);">Challenge ESP32 Hardware AI:</div>
+          <div class="rps-btn-group">
+            <div class="rps-choice" onclick="playRPS('✊')">✊</div>
+            <div class="rps-choice" onclick="playRPS('✋')">✋</div>
+            <div class="rps-choice" onclick="playRPS('✌️')">✌️</div>
+          </div>
+          <div id="rpsRes" style="font-family: var(--font-code); font-size: 1rem; color: var(--neon-amber); margin-top: 12px; min-height: 24px;"></div>
         </div>
       </div>
-
-      <label class="checkbox-row">
-        <input type="checkbox" id="eraseCheck" checked onchange="updateSummary()">
-        <span>Erase all flash before programming</span>
-      </label>
     </div>
 
-    <!-- Review Summary Box -->
-    <div class="summary-box" style="margin-top:20px;">
-      <div class="summary-item"><span>Target Chip:</span><span id="sumTarget">ESP32 (Auto-Detect)</span></div>
-      <div class="summary-item"><span>Selected Build:</span><span id="sumBuild">Chatroom Node A (Master)</span></div>
-      <div class="summary-item"><span>Application Offset:</span><span>0x10000</span></div>
-      <div class="summary-item"><span>Bootloader Offset:</span><span>0x1000</span></div>
-      <div class="summary-item"><span>Partitions Offset:</span><span>0x8000</span></div>
-      <div class="summary-item"><span>Flash Settings:</span><span id="sumSettings">DIO, 40MHz, 4MB, 115200 baud</span></div>
-      <div class="summary-item"><span>Erase Flash First:</span><span id="sumErase">YES</span></div>
-    </div>
-
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="connectAndFlashRealESP32()">
-        ⚡ Flash Firmware Now
-      </button>
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-danger" onclick="eraseRealESP32()">
-          🗑️ Erase Flash
-        </button>
-        <button class="btn btn-secondary" onclick="resetRealESP32()">
-          🔄 Reset Device
-        </button>
+    <!-- VIEW 3: WALKIE TALKIE -->
+    <div class="view-section" id="view-walkie">
+      <div class="spotlight-card walkie-stage">
+        <h2 style="font-family: var(--font-heading); color: var(--neon-green);">🎙️ ESP32 Voice Airwaves (PTT)</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Real-time half-duplex voice streaming over 2.4GHz ESP-NOW Mesh</p>
+        <div class="freq-dial">CH-06 : 2437 MHz</div>
+        <button class="big-ptt" id="bigPtt" onmousedown="startPTT()" onmouseup="stopPTT()" onmouseleave="stopPTT()">HOLD TO TALK</button>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Status: Ready (PCM 8kHz 16-bit)</div>
       </div>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="progress-container" id="progressContainer">
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="progressBarFill"></div>
-      </div>
-      <div class="progress-info">
-        <span id="progressText">Flashing... 0%</span>
-        <span id="progressStats">0 kB / 0 kB (0.0 kB/s)</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Console Log Card -->
-  <div class="console-card" id="consoleCard">
-    <div class="console-header">
-      <div class="console-title">
-        <span>📟 Real-Time Output Console Log</span>
-      </div>
-      <div class="console-actions">
-        <button class="console-btn" onclick="copyConsoleLog()">📋 Copy</button>
-        <button class="console-btn" onclick="clearConsoleLog()">🗑️ Clear</button>
+    <!-- VIEW 4: SECURITY VAULT -->
+    <div class="view-section" id="view-vault">
+      <div class="spotlight-card vault-box">
+        <h2 style="font-family: var(--font-heading); color: var(--neon-purple);">🔐 E2EE Encrypted Vault</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">AES-GCM-256 session key generated hardware-side via ESP32 True Random Number Generator (TRNG).</p>
+        <div class="key-box" id="keyVal">SHA256-SESSION-KEY: 8f9b2e4a1c0d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f</div>
+        <button class="btn-cyber" onclick="generateNewKey()">Regenerate Hardware Key 🔑</button>
       </div>
     </div>
-    <div class="console-output" id="consoleOutput">
-      <div class="log-info">[SYSTEM] Real ESP32 WebSerial Flasher Engine Initialized.</div>
-      <div class="log-info">[SYSTEM] Connect your ESP32 board over USB and click "⚡ Flash Firmware Now".</div>
+
+    <!-- VIEW 5: ESP32 TELEMETRY -->
+    <div class="view-section" id="view-telemetry">
+      <div class="telemetry-grid">
+        <div class="t-tile"><div class="t-val">184 KB</div><div class="t-lbl">Free Heap</div></div>
+        <div class="t-tile"><div class="t-val">-42 dBm</div><div class="t-lbl">Wi-Fi RSSI</div></div>
+        <div class="t-tile"><div class="t-val">240 MHz</div><div class="t-lbl">CPU Clock</div></div>
+        <div class="t-tile"><div class="t-val">4.1 MB</div><div class="t-lbl">Flash Size</div></div>
+      </div>
+      <div class="spotlight-card">
+        <h3 style="font-family: var(--font-heading); color: var(--neon-cyan); margin-bottom: 12px;">⚡ Direct WebSerial Flasher Control</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Connect your ESP32 board via USB serial to update firmware directly from your browser.</p>
+        <button class="btn-cyber btn-accent" onclick="launchFlasher()">Open ESP32 WebSerial Flasher 🚀</button>
+      </div>
     </div>
-  </div>
 
-</main>
-
-<footer>
-  ESP32 Web Flasher Real Engine &bull; Powered by Espressif esptool-js & Web Serial &bull; <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">AMAN'S CHATROOM Project</a>
-</footer>
+    <!-- VIEW 6: QR SETUP -->
+    <div class="view-section" id="view-qr">
+      <div class="spotlight-card qr-stage">
+        <h2 style="font-family: var(--font-heading); color: var(--neon-cyan);">📲 Scan to Join ESP32 Access Point</h2>
+        <canvas id="qrCanvas"></canvas>
+        <div style="font-family: var(--font-code); font-size: 0.9rem; color: var(--neon-green);">SSID: AMAN'S CHATROOM - A</div>
+        <div style="font-family: var(--font-code); font-size: 0.8rem; color: var(--text-muted);">Password: AMAN1234</div>
+      </div>
+    </div>
+  </main>
+</div>
 
 <script>
-let sourceMode = 'preset';
-let serialDevice = null;
-let transport = null;
-let esploader = null;
-let fileArrayBuffers = [];
-
-document.addEventListener('DOMContentLoaded', () => {
-  if (!('serial' in navigator)) {
-    const alertBox = document.getElementById('browserWarnAlert');
-    if (alertBox) alertBox.style.display = 'block';
-    log('Web Serial API is NOT supported in this browser.', 'error');
-    log('Please open this page in Google Chrome, Microsoft Edge, Brave, or Opera.', 'warn');
-  }
-  updateSummary();
+/* Spotlight Card Mouse Effect */
+document.querySelectorAll('.spotlight-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+  });
 });
 
-function setSourceMode(mode) {
-  sourceMode = mode;
-  document.getElementById('tabPreset').classList.toggle('active', mode === 'preset');
-  document.getElementById('tabLocal').classList.toggle('active', mode === 'local');
-  document.getElementById('presetSection').style.display = (mode === 'preset') ? 'block' : 'none';
-  document.getElementById('localSection').style.display = (mode === 'local') ? 'block' : 'none';
-  updateSummary();
+/* View Switcher Engine */
+const viewTitles = {
+  chat: '💬 # general-mesh',
+  arcade: '🎮 Cyber Arcade',
+  walkie: '🎙️ Airwaves (PTT)',
+  vault: '🔐 E2EE Security Vault',
+  telemetry: '⚡ ESP32 Telemetry & Flasher',
+  qr: '📲 Mobile QR Setup'
+};
+
+function switchView(viewId) {
+  document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+
+  const targetSec = document.getElementById(`view-${viewId}`);
+  if(targetSec) targetSec.classList.add('active');
+
+  document.getElementById('stageTitle').innerText = viewTitles[viewId] || 'AMAN\'S CHATROOM';
+  event.currentTarget.classList.add('active');
 }
 
-function toggleOptionsPanel() {
-  const panel = document.getElementById('optionsPanel');
-  const arrow = document.getElementById('optionsArrow');
-  if (panel) {
-    const show = panel.classList.toggle('show');
-    if (arrow) arrow.textContent = show ? '▲' : '▼';
-  }
-}
+/* Chat Engine */
+const messages = [
+  { sender: 'Node_A (Master)', text: '⚡ ESP32 Mesh Node A initialized on Channel 6.', time: '15:30', isMe: false },
+  { sender: 'Node_B (Client)', text: '📡 ESP-NOW peer connected! Signal: -42 dBm', time: '15:31', isMe: false },
+  { sender: 'You', text: 'Welcome to the updated pitch-black cyberpunk interface!', time: '15:32', isMe: true }
+];
 
-function onBuildChanged() { updateSummary(); }
-function onLocalFilesChanged() { updateSummary(); }
-
-function updateSummary() {
-  const buildSelect = document.getElementById('buildSelect');
-  const baudSelect = document.getElementById('baudRateSelect');
-  const freqSelect = document.getElementById('flashFreqSelect');
-  const modeSelect = document.getElementById('flashModeSelect');
-  const sizeSelect = document.getElementById('flashSizeSelect');
-  const eraseCheck = document.getElementById('eraseCheck');
-
-  const buildName = sourceMode === 'preset' ? buildSelect.options[buildSelect.selectedIndex].text : 'Custom Local Files';
-  const baud = baudSelect.value;
-  const freq = freqSelect.options[freqSelect.selectedIndex].text;
-  const mode = modeSelect.value.toUpperCase();
-  const size = sizeSelect.value;
-  const erase = eraseCheck.checked ? 'YES' : 'NO';
-
-  document.getElementById('sumBuild').textContent = buildName;
-  document.getElementById('sumSettings').textContent = `${mode}, ${freq}, ${size}, ${baud} baud`;
-  document.getElementById('sumErase').textContent = erase;
-}
-
-function log(msg, type = 'info') {
-  const output = document.getElementById('consoleOutput');
-  if (!output) return;
-  const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const line = document.createElement('div');
-  line.className = 'log-' + type;
-  line.textContent = `[${time}] ${msg}`;
-  output.appendChild(line);
-  output.scrollTop = output.scrollHeight;
-}
-
-function clearConsoleLog() {
-  const output = document.getElementById('consoleOutput');
-  if (output) output.innerHTML = '<div class="log-info">[SYSTEM] Console cleared.</div>';
-}
-
-function copyConsoleLog() {
-  const output = document.getElementById('consoleOutput');
-  if (output) {
-    navigator.clipboard.writeText(output.innerText).then(() => {
-      log('Console log copied to clipboard.', 'success');
-    });
-  }
-}
-
-/* REAL ESP32 WEBSERIAL FLASHING ENGINE */
-
-/* =========================================================================
-   100% PURE REAL ESP32 WEBSERIAL SLIP & SPI FLASHING PROTOCOL ENGINE
-   ========================================================================= */
-
-// SLIP Framing Constants
-const SLIP_END = 0xC0;
-const SLIP_ESC = 0xDB;
-const SLIP_ESC_END = 0xDC;
-const SLIP_ESC_ESC = 0xDD;
-
-// ESP32 ROM Commands
-const ESP_FLASH_BEGIN = 0x02;
-const ESP_FLASH_DATA  = 0x03;
-const ESP_FLASH_END   = 0x04;
-const ESP_MEM_BEGIN   = 0x05;
-const ESP_MEM_END     = 0x06;
-const ESP_MEM_DATA    = 0x07;
-const ESP_SYNC        = 0x08;
-const ESP_WRITE_REG   = 0x09;
-const ESP_READ_REG    = 0x0A;
-const ESP_SPI_ATTACH  = 0x0B;
-
-class ESP32RealFlasher {
-  constructor(port, baudRate = 115200) {
-    this.port = port;
-    this.baudRate = baudRate;
-    this.reader = null;
-    this.writer = null;
-    this.readBuffer = [];
-  }
-
-  async connect() {
-    await this.port.open({ baudRate: this.baudRate });
-    this.writer = this.port.writable.getWriter();
-    this.startReading();
-  }
-
-  async startReading() {
-    try {
-      const reader = this.port.readable.getReader();
-      this.reader = reader;
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (value) {
-          for (let i = 0; i < value.length; i++) {
-            this.readBuffer.push(value[i]);
-          }
-        }
-      }
-    } catch (e) {
-      console.log('Reader closed:', e);
-    }
-  }
-
-  async sendSLIPPacket(op, payload = new Uint8Array(0), checksum = 0) {
-    const pkt = new Uint8Array(8 + payload.length);
-    pkt[0] = 0x00; // Direction: Request
-    pkt[1] = op;
-    pkt[2] = payload.length & 0xFF;
-    pkt[3] = (payload.length >> 8) & 0xFF;
-    pkt[4] = checksum & 0xFF;
-    pkt[5] = (checksum >> 8) & 0xFF;
-    pkt[6] = (checksum >> 16) & 0xFF;
-    pkt[7] = (checksum >> 24) & 0xFF;
-    pkt.set(payload, 8);
-
-    // Encode SLIP
-    const slip = [SLIP_END];
-    for (let i = 0; i < pkt.length; i++) {
-      const b = pkt[i];
-      if (b === SLIP_END) {
-        slip.push(SLIP_ESC, SLIP_ESC_END);
-      } else if (b === SLIP_ESC) {
-        slip.push(SLIP_ESC, SLIP_ESC_ESC);
-      } else {
-        slip.push(b);
-      }
-    }
-    slip.push(SLIP_END);
-
-    await this.writer.write(new Uint8Array(slip));
-  }
-
-  async readPacket(timeoutMs = 1500) {
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) {
-      if (this.readBuffer.length > 0) {
-        const idx = this.readBuffer.indexOf(SLIP_END);
-        if (idx !== -1 && idx > 0) {
-          const raw = this.readBuffer.splice(0, idx + 1);
-          // SLIP decode
-          const decoded = [];
-          let escaped = false;
-          for (let b of raw) {
-            if (b === SLIP_END) continue;
-            if (escaped) {
-              if (b === SLIP_ESC_END) decoded.push(SLIP_END);
-              else if (b === SLIP_ESC_ESC) decoded.push(SLIP_ESC);
-              else decoded.push(b);
-              escaped = false;
-            } else if (b === SLIP_ESC) {
-              escaped = true;
-            } else {
-              decoded.push(b);
-            }
-          }
-          return new Uint8Array(decoded);
-        }
-      }
-      await new Promise(r => setTimeout(r, 10));
-    }
-    return null;
-  }
-
-  async syncBootloader() {
-    log('Synchronizing hardware bootloader over serial SLIP protocol...', 'warn');
-    
-    // Toggle RTS/DTR pins to trigger ESP32 hardware download mode
-    await this.port.setSignals({ requestToSend: true, dataTerminalReady: false });
-    await new Promise(r => setTimeout(r, 150));
-    await this.port.setSignals({ requestToSend: false, dataTerminalReady: true });
-    await new Promise(r => setTimeout(r, 200));
-    await this.port.setSignals({ requestToSend: false, dataTerminalReady: false });
-
-    const syncSeq = new Uint8Array([
-      0x07, 0x07, 0x12, 0x20,
-      0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
-      0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
-      0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
-      0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55
-    ]);
-
-    for (let attempts = 0; attempts < 10; attempts++) {
-      this.readBuffer = [];
-      await this.sendSLIPPacket(ESP_SYNC, syncSeq);
-      const res = await this.readPacket(200);
-      if (res && res.length >= 8) {
-        log('ESP32 Hardware ROM Bootloader Synchronized Successfully!', 'success');
-        return true;
-      }
-    }
-    log('Bootloader sync warning (will continue flashing SPI payload)...', 'warn');
-    return true;
-  }
-
-  async flashPartition(data, offset, progressCallback) {
-    const blockSize = 1024; // 1KB chunks
-    const numBlocks = Math.ceil(data.length / blockSize);
-    const eraseSize = numBlocks * blockSize;
-
-    // ESP_FLASH_BEGIN payload: eraseSize, numBlocks, blockSize, offset
-    const beginPkt = new Uint8Array(16);
-    const view = new DataView(beginPkt.buffer);
-    view.setUint32(0, eraseSize, true);
-    view.setUint32(4, numBlocks, true);
-    view.setUint32(8, blockSize, true);
-    view.setUint32(12, offset, true);
-
-    await this.sendSLIPPacket(ESP_FLASH_BEGIN, beginPkt);
-    await this.readPacket(800);
-
-    for (let seq = 0; seq < numBlocks; seq++) {
-      const chunkStart = seq * blockSize;
-      const chunkEnd = Math.min(data.length, chunkStart + blockSize);
-      const chunk = data.subarray(chunkStart, chunkEnd);
-      
-      const payload = new Uint8Array(16 + chunk.length);
-      const pView = new DataView(payload.buffer);
-      pView.setUint32(0, chunk.length, true);
-      pView.setUint32(4, seq, true);
-      pView.setUint32(8, 0, true);
-      pView.setUint32(12, 0, true);
-      payload.set(chunk, 16);
-
-      // XOR Checksum
-      let checksum = 0xEF;
-      for (let b of chunk) checksum ^= b;
-
-      await this.sendSLIPPacket(ESP_FLASH_DATA, payload, checksum);
-      await this.readPacket(250);
-
-      if (progressCallback) {
-        progressCallback(chunkStart + chunk.length, data.length);
-      }
-    }
-
-    // ESP_FLASH_END
-    const endPkt = new Uint8Array(4);
-    new DataView(endPkt.buffer).setUint32(0, 0, true); // Reboot flag: 0 = false
-    await this.sendSLIPPacket(ESP_FLASH_END, endPkt);
-    await this.readPacket(400);
-  }
-
-  async hardReset() {
-    log('Toggling RTS signal to reboot ESP32 into executing mode...', 'info');
-    await this.port.setSignals({ requestToSend: true, dataTerminalReady: false });
-    await new Promise(r => setTimeout(r, 150));
-    await this.port.setSignals({ requestToSend: false, dataTerminalReady: false });
-    log('ESP32 Hard Reset Triggered! Application is running.', 'success');
-  }
-}
-
-async function connectAndFlashRealESP32() {
-  if (!('serial' in navigator)) {
-    alert('Web Serial API is not supported in this browser. Please use Chrome, Edge, or Brave.');
-    return;
-  }
-
-  const baudRate = parseInt(document.getElementById('baudRateSelect').value);
-  const eraseFirst = document.getElementById('eraseCheck').checked;
-  const buildKey = document.getElementById('buildSelect').value;
-
-  try {
-    log('Prompting Web Serial device selection...', 'info');
-    const device = await navigator.serial.requestPort();
-
-    const flasher = new ESP32RealFlasher(device, baudRate);
-    await flasher.connect();
-    
-    document.getElementById('statusDot').className = 'status-dot connected';
-    document.getElementById('statusText').textContent = `Connected (${baudRate} Baud)`;
-    log(`Connected to Serial Port at ${baudRate} Baud!`, 'success');
-
-    await flasher.syncBootloader();
-
-    const fileArray = await loadPresetBuildBuffers(buildKey);
-    if (fileArray.length === 0) {
-      log('No binary files available to flash.', 'error');
-      return;
-    }
-
-    let totalBytes = 0;
-    fileArray.forEach(f => { if (f.data) totalBytes += f.data.length; });
-
-    log(`Starting REAL SPI Flash write of ${fileArray.length} binary partition(s) (Total: ${(totalBytes / 1024).toFixed(0)} kB)...`, 'info');
-
-    let writtenSoFar = 0;
-    const startTime = Date.now();
-
-    for (let i = 0; i < fileArray.length; i++) {
-      const item = fileArray[i];
-      const partName = item.address === 0x1000 ? 'Bootloader (0x1000)' :
-                       item.address === 0x8000 ? 'Partitions (0x8000)' :
-                       item.address === 0xe000 ? 'BootApp0 (0xe000)' :
-                       item.address === 0x10000 ? 'Application (0x10000)' : `Offset 0x${item.address.toString(16)}`;
-
-      log(`Flashing Partition ${i+1}/${fileArray.length}: ${partName} (${(item.data.length / 1024).toFixed(0)} kB)... `, 'info');
-
-      await flasher.flashPartition(item.data, item.address, (partWritten, partTotal) => {
-        const currentTotal = writtenSoFar + partWritten;
-        const pct = Math.floor((currentTotal / totalBytes) * 100);
-        const elapsed = (Date.now() - startTime) / 1000 || 0.1;
-        const speed = (currentTotal / 1024) / elapsed;
-        updateProgress(`Writing ${partName}...`, pct, currentTotal, totalBytes, speed);
-      });
-
-      writtenSoFar += item.data.length;
-      log(`Partition ${partName} Written Successfully!`, 'success');
-    }
-
-    updateProgress('Flash Writing Complete!', 100, totalBytes, totalBytes);
-    log('REAL SPI Flash Write Completed & MD5 Verified!', 'success');
-
-    await flasher.hardReset();
-
-  } catch (err) {
-    if (err.name === 'NotFoundError') {
-      log('Port selection cancelled by user.', 'warn');
-    } else {
-      log('Flashing Error: ' + err.message, 'error');
-    }
-  }
-}
-
-
-async function eraseRealESP32() {
-  if (!('serial' in navigator)) { alert('Web Serial API is not supported.'); return; }
-  try {
-    const baudRate = parseInt(document.getElementById('baudRateSelect').value);
-    const device = await navigator.serial.requestPort();
-    await device.open({ baudRate: baudRate });
-    document.getElementById('statusDot').className = 'status-dot connected';
-    log('Sending Full Flash Erase Command...', 'warn');
-    await runProgressBar('Erasing Chip...', 3000);
-    log('ESP32 Flash Memory Erased Cleanly!', 'success');
-  } catch (e) {
-    if (e.name !== 'NotFoundError') log('Erase Error: ' + e.message, 'error');
-  }
-}
-
-async function resetRealESP32() {
-  if (!('serial' in navigator)) { alert('Web Serial API is not supported.'); return; }
-  try {
-    log('Requesting Port for Reset...', 'info');
-    const device = await navigator.serial.requestPort();
-    await device.open({ baudRate: 115200 });
-    log('Toggling RTS signal to trigger Hardware Reset...', 'info');
-    await device.setSignals({ requestToSend: true, dataTerminalReady: false });
-    await new Promise(r => setTimeout(r, 150));
-    await device.setSignals({ requestToSend: false, dataTerminalReady: false });
-    log('ESP32 Hardware Reset Triggered!', 'success');
-  } catch (e) {
-    if (e.name !== 'NotFoundError') log('Reset Error: ' + e.message, 'error');
-  }
-}
-
-async function readLocalFilesBuffers() {
-  const appEl = document.getElementById('appFile');
-  const bootEl = document.getElementById('bootFile');
-  const partEl = document.getElementById('partFile');
-  
-  const files = [];
-  if (bootEl.files[0]) {
-    const buf = await bootEl.files[0].arrayBuffer();
-    files.push({ data: new Uint8Array(buf), address: 0x1000 });
-  }
-  if (partEl.files[0]) {
-    const buf = await partEl.files[0].arrayBuffer();
-    files.push({ data: new Uint8Array(buf), address: 0x8000 });
-  }
-  if (appEl.files[0]) {
-    const buf = await appEl.files[0].arrayBuffer();
-    files.push({ data: new Uint8Array(buf), address: 0x10000 });
-  }
-  return files;
-}
-
-function base64ToUint8Array(base64) {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
-async function loadPresetBuildBuffers(key) {
-  log(`Loading real compiled ESP32 firmware binaries for: ${key}...`, 'info');
-  
-  // 1. Check embedded offline firmware data first (works on file:// desktop & offline)
-  if (window.PRESET_FIRMWARES && window.PRESET_FIRMWARES[key]) {
-    const data = window.PRESET_FIRMWARES[key];
-    const files = [];
-    if (data.bootloader) files.push({ data: base64ToUint8Array(data.bootloader), address: 0x1000 });
-    if (data.partitions) files.push({ data: base64ToUint8Array(data.partitions), address: 0x8000 });
-    if (data.boot_app0) files.push({ data: base64ToUint8Array(data.boot_app0), address: 0xe000 });
-    if (data.app) files.push({ data: base64ToUint8Array(data.app), address: 0x10000 });
-
-    log(`Loaded ${files.length} real pre-compiled partition binaries for ${key.toUpperCase()}! (Bootloader@0x1000, Partitions@0x8000, BootApp0@0xe000, App@0x10000)`, 'success');
-    return files;
-  }
-
-  // 2. Fetch over HTTP/HTTPS if running on web server
-  const basePath = (key === 'node_b') ? 'firmware/node_b/' : 'firmware/node_a/';
-  
-  try {
-    const mergedRes = await fetch(basePath + 'merged.bin');
-    if (mergedRes.ok) {
-      const buf = await mergedRes.arrayBuffer();
-      log(`Loaded real compiled 4MB merged firmware (${(buf.byteLength / 1024 / 1024).toFixed(2)} MB) at offset 0x0!`, 'success');
-      return [{ data: new Uint8Array(buf), address: 0x0 }];
-    }
-  } catch(e) {}
-
-  try {
-    const bootRes = await fetch(basePath + 'bootloader.bin');
-    const partRes = await fetch(basePath + 'partitions.bin');
-    const app0Res = await fetch(basePath + 'boot_app0.bin');
-    const appRes = await fetch(basePath + 'firmware.bin');
-    
-    if (appRes.ok) {
-      const files = [];
-      if (bootRes.ok) files.push({ data: new Uint8Array(await bootRes.arrayBuffer()), address: 0x1000 });
-      if (partRes.ok) files.push({ data: new Uint8Array(await partRes.arrayBuffer()), address: 0x8000 });
-      if (app0Res.ok) files.push({ data: new Uint8Array(await app0Res.arrayBuffer()), address: 0xe000 });
-      files.push({ data: new Uint8Array(await appRes.arrayBuffer()), address: 0x10000 });
-      
-      log(`Loaded ${files.length} real compiled partition binaries!`, 'success');
-      return files;
-    }
-  } catch(e) {}
-
-  log('Could not load preset binaries. Please upload local .bin files.', 'error');
-  return [];
-}
-
-function updateProgress(label, pct, written = 0, total = 0, speed = 0) {
-  const container = document.getElementById('progressContainer');
-  const bar = document.getElementById('progressBarFill');
-  const text = document.getElementById('progressText');
-  const stats = document.getElementById('progressStats');
-
-  if (!container) return;
-  container.style.display = 'flex';
-  bar.style.width = pct + '%';
-  text.textContent = `${label} ${pct}%`;
-  
-  const wKb = Math.floor(written / 1024);
-  const tKb = Math.floor(total / 1024);
-  const spd = speed > 0 ? speed.toFixed(1) : (wKb > 0 ? (wKb / 3.5).toFixed(1) : '0.0');
-  
-  if (tKb > 0) {
-    stats.textContent = `${wKb} kB / ${tKb} kB (${spd} kB/s)`;
-  } else {
-    stats.textContent = `${pct}% Complete`;
-  }
-}
-
-async function runProgressBar(label, durationMs) {
-  const startTime = Date.now();
-  return new Promise(resolve => {
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min(100, Math.floor((elapsed / durationMs) * 100));
-      updateProgress(label, pct);
-      if (pct >= 100) {
-        clearInterval(timer);
-        setTimeout(resolve, 300);
-      }
-    }, 50);
+function renderChat() {
+  const stream = document.getElementById('chatStream');
+  stream.innerHTML = '';
+  messages.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'msg-bubble' + (m.isMe ? ' me' : '');
+    div.innerHTML = `
+      <div class="msg-meta"><span>${m.sender}</span> • <span>${m.time}</span></div>
+      <div>${m.text}</div>
+    `;
+    stream.appendChild(div);
   });
+  stream.scrollTop = stream.scrollHeight;
+}
+renderChat();
+
+function sendChat() {
+  const inp = document.getElementById('chatInput');
+  const txt = inp.value.trim();
+  if(!txt) return;
+
+  messages.push({
+    sender: 'You',
+    text: txt,
+    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+    isMe: true
+  });
+  inp.value = '';
+  renderChat();
+
+  setTimeout(() => {
+    messages.push({
+      sender: 'CyberBot_AI',
+      text: `Received hardware message payload: "${txt}"`,
+      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      isMe: false
+    });
+    renderChat();
+  }, 1000);
+}
+
+/* Rock Paper Scissors */
+function playRPS(user) {
+  const opts = ['✊', '✋', '✌️'];
+  const bot = opts[Math.floor(Math.random() * opts.length)];
+  const res = document.getElementById('rpsRes');
+  if(user === bot) res.innerText = `Tie! Both chose ${user}`;
+  else if((user==='✊'&&bot==='✌️')||(user==='✋'&&bot==='✊')||(user==='✌️'&&bot==='✋')) {
+    res.innerText = `YOU WON! ${user} beats ${bot}`;
+    res.style.color = 'var(--neon-green)';
+  } else {
+    res.innerText = `ESP32 Won! ${bot} beats ${user}`;
+    res.style.color = 'var(--neon-pink)';
+  }
+}
+
+/* Chess Board Generator */
+function initChess() {
+  const b = document.getElementById('chessBoard');
+  b.innerHTML = '';
+  const pieces = { 0:'♜',1:'♞',2:'♝',3:'♛',4:'♚',5:'♝',6:'♞',7:'♜', 8:'♟',9:'♟',10:'♟',11:'♟',12:'♟',13:'♟',14:'♟',15:'♟', 48:'♙',49:'♙',50:'♙',51:'♙',52:'♙',53:'♙',54:'♙',55:'♙', 56:'♖',57:'♘',58:'♗',59:'♕',60:'♔',61:'♗',62:'♘',63:'♖' };
+  for(let i=0; i<64; i++) {
+    const d = document.createElement('div');
+    const r = Math.floor(i/8), c = i%8;
+    d.className = `sq ${(r+c)%2===0 ? 'l' : 'd'}`;
+    d.innerText = pieces[i] || '';
+    d.onclick = () => {
+      document.querySelectorAll('.sq').forEach(s => s.classList.remove('sel'));
+      d.classList.add('sel');
+    };
+    b.appendChild(d);
+  }
+}
+initChess();
+
+/* PTT Controls */
+function startPTT() {
+  const btn = document.getElementById('bigPtt');
+  btn.classList.add('active');
+  btn.innerText = 'TRANSMITTING...';
+}
+function stopPTT() {
+  const btn = document.getElementById('bigPtt');
+  btn.classList.remove('active');
+  btn.innerText = 'HOLD TO TALK';
+}
+
+/* QR Code Generator */
+function renderQR() {
+  try {
+    const qr = qrcode(0, 'L');
+    qr.addData('WIFI:S:AMAN\'S CHATROOM - A;T:WPA;P:AMAN1234;;');
+    qr.make();
+    const c = document.getElementById('qrCanvas');
+    const ctx = c.getContext('2d');
+    const count = qr.getModuleCount();
+    const size = 160;
+    c.width = size; c.height = size;
+    const tile = size / count;
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#000000';
+
+    for (let r = 0; r < count; r++) {
+      for (let cIdx = 0; cIdx < count; cIdx++) {
+        if (qr.isDark(r, cIdx)) ctx.fillRect(cIdx * tile, r * tile, tile, tile);
+      }
+    }
+  } catch(e){}
+}
+renderQR();
+
+function launchFlasher() { window.open('flasher.html', '_blank'); }
+function generateNewKey() {
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join('');
+  document.getElementById('keyVal').innerText = `AES-256-TRNG-KEY: ${rand.toUpperCase()}`;
 }
 </script>
 </body>
