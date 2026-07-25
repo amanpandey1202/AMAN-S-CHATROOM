@@ -141,12 +141,17 @@ body.bw-theme .room-btn.active {
 .inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255, 255, 255, 0.12);}
 .btn{
   width:100%;padding:13px;
-  background:var(--accent);
+  background:linear-gradient(135deg,#00f0ff,#7c3aed) !important;
   border:none;border-radius:10px;
-  color:#fff;font-weight:700;font-size:.95rem;font-family:var(--font);
-  cursor:pointer;transition:background .2s,transform .15s;
+  color:#ffffff !important;font-weight:800;font-size:.95rem;font-family:var(--font);
+  cursor:pointer;box-shadow:0 0 16px rgba(0,240,255,0.4);
+  transition:all .2s;
 }
-.btn:hover{background:#ffffff;transform:translateY(-1px);}
+.btn:hover{
+  background:linear-gradient(135deg,#00f0ff,#a855f7) !important;
+  box-shadow:0 0 24px rgba(0,240,255,0.7);
+  transform:translateY(-1px);
+}
 .btn:active{transform:translateY(0);}
 #loginErr{font-size:.8rem;color:var(--red);min-height:16px;font-weight:600;text-align:center;}
 
@@ -696,8 +701,19 @@ body.bw-theme .room-btn.active {
 #e2eeBadge.fallback-warning{color:#f87171;background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);animation:pulse 2s infinite;}
 #msgInput{flex:1;background:#0a0a0a;border:1px solid rgba(255,255,255,0.08);color:var(--text);padding:12px 16px;border-radius:12px;font-family:var(--font);font-size:.93rem;outline:none;transition:border-color .2s;}
 #msgInput:focus{border-color:rgba(255, 255, 255, 0.12);}
-#sendBtn{background:var(--accent);color:#fff;border:none;border-radius:12px;padding:12px 22px;font-family:var(--font);font-weight:700;font-size:.9rem;cursor:pointer;transition:background .2s;}
-#sendBtn:hover{background:#ffffff;}
+#sendBtn{
+  background:linear-gradient(135deg,#00f0ff,#7c3aed) !important;
+  color:#ffffff !important;
+  border:none;border-radius:12px;padding:12px 22px;
+  font-family:var(--font);font-weight:800;font-size:.9rem;
+  cursor:pointer;box-shadow:0 0 16px rgba(0,240,255,0.4);
+  transition:all .2s;
+}
+#sendBtn:hover{
+  background:linear-gradient(135deg,#00f0ff,#a855f7) !important;
+  box-shadow:0 0 24px rgba(0,240,255,0.7);
+  transform:translateY(-1px);
+}
 
 /* -- Game Area -- */
 /* ===== GAME AREA — PREMIUM REDESIGN ===== */
