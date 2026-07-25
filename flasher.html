@@ -317,9 +317,9 @@ footer a { color: var(--accent); text-decoration: none; }
         <div class="select-wrapper">
           <label class="label-sm">BAUD RATE / UPLOAD SPEED</label>
           <select id="baudRateSelect" onchange="updateSummary()">
-            <option value="115200" selected>115200 (Default)</option>
+            <option value="115200">115200 (Standard)</option>
             <option value="230400">230400</option>
-            <option value="460800">460800 (Fast)</option>
+            <option value="460800" selected>460800 (Fast Upload)</option>
             <option value="921600">921600 (High-Speed)</option>
           </select>
         </div>
@@ -849,20 +849,14 @@ async function loadPresetBuildBuffers(key) {
   if (presets && presets[key]) {
     const data = presets[key];
     
-    // If 4MB merged binary is present, use single merged flash at 0x0000 to wipe old Hydra/bootloader partitions cleanly
-    if (data.merged) {
-      const mergedBytes = base64ToUint8Array(data.merged);
-      log(`Loaded 4MB Full Merged Firmware for ${key.toUpperCase()} at offset 0x0000! (Wipes old Hydra NVS completely)`, 'success');
-      return [{ data: mergedBytes, address: 0x0000 }];
-    }
-
+    // Load 4 active partitions (Total: 1,405 kB - completes ultra-fast in ~25 seconds at High Speed Baud)
     const files = [];
     if (data.bootloader) files.push({ data: base64ToUint8Array(data.bootloader), address: 0x1000 });
     if (data.partitions) files.push({ data: base64ToUint8Array(data.partitions), address: 0x8000 });
     if (data.boot_app0) files.push({ data: base64ToUint8Array(data.boot_app0), address: 0xe000 });
     if (data.app) files.push({ data: base64ToUint8Array(data.app), address: 0x10000 });
 
-    log(`Loaded ${files.length} real pre-compiled partition binaries for ${key.toUpperCase()}! (Bootloader@0x1000, Partitions@0x8000, BootApp0@0xe000, App@0x10000)`, 'success');
+    log(`Loaded ${files.length} real pre-compiled partition binaries for ${key.toUpperCase()}! (Bootloader@0x1000, Partitions@0x8000, BootApp0@0xe000, App@0x10000 - Total: 1405 kB)`, 'success');
     return files;
   }
 
