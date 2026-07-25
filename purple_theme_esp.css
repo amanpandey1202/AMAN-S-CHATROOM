@@ -1,0 +1,188 @@
+/*
+ * ═══════════════════════════════════════════════════════════════════
+ *   PURPLE THEME ESP — AMAN'S CHATROOM
+ *   Cyberpunk Midnight Indigo Theme
+ *   Saved: 2026-07-25
+ *
+ *   HOW TO APPLY:
+ *   Add class "purple-theme" to <body> → document.body.classList.add("purple-theme")
+ *   Remove it → document.body.classList.remove("purple-theme")
+ *
+ *   The toggleThemeMode() function in the JS already handles switching.
+ *   To re-enable from default cyan theme, just paste this entire block
+ *   inside the <style> tag in index.html / preview.html before </style>.
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+
+/* ── CSS VARIABLE OVERRIDES ─────────────────────────────────────── */
+body.purple-theme {
+  --bg: #09090b !important;
+  --bg2: rgba(15, 18, 28, 0.92) !important;
+  --bg3: rgba(22, 26, 40, 0.9) !important;
+  --border: rgba(99, 102, 241, 0.35) !important;
+  --border-glow: rgba(99, 102, 241, 0.6) !important;
+  --accent: #6366f1 !important;
+  --accent2: #a5b4fc !important;
+  --text: #f1f5f9 !important;
+  --muted: #64748b !important;
+  --me-bg: rgba(99, 102, 241, 0.18) !important;
+  --other-bg: rgba(255, 255, 255, 0.05) !important;
+}
+
+
+/* ── SIDEBARS ───────────────────────────────────────────────────── */
+body.purple-theme #leftSidebar {
+  background: rgba(15, 18, 28, 0.94) !important;
+  border-right: 1px solid rgba(99, 102, 241, 0.35) !important;
+}
+
+body.purple-theme #rightSidebar {
+  background: rgba(15, 18, 28, 0.94) !important;
+  border-left: 1px solid rgba(99, 102, 241, 0.35) !important;
+}
+
+/* Frosted glass transparency (so dot terrain shines through) */
+body.purple-theme #leftSidebar,
+body.purple-theme #rightSidebar {
+  background: rgba(15, 18, 28, 0.78) !important;
+}
+
+
+/* ── TOPBAR & INPUT BAR ─────────────────────────────────────────── */
+body.purple-theme #topbar,
+body.purple-theme #inputBar,
+body.purple-theme .sidebar-header,
+body.purple-theme .logo-header {
+  background: rgba(15, 18, 28, 0.92) !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+body.purple-theme #topbar,
+body.purple-theme #inputBar {
+  background: rgba(15, 18, 28, 0.82) !important;
+}
+
+
+/* ── CARDS & PANELS ─────────────────────────────────────────────── */
+body.purple-theme .stat-card,
+body.purple-theme .user-item,
+body.purple-theme #adminPanel,
+body.purple-theme #vaultPanel,
+body.purple-theme .login-panel {
+  background: rgba(22, 26, 40, 0.9) !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.2) !important;
+}
+
+
+/* ── ROOM BUTTONS ───────────────────────────────────────────────── */
+body.purple-theme .room-btn.active {
+  background: rgba(99, 102, 241, 0.25) !important;
+  border: 1px solid #6366f1 !important;
+  color: #a5b4fc !important;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.4) !important;
+}
+
+
+/* ── CONNECT / SEND BUTTONS ─────────────────────────────────────── */
+body.purple-theme .btn,
+body.purple-theme #sendBtn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.5) !important;
+}
+
+body.purple-theme .btn:hover,
+body.purple-theme #sendBtn:hover {
+  background: linear-gradient(135deg, #818cf8, #a78bfa) !important;
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.75) !important;
+  transform: translateY(-1px);
+}
+
+
+/* ── TEXT & LABELS ──────────────────────────────────────────────── */
+body.purple-theme .msg-user,
+body.purple-theme #roomLabel,
+body.purple-theme .logo-title {
+  color: #a5b4fc !important;
+  text-shadow: 0 0 8px rgba(99, 102, 241, 0.5) !important;
+}
+
+body.purple-theme .user-avatar {
+  background: rgba(99, 102, 241, 0.2) !important;
+  border: 1px solid #6366f1 !important;
+  color: #a5b4fc !important;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.35) !important;
+}
+
+body.purple-theme .msg.me {
+  background: rgba(99, 102, 241, 0.18) !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+}
+
+body.purple-theme .icon-btn {
+  background: rgba(99, 102, 241, 0.1) !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  color: #a5b4fc !important;
+}
+
+body.purple-theme .icon-btn:hover {
+  background: rgba(99, 102, 241, 0.25) !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.5) !important;
+}
+
+
+/* ── VAULT INVITE ROW (Purple override) ─────────────────────────── */
+body.purple-theme .vault-invite-row input#vaultInviteInput {
+  background: rgba(15, 18, 28, 0.95) !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+  color: #a5b4fc !important;
+}
+
+body.purple-theme .vault-invite-row button {
+  background: rgba(99, 102, 241, 0.2) !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+
+/* ── LOGIN PANEL ────────────────────────────────────────────────── */
+body.purple-theme .login-panel {
+  background: rgba(15, 18, 28, 0.97) !important;
+  border: 1px solid rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.2) !important;
+}
+
+body.purple-theme .inp:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+}
+
+
+/* ── SCROLLBARS ─────────────────────────────────────────────────── */
+body.purple-theme ::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.35) !important;
+}
+
+body.purple-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.6) !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   NON-PURPLE (default cyan GhostESP) background overrides
+   These ensure the cyan theme is correct when purple-theme is OFF
+   ══════════════════════════════════════════════════════════════════ */
+body:not(.purple-theme) #leftSidebar,
+body:not(.purple-theme) #rightSidebar {
+  background: rgba(8, 12, 22, 0.82) !important;
+}
+
+body:not(.purple-theme) #topbar,
+body:not(.purple-theme) #inputBar {
+  background: rgba(8, 12, 22, 0.85) !important;
+}
