@@ -84,14 +84,13 @@ body.bw-theme {
 }
 
 .btn, #sendBtn {
-  background: #ffffff !important;
-  color: #000000 !important;
-  font-weight: 700 !important;
-  border: none !important;
-  border-radius: 10px !important;
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  font-weight: 700;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 10px;
   cursor: pointer;
-  transition: transform 0.15s, opacity 0.15s;
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15) !important;
+  transition: all 0.18s ease-in-out;
 }
 
 .btn:hover, #sendBtn:hover {
@@ -1097,20 +1096,27 @@ body.bw-theme .room-btn.active {
   box-shadow: 0 0 14px rgba(0, 240, 255, 0.5) !important;
 }
 
+/* ── DEFINITIVE BUTTON RULE ── */
 .btn, #sendBtn, .flash-topbar-btn {
-  background: rgba(0, 240, 255, 0.08) !important;
-  color: #ffffff !important;
-  border: none !important;
+  background: rgba(0, 240, 255, 0.10) !important;
+  border: 1px solid rgba(0, 240, 255, 0.45) !important;
+  color: #00f0ff !important;
+  font-weight: 700 !important;
   border-radius: 10px !important;
-  font-weight: 800 !important;
-  box-shadow: 0 0 18px rgba(0, 240, 255, 0.45) !important;
-  transition: all 0.2s !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.5) !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25) !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease-in-out !important;
 }
 
 .btn:hover, #sendBtn:hover, .flash-topbar-btn:hover {
-  background: linear-gradient(135deg, #00f0ff, #38bdf8) !important;
-  box-shadow: 0 0 26px rgba(0, 240, 255, 0.75) !important;
-  transform: translateY(-1px);
+  background: rgba(0, 240, 255, 0.22) !important;
+  border-color: #00f0ff !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 8px #00f0ff !important;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.5) !important;
+  transform: translateY(-1px) !important;
 }
 
 .msg.me {
@@ -1123,41 +1129,9 @@ body.bw-theme .room-btn.active {
   text-shadow: 0 0 10px rgba(0, 240, 255, 0.4) !important;
 }
 
-
-
-
-
-/* ── HIGH-INTENSITY AMBIENT NEON GLOW BUTTONS ── */
-.flash-topbar-btn, #sendBtn, .btn {
-  background: rgba(0, 240, 255, 0.14) !important;
-  border: 1.5px solid #00f0ff !important;
-  color: #ffffff !important;
-  font-weight: 800 !important;
-  border-radius: 10px !important;
-  letter-spacing: 0.5px !important;
-  text-shadow: 0 0 8px #00f0ff, 0 0 16px #00f0ff !important;
-  box-shadow: 0 0 18px rgba(0, 240, 255, 0.7), 0 0 36px rgba(0, 240, 255, 0.45), inset 0 0 14px rgba(0, 240, 255, 0.3) !important;
-  cursor: pointer !important;
-  animation: neonAuraPulse 2.4s ease-in-out infinite alternate !important;
-  transition: all 0.2s ease !important;
-}
-
 @keyframes neonAuraPulse {
-  0% {
-    box-shadow: 0 0 14px rgba(0, 240, 255, 0.6), 0 0 28px rgba(0, 240, 255, 0.35), inset 0 0 10px rgba(0, 240, 255, 0.2);
-  }
-  100% {
-    box-shadow: 0 0 24px rgba(0, 240, 255, 0.9), 0 0 48px rgba(0, 240, 255, 0.6), inset 0 0 18px rgba(0, 240, 255, 0.4);
-  }
-}
-
-.flash-topbar-btn:hover, #sendBtn:hover, .btn:hover {
-  background: rgba(0, 240, 255, 0.3) !important;
-  border-color: #ffffff !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 12px #ffffff, 0 0 24px #00f0ff !important;
-  box-shadow: 0 0 30px #00f0ff, 0 0 60px rgba(0, 240, 255, 0.8), inset 0 0 20px rgba(0, 240, 255, 0.5) !important;
-  transform: translateY(-2px) scale(1.03) !important;
+  0% { box-shadow: 0 0 10px rgba(0,240,255,0.4), 0 0 20px rgba(0,240,255,0.2); }
+  100% { box-shadow: 0 0 18px rgba(0,240,255,0.7), 0 0 36px rgba(0,240,255,0.4); }
 }
 
 .flash-sidebar-card {
@@ -1165,82 +1139,14 @@ body.bw-theme .room-btn.active {
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
 }
 
-
-
-/* ── ELECTRIC CYAN TEXT & BUTTON REFINEMENTS ── */
-.flash-topbar-btn, #sendBtn, .btn {
-  background: rgba(0, 240, 255, 0.12) !important;
-  border: 1.5px solid #00f0ff !important;
-  color: #00f0ff !important;
-  font-weight: 800 !important;
-  border-radius: 10px !important;
-  letter-spacing: 0.5px !important;
-  text-shadow: 0 0 8px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.6) !important;
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.2) !important;
-  cursor: pointer !important;
-  animation: neonAuraPulse 2.4s ease-in-out infinite alternate !important;
-  transition: all 0.2s ease !important;
-}
-
-.flash-topbar-btn:hover, #sendBtn:hover, .btn:hover {
-  background: rgba(0, 240, 255, 0.25) !important;
-  border-color: #00f0ff !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 12px #00f0ff, 0 0 24px #00f0ff !important;
-  box-shadow: 0 0 26px #00f0ff, 0 0 50px rgba(0, 240, 255, 0.6) !important;
-  transform: translateY(-1px) scale(1.02) !important;
-}
-
-/* Vault Invite Input & Button (Bottom Right) */
-.vault-invite-row input {
-  background: rgba(10, 16, 30, 0.95) !important;
-  border: 1px solid rgba(0, 240, 255, 0.3) !important;
-  color: #00f0ff !important;
-  border-radius: 8px !important;
-  padding: 8px 12px !important;
-}
-
-.vault-invite-row button {
-  background: rgba(0, 240, 255, 0.15) !important;
-  border: 1px solid #00f0ff !important;
-  color: #00f0ff !important;
-  border-radius: 8px !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
-}
-
-
-
-/* ── ELEGANT SUBTLE CYAN NEON BUTTONS (NO HARSH BLINDING GLOW) ── */
-.flash-topbar-btn, #sendBtn, .btn {
-  background: rgba(0, 240, 255, 0.08) !important;
-  border: 1px solid rgba(0, 240, 255, 0.4) !important;
-  color: #00f0ff !important;
-  font-weight: 700 !important;
-  border-radius: 8px !important;
-  letter-spacing: 0.5px !important;
-  text-shadow: 0 0 4px rgba(0, 240, 255, 0.4) !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
-  cursor: pointer !important;
-  animation: none !important;
-  transition: all 0.18s ease-in-out !important;
-}
-
-.flash-topbar-btn:hover, #sendBtn:hover, .btn:hover {
-  background: rgba(0, 240, 255, 0.18) !important;
-  border-color: #00f0ff !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.4) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* FIX BOTTOM-RIGHT  ROW & WHITE BUTTON */
+/* Vault Invite Row */
 .vault-invite-row {
   display: flex !important;
   gap: 6px !important;
   width: 100% !important;
 }
+
+/* ── SEND & CONNECT BUTTONS — see definitive rule above ── */
 
 .vault-invite-row input, #vaultKeyInput, #adminPanel input {
   background: rgba(8, 12, 22, 0.95) !important;
@@ -1719,7 +1625,8 @@ body:not(.purple-theme) #inputBar {
   </div>
 </div>
 
-
+<div id="vaultInviteToast">
+  <div class="vit-title">🔐 Vault Invite</div>
   <div class="vit-sub" id="vitSub">Admin invited you to the vault.</div>
   <button class="vit-btn accept" id="vitAccept">Accept</button>
   <button class="vit-btn decline" onclick="dismissVaultInvite()">Decline</button>
