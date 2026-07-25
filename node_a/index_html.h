@@ -143,7 +143,7 @@ body.bw-theme .room-btn.active {
 .inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255, 255, 255, 0.12);}
 .btn{
   width:100%;padding:13px;
-  background:linear-gradient(135deg,#00f0ff,#0077ff) !important;
+  background:rgba(0, 240, 255, 0.08) !important;
   border:none;border-radius:10px;
   color:#ffffff !important;font-weight:800;font-size:.95rem;font-family:var(--font);
   cursor:pointer;box-shadow:0 0 16px rgba(0,240,255,0.4);
@@ -704,7 +704,7 @@ body.bw-theme .room-btn.active {
 #msgInput{flex:1;background:#0a0a0a;border:1px solid rgba(255,255,255,0.08);color:var(--text);padding:12px 16px;border-radius:12px;font-family:var(--font);font-size:.93rem;outline:none;transition:border-color .2s;}
 #msgInput:focus{border-color:rgba(255, 255, 255, 0.12);}
 #sendBtn{
-  background:linear-gradient(135deg,#00f0ff,#0077ff) !important;
+  background:rgba(0, 240, 255, 0.08) !important;
   color:#ffffff !important;
   border:none;border-radius:12px;padding:12px 22px;
   font-family:var(--font);font-weight:800;font-size:.9rem;
@@ -1085,7 +1085,7 @@ body.bw-theme .room-btn.active {
 }
 
 .btn, #sendBtn, .flash-topbar-btn {
-  background: linear-gradient(135deg, #00f0ff, #0077ff) !important;
+  background: rgba(0, 240, 255, 0.08) !important;
   color: #ffffff !important;
   border: none !important;
   border-radius: 10px !important;
@@ -1110,6 +1110,37 @@ body.bw-theme .room-btn.active {
   text-shadow: 0 0 10px rgba(0, 240, 255, 0.4) !important;
 }
 
+
+
+/* ── GLASSMORPHIC NEON GLOW BUTTONS ── */
+.btn, #sendBtn, .flash-topbar-btn {
+  background: rgba(0, 240, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 240, 255, 0.55) !important;
+  color: #00f0ff !important;
+  font-weight: 800 !important;
+  border-radius: 10px !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3), inset 0 0 12px rgba(0, 240, 255, 0.12) !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn:hover, #sendBtn:hover, .flash-topbar-btn:hover {
+  background: rgba(0, 240, 255, 0.22) !important;
+  border-color: #00f0ff !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.9) !important;
+  box-shadow: 0 0 28px rgba(0, 240, 255, 0.65), inset 0 0 16px rgba(0, 240, 255, 0.3) !important;
+  transform: translateY(-1px) scale(1.02) !important;
+}
+
+.btn:active, #sendBtn:active, .flash-topbar-btn:active {
+  transform: translateY(0) scale(0.98) !important;
+}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 </head>
@@ -1127,7 +1158,7 @@ body.bw-theme .room-btn.active {
     <div id="pwaTip" style="display:none;margin:6px 0;padding:10px 12px;background:rgba(255, 255, 255, 0.12);border:1px solid rgba(255, 255, 255, 0.12);border-radius:10px;font-size:.83rem;color:var(--text);text-align:center;">
       Tap browser menu → <b>Add to Home Screen</b> for the full app!
     </div>
-    <button class="btn" style="background: linear-gradient(135deg, #00f0ff, #7c3aed) !important; color: #ffffff !important; box-shadow: 0 0 20px rgba(0, 240, 255, 0.5) !important;" onclick="doLogin()">Connect →</button>
+    <button class="btn"  onclick="doLogin()">Connect →</button>
   </div>
 </div>
 
@@ -1252,7 +1283,7 @@ body.bw-theme .room-btn.active {
       <input id="msgInput" placeholder="Message… (/dm /clear /kick /ban)" maxlength="300" autocomplete="off">
       <button id="micBtn" onclick="toggleMic()" title="Hold to talk — broadcasts voice over mesh">🎙️</button>
       <button id="emojiBtn" onclick="toggleEmojiPicker(event)" title="Choose Emoji">😀</button>
-      <button id="sendBtn" style="background: linear-gradient(135deg, #00f0ff, #7c3aed) !important; color: #ffffff !important; box-shadow: 0 0 16px rgba(0, 240, 255, 0.4) !important;" onclick="sendMsg()">SEND</button>
+      <button id="sendBtn"  onclick="sendMsg()">SEND</button>
     </div>
   </div>
 
