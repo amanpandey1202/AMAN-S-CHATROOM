@@ -50,8 +50,8 @@ struct __attribute__((packed)) RadioPacket {
 };
 
 // ====== Pipe Addresses ======
-const uint64_t RADIO_PIPE_1 = 0xF0F0F0F0E1LL;   // Pipe 1 (Node A Tx / Node B Rx)
-const uint64_t RADIO_PIPE_2 = 0xF0F0F0F0D2LL;   // Pipe 2 (Node B Tx / Node A Rx)
+const uint64_t RADIO_PIPE_1 = 0xF0F0F0F0D2LL;   // Pipe 1 (Node A Tx / Node B Rx)
+const uint64_t RADIO_PIPE_2 = 0xF0F0F0F0E1LL;   // Pipe 2 (Node B Tx / Node A Rx)
 // -- Core Data Structures and Diagnostics (Must be at the top) ------
 struct ChatClient {
   uint32_t id        = 0;

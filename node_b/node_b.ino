@@ -2021,8 +2021,8 @@ void initRadio() {
   radio.enableDynamicPayloads();
   
   // Symmetrical read/write pipe mapping configured for Node B
-  radio.openWritingPipe(RADIO_PIPE_1);
-  radio.openReadingPipe(1, RADIO_PIPE_2);
+  radio.openWritingPipe(RADIO_PIPE_2);
+  radio.openReadingPipe(1, RADIO_PIPE_1);
   
   radio.startListening();
   Serial.println("nRF24L01 Bridge configured successfully on Channel " + String(Config::NRF_CHANNEL));
