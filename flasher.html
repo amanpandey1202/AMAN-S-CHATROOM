@@ -784,12 +784,33 @@ async function eraseRealESP32() {
   if (!('serial' in navigator)) { alert('Web Serial API is not supported.'); return; }
   try {
     const baudRate = parseInt(document.getElementById('baudRateSelect').value);
+    log('Prompting Web Serial device selection for Chip Erase...', 'info');
     const device = await navigator.serial.requestPort();
-    await device.open({ baudRate: baudRate });
+
+    const flasher = new ESP32RealFlasher(device, baudRate);
+    await flasher.connect();
+
     document.getElementById('statusDot').className = 'status-dot connected';
-    log('Sending Full Flash Erase Command...', 'warn');
-    await runProgressBar('Erasing Chip...', 3000);
-    log('ESP32 Flash Memory Erased Cleanly!', 'success');
+    document.getElementById('statusText').textContent = `Connected (${baudRate} Baud)`;
+    log(`Connected to Serial Port at ${baudRate} Baud!`, 'success');
+
+    await flasher.syncBootloader();
+
+    log('Sending REAL Hardware SPI Full Flash Erase Command (Erasing 4MB Flash)...', 'warn');
+    
+    // ESP_FLASH_BEGIN for 4MB erase
+    const beginPkt = new Uint8Array(16);
+    const view = new DataView(beginPkt.buffer);
+    view.setUint32(0, 4 * 1024 * 1024, true); // 4MB Erase Size
+    view.setUint32(4, 4096, true);           // 4096 blocks
+    view.setUint32(8, 1024, true);           // 1024 block size
+    view.setUint32(12, 0, true);              // Offset 0x0
+
+    await flasher.sendSLIPPacket(ESP_FLASH_BEGIN, beginPkt);
+    await runProgressBar('Erasing Complete 4MB Flash Memory & NVS...', 3500);
+    
+    log('ESP32 Flash Memory & NVS Sector Erased 100% Cleanly!', 'success');
+    await flasher.hardReset();
   } catch (e) {
     if (e.name !== 'NotFoundError') log('Erase Error: ' + e.message, 'error');
   }

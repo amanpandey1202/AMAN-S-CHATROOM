@@ -2613,6 +2613,11 @@ void setup() {
   delay(500); // Stagger power startup
 
   // Setup Wi-Fi Soft Access Point Configuration
+  WiFi.persistent(false);
+  WiFi.mode(WIFI_OFF);
+  delay(100);
+  WiFi.mode(WIFI_AP);
+
   IPAddress local_IP(192, 168, 4, 1);
   IPAddress gateway(192, 168, 4, 1);
   IPAddress subnet(255, 255, 255, 0);
