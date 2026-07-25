@@ -845,8 +845,17 @@ async function loadPresetBuildBuffers(key) {
   log(`Loading real compiled ESP32 firmware binaries for: ${key}...`, 'info');
   
   // 1. Check embedded offline firmware data first (works on file:// desktop & offline)
-  if (window.PRESET_FIRMWARES && window.PRESET_FIRMWARES[key]) {
-    const data = window.PRESET_FIRMWARES[key];
+  const presets = window.FIRMWARE_PRESETS || window.PRESET_FIRMWARES;
+  if (presets && presets[key]) {
+    const data = presets[key];
+    
+    // If 4MB merged binary is present, use single merged flash at 0x0000 to wipe old Hydra/bootloader partitions cleanly
+    if (data.merged) {
+      const mergedBytes = base64ToUint8Array(data.merged);
+      log(`Loaded 4MB Full Merged Firmware for ${key.toUpperCase()} at offset 0x0000! (Wipes old Hydra NVS completely)`, 'success');
+      return [{ data: mergedBytes, address: 0x0000 }];
+    }
+
     const files = [];
     if (data.bootloader) files.push({ data: base64ToUint8Array(data.bootloader), address: 0x1000 });
     if (data.partitions) files.push({ data: base64ToUint8Array(data.partitions), address: 0x8000 });
