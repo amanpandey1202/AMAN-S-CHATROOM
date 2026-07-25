@@ -1298,6 +1298,40 @@ body.bw-theme .room-btn.active {
   box-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
 }
 
+
+
+/* ── FIX GREEN ONLINE / RED OFFLINE STATUS BADGE LAYOUT ── */
+.stat-val.online {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+  border: 1px solid rgba(34, 197, 94, 0.35) !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  letter-spacing: 0.5px !important;
+  width: fit-content !important;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.2) !important;
+}
+
+.stat-val.offline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  letter-spacing: 0.5px !important;
+  width: fit-content !important;
+}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 </head>
