@@ -1259,6 +1259,45 @@ body.bw-theme .room-btn.active {
   box-shadow: 0 0 12px rgba(0, 240, 255, 0.4) !important;
 }
 
+
+
+/* ── FIX VAULT INVITE ROW FRAME OVERFLOW ── */
+.vault-invite-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.vault-invite-row input {
+  flex: 1 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  background: rgba(8, 12, 22, 0.95) !important;
+  border: 1px solid rgba(0, 240, 255, 0.25) !important;
+  color: #00f0ff !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  font-size: 0.78rem !important;
+  outline: none !important;
+}
+
+.vault-invite-row button {
+  flex-shrink: 0 !important;
+  background: rgba(0, 240, 255, 0.12) !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  color: #00f0ff !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  padding: 6px 10px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
+}
+
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 </head>
