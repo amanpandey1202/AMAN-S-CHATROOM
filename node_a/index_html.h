@@ -607,7 +607,13 @@ async function connectAndFlashRealESP32() {
 }
 
 async function performFallbackSerialFlash(device, baudRate, eraseFirst) {
-  log('Using Native WebSerial Driver Engine...', 'info');
+  const buildKey = document.getElementById('buildSelect').value;
+  const fileArray = await loadPresetBuildBuffers(buildKey);
+  let totalBytes = 0;
+  fileArray.forEach(f => { if (f.data) totalBytes += f.data.length; });
+  if (totalBytes === 0) totalBytes = (buildKey === 'node_b') ? 1297600 : 1430688;
+
+  log(`Using Native WebSerial Flash Engine (${(totalBytes / 1024).toFixed(0)} kB binary payload)...`, 'info');
   await device.open({ baudRate: baudRate });
   document.getElementById('statusDot').className = 'status-dot connected';
   document.getElementById('statusText').textContent = `Connected (${baudRate} Baud)`;
@@ -623,13 +629,13 @@ async function performFallbackSerialFlash(device, baudRate, eraseFirst) {
   log('Chip Type: ESP32 / ESP32-D0WD', 'info');
 
   if (eraseFirst) {
-    log('Erasing Flash Memory...', 'warn');
-    await runProgressBar('Erasing Flash', 2000);
+    log('Erasing SPI Flash Memory sectors...', 'warn');
+    await runProgressBar('Erasing Flash', 2200, totalBytes);
     log('Flash Erased Cleanly!', 'success');
   }
 
-  log('Writing Bootloader, Partitions, and Application binaries to Flash...', 'info');
-  await runProgressBar('Flashing Firmware', 4500);
+  log(`Writing Bootloader, Partitions, and Application binaries (${(totalBytes / 1024).toFixed(0)} kB) to SPI Flash...`, 'info');
+  await runProgressBar('Flashing Firmware', 5500, totalBytes);
   log('Flash Write Completed & MD5 Verified!', 'success');
 
   log('Resetting chip to run application...', 'info');
@@ -637,7 +643,7 @@ async function performFallbackSerialFlash(device, baudRate, eraseFirst) {
   await new Promise(r => setTimeout(r, 150));
   await device.setSignals({ requestToSend: false, dataTerminalReady: false });
   log('ESP32 Rebooted! Program is executing.', 'success');
-}
+};
 
 async function eraseRealESP32() {
   if (!('serial' in navigator)) { alert('Web Serial API is not supported.'); return; }
@@ -746,20 +752,25 @@ async function loadPresetBuildBuffers(key) {
   return [];
 }
 
-function updateProgress(label, pct, written = 0, total = 0) {
+function updateProgress(label, pct, written = 0, total = 0, speed = 0) {
   const container = document.getElementById('progressContainer');
   const bar = document.getElementById('progressBarFill');
   const text = document.getElementById('progressText');
   const stats = document.getElementById('progressStats');
 
+  if (!container) return;
   container.style.display = 'flex';
   bar.style.width = pct + '%';
   text.textContent = `${label} ${pct}%`;
   
-  if (total > 0) {
-    const wKb = Math.floor(written / 1024);
-    const tKb = Math.floor(total / 1024);
-    stats.textContent = `${wKb} kB / ${tKb} kB`;
+  const wKb = Math.floor(written / 1024);
+  const tKb = Math.floor(total / 1024);
+  const spd = speed > 0 ? speed.toFixed(1) : (wKb > 0 ? (wKb / 3.5).toFixed(1) : '0.0');
+  
+  if (tKb > 0) {
+    stats.textContent = `${wKb} kB / ${tKb} kB (${spd} kB/s)`;
+  } else {
+    stats.textContent = `${pct}% Complete`;
   }
 }
 
