@@ -711,12 +711,13 @@ async function loadPresetBuildBuffers(key) {
   // 1. Check embedded offline firmware data first (works on file:// desktop & offline)
   if (window.PRESET_FIRMWARES && window.PRESET_FIRMWARES[key]) {
     const data = window.PRESET_FIRMWARES[key];
-    const files = [
-      { data: base64ToUint8Array(data.app), address: 0x10000 },
-      { data: base64ToUint8Array(data.bootloader), address: 0x1000 },
-      { data: base64ToUint8Array(data.partitions), address: 0x8000 }
-    ];
-    log(`Loaded ${files.length} real pre-compiled partition binaries for ${key.toUpperCase()}! (App: ${(files[0].data.length / 1024).toFixed(0)} kB)`, 'success');
+    const files = [];
+    if (data.bootloader) files.push({ data: base64ToUint8Array(data.bootloader), address: 0x1000 });
+    if (data.partitions) files.push({ data: base64ToUint8Array(data.partitions), address: 0x8000 });
+    if (data.boot_app0) files.push({ data: base64ToUint8Array(data.boot_app0), address: 0xe000 });
+    if (data.app) files.push({ data: base64ToUint8Array(data.app), address: 0x10000 });
+
+    log(`Loaded ${files.length} real pre-compiled partition binaries for ${key.toUpperCase()}! (Bootloader@0x1000, Partitions@0x8000, BootApp0@0xe000, App@0x10000)`, 'success');
     return files;
   }
 
@@ -733,15 +734,18 @@ async function loadPresetBuildBuffers(key) {
   } catch(e) {}
 
   try {
-    const appRes = await fetch(basePath + 'firmware.bin');
     const bootRes = await fetch(basePath + 'bootloader.bin');
     const partRes = await fetch(basePath + 'partitions.bin');
+    const app0Res = await fetch(basePath + 'boot_app0.bin');
+    const appRes = await fetch(basePath + 'firmware.bin');
     
     if (appRes.ok) {
-      const appBuf = await appRes.arrayBuffer();
-      const files = [{ data: new Uint8Array(appBuf), address: 0x10000 }];
+      const files = [];
       if (bootRes.ok) files.push({ data: new Uint8Array(await bootRes.arrayBuffer()), address: 0x1000 });
       if (partRes.ok) files.push({ data: new Uint8Array(await partRes.arrayBuffer()), address: 0x8000 });
+      if (app0Res.ok) files.push({ data: new Uint8Array(await app0Res.arrayBuffer()), address: 0xe000 });
+      files.push({ data: new Uint8Array(await appRes.arrayBuffer()), address: 0x10000 });
+      
       log(`Loaded ${files.length} real compiled partition binaries!`, 'success');
       return files;
     }
