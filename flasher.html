@@ -453,9 +453,10 @@ async function startFlash() {
     // 3. Flash — try write_flash first, then writeFlash, then manual partition loop
     const flashOptions = {
       fileArray,
-      flash_size: 'detect',
-      flash_mode: 'keep',
-      flash_freq: 'keep',
+      // 'detect' is invalid in this esptool-js version — use 'keep' to auto-detect
+      flash_size: 'keep',   flashSize: 'keep',
+      flash_mode: 'keep',   flashMode: 'keep',
+      flash_freq: 'keep',   flashFreq: 'keep',
       eraseAll,
       compress: true,
       reportProgress(fileIdx, written, total) {
