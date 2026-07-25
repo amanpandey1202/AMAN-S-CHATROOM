@@ -1222,7 +1222,7 @@ body.bw-theme .room-btn.active {
   transform: translateY(-1px) !important;
 }
 
-/* FIX BOTTOM-RIGHT VAULT INVITE ROW & WHITE BUTTON */
+/* FIX BOTTOM-RIGHT  ROW & WHITE BUTTON */
 .vault-invite-row {
   display: flex !important;
   gap: 6px !important;
@@ -1261,7 +1261,7 @@ body.bw-theme .room-btn.active {
 
 
 
-/* ── FIX VAULT INVITE ROW FRAME OVERFLOW ── */
+/* ── FIX  ROW FRAME OVERFLOW ── */
 .vault-invite-row {
   display: flex !important;
   flex-direction: row !important;
@@ -1334,7 +1334,7 @@ body.bw-theme .room-btn.active {
 
 
 
-/* ── DUAL THEME ENGINE & VAULT INVITE LAYOUT FIX ── */
+/* ── DUAL THEME ENGINE &  LAYOUT FIX ── */
 
 /* Theme 2: Classic Cyberpunk Purple Theme Overrides */
 body.purple-theme {
@@ -1404,7 +1404,7 @@ body.purple-theme .logo-title {
 
 
 
-/* ── VAULT INVITE ROW FRAME FIX ── */
+/* ──  ROW FRAME FIX ── */
 .vault-invite-row {
   display: flex !important;
   flex-direction: row !important;
@@ -1690,10 +1690,7 @@ body:not(.purple-theme) #inputBar {
       <h3>Ban Manager</h3>
       <div id="banList"><span id="banListEmpty">No active bans.</span></div>
       <h3 style="margin-top:16px;color:var(--dm);">Vault Invite</h3>
-      <div class="vault-invite-row">
-        <input id="vaultInviteInput" placeholder="Username..." autocomplete="off">
-        <button onclick="vaultInviteUser()">Invite</button>
-      </div>
+      
     </div>
   </div>
 </div>
