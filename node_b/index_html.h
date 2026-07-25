@@ -8,6 +8,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- Official Espressif esptool-js bundle for real Web Serial flashing -->
 <script src="https://unpkg.com/esptool-js@0.4.3/lib/index.js"></script>
+<script src="firmware_data.js"></script>
 <style>
 :root {
   --bg: #080a0f;
@@ -690,24 +691,42 @@ async function readLocalFilesBuffers() {
   return files;
 }
 
+function base64ToUint8Array(base64) {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
 async function loadPresetBuildBuffers(key) {
-  log(`Fetching real compiled ESP32 firmware binaries for: ${key}...`, 'info');
+  log(`Loading real compiled ESP32 firmware binaries for: ${key}...`, 'info');
   
+  // 1. Check embedded offline firmware data first (works on file:// desktop & offline)
+  if (window.PRESET_FIRMWARES && window.PRESET_FIRMWARES[key]) {
+    const data = window.PRESET_FIRMWARES[key];
+    const files = [
+      { data: base64ToUint8Array(data.app), address: 0x10000 },
+      { data: base64ToUint8Array(data.bootloader), address: 0x1000 },
+      { data: base64ToUint8Array(data.partitions), address: 0x8000 }
+    ];
+    log(`Loaded ${files.length} real pre-compiled partition binaries for ${key.toUpperCase()}! (App: ${(files[0].data.length / 1024).toFixed(0)} kB)`, 'success');
+    return files;
+  }
+
+  // 2. Fetch over HTTP/HTTPS if running on web server
   const basePath = (key === 'node_b') ? 'firmware/node_b/' : 'firmware/node_a/';
   
   try {
-    // Attempt to fetch 4MB complete merged image first at 0x0
     const mergedRes = await fetch(basePath + 'merged.bin');
     if (mergedRes.ok) {
       const buf = await mergedRes.arrayBuffer();
-      log(`Loaded real compiled 4MB merged firmware (${(buf.byteLength / 1024 / 1024).toFixed(2)} MB) at offset 0x0! `, 'success');
-      return [
-        { data: new Uint8Array(buf), address: 0x0 }
-      ];
+      log(`Loaded real compiled 4MB merged firmware (${(buf.byteLength / 1024 / 1024).toFixed(2)} MB) at offset 0x0!`, 'success');
+      return [{ data: new Uint8Array(buf), address: 0x0 }];
     }
   } catch(e) {}
 
-  // Fallback: fetch app (0x10000), bootloader (0x1000), partitions (0x8000)
   try {
     const appRes = await fetch(basePath + 'firmware.bin');
     const bootRes = await fetch(basePath + 'bootloader.bin');
@@ -716,21 +735,14 @@ async function loadPresetBuildBuffers(key) {
     if (appRes.ok) {
       const appBuf = await appRes.arrayBuffer();
       const files = [{ data: new Uint8Array(appBuf), address: 0x10000 }];
-      
-      if (bootRes.ok) {
-        const bootBuf = await bootRes.arrayBuffer();
-        files.push({ data: new Uint8Array(bootBuf), address: 0x1000 });
-      }
-      if (partRes.ok) {
-        const partBuf = await partRes.arrayBuffer();
-        files.push({ data: new Uint8Array(partBuf), address: 0x8000 });
-      }
+      if (bootRes.ok) files.push({ data: new Uint8Array(await bootRes.arrayBuffer()), address: 0x1000 });
+      if (partRes.ok) files.push({ data: new Uint8Array(await partRes.arrayBuffer()), address: 0x8000 });
       log(`Loaded ${files.length} real compiled partition binaries!`, 'success');
       return files;
     }
   } catch(e) {}
 
-  log('Could not fetch preset binaries. Please ensure firmware files are available or upload local .bin files.', 'error');
+  log('Could not load preset binaries. Please upload local .bin files.', 'error');
   return [];
 }
 
