@@ -4,192 +4,121 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AMAN'S CHATROOM — ESP32 Flasher</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- CryptoJS required by esptool-js for MD5 verification -->
+<!-- CryptoJS for MD5 verification (loaded as classic script, available globally) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
 <style>
-:root {
-  --bg: #000000;
-  --surface: #0a0a0f;
-  --card: #111118;
-  --border: rgba(255,255,255,0.07);
-  --cyan: #00f0ff;
-  --green: #00ff88;
-  --red: #ff3b5c;
-  --amber: #ffaa00;
-  --purple: #8b5cf6;
-  --text: #f1f5f9;
-  --muted: #64748b;
-  --font: 'Space Grotesk', sans-serif;
-  --mono: 'JetBrains Mono', monospace;
+:root{
+  --bg:#000;--surface:#0a0a0f;--card:#111118;--border:rgba(255,255,255,0.07);
+  --cyan:#00f0ff;--green:#00ff88;--red:#ff3b5c;--amber:#ffaa00;--purple:#8b5cf6;
+  --text:#f1f5f9;--muted:#64748b;
+  --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; display: flex; flex-direction: column; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;}
 
-/* ── TOPBAR ── */
-.topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 28px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-.brand-icon {
-  width: 38px; height: 38px; border-radius: 10px;
-  background: linear-gradient(135deg, var(--cyan), var(--purple));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem;
-}
-.brand-name { font-size: 1rem; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
-.brand-name span { color: var(--cyan); }
-.brand-sub { font-size: 0.65rem; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-.topbar-right { display: flex; align-items: center; gap: 12px; }
-.nav-link { font-size: 0.85rem; font-weight: 600; color: var(--muted); text-decoration: none; transition: color 0.2s; }
-.nav-link:hover { color: #fff; }
-.status-pill {
-  display: flex; align-items: center; gap: 7px;
-  padding: 6px 14px; border-radius: 20px;
-  background: var(--card); border: 1px solid var(--border);
-  font-size: 0.82rem; font-family: var(--mono); font-weight: 600;
-}
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); transition: all 0.3s; }
-.dot.connected { background: var(--green); box-shadow: 0 0 10px var(--green); }
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:var(--surface);border-bottom:1px solid var(--border);}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.brand-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-size:1.3rem;}
+.brand-name{font-size:1rem;font-weight:800;color:#fff;} .brand-name span{color:var(--cyan);}
+.brand-sub{font-size:0.62rem;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.nav-link{font-size:0.85rem;font-weight:600;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-link:hover{color:#fff;}
+.status-pill{display:flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;background:var(--card);border:1px solid var(--border);font-size:0.82rem;font-family:var(--mono);font-weight:600;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--red);transition:all .3s;flex-shrink:0;}
+.dot.connected{background:var(--green);box-shadow:0 0 10px var(--green);}
+.dot.loading{background:var(--amber);animation:blink .7s infinite;}
 
-/* ── BANNER ── */
-.banner {
-  background: linear-gradient(90deg, rgba(0,240,255,0.12), rgba(139,92,246,0.12));
-  border-bottom: 1px solid rgba(0,240,255,0.2);
-  padding: 10px 28px;
-  font-size: 0.82rem; font-weight: 600; color: var(--cyan);
-  text-align: center;
-}
-.banner a { color: #fff; text-decoration: none; margin-left: 8px; }
-.banner a:hover { color: var(--cyan); }
+/* BANNER */
+.banner{background:linear-gradient(90deg,rgba(0,240,255,.12),rgba(139,92,246,.12));border-bottom:1px solid rgba(0,240,255,.2);padding:10px 28px;font-size:.82rem;font-weight:600;color:var(--cyan);text-align:center;}
+.banner a{color:#fff;text-decoration:none;margin-left:8px;} .banner a:hover{color:var(--cyan);}
 
-/* ── MAIN ── */
-main { flex: 1; max-width: 860px; margin: 0 auto; width: 100%; padding: 32px 20px; display: flex; flex-direction: column; gap: 20px; }
+/* READY BADGE */
+#readyBadge{display:none;font-size:.72rem;font-family:var(--mono);padding:4px 10px;border-radius:8px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:var(--green);}
+#readyBadge.show{display:block;}
+#errorBadge{display:none;font-size:.72rem;font-family:var(--mono);padding:4px 10px;border-radius:8px;background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.3);color:var(--red);}
+#errorBadge.show{display:block;}
 
-/* ── CARD ── */
-.card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 16px; padding: 26px;
-}
-.card-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
-.card-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 22px; line-height: 1.5; }
+/* MAIN */
+main{flex:1;max-width:860px;margin:0 auto;width:100%;padding:28px 20px;display:flex;flex-direction:column;gap:18px;}
 
-/* ── BROWSER WARN ── */
-#browserWarn {
-  display: none;
-  background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.35);
-  border-radius: 12px; padding: 14px 18px; font-size: 0.88rem; color: #fca5a5;
-  margin-bottom: 4px;
-}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.card-title{font-size:1.1rem;font-weight:800;margin-bottom:5px;}
+.card-sub{font-size:.85rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
 
-/* ── BUILD SELECTOR ── */
-.build-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-.build-card {
-  border: 2px solid var(--border); border-radius: 12px; padding: 16px 18px;
-  cursor: pointer; transition: all 0.2s; background: var(--surface);
-}
-.build-card:hover { border-color: rgba(0,240,255,0.4); background: rgba(0,240,255,0.04); }
-.build-card.selected { border-color: var(--cyan); background: rgba(0,240,255,0.07); box-shadow: 0 0 20px rgba(0,240,255,0.15); }
-.build-card .bc-title { font-size: 0.95rem; font-weight: 700; color: var(--cyan); margin-bottom: 4px; }
-.build-card .bc-sub { font-size: 0.75rem; color: var(--muted); }
+/* BROWSER WARN */
+#browserWarn{display:none;background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.35);border-radius:12px;padding:14px 18px;font-size:.88rem;color:#fca5a5;margin-bottom:4px;}
 
-/* ── FETCH STATUS ── */
-.fetch-status {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 14px 16px;
-  display: flex; flex-direction: column; gap: 8px;
-  margin-bottom: 16px;
-}
-.fetch-row { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 0.78rem; }
-.fetch-row .fi { width: 14px; height: 14px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: all 0.3s; }
-.fetch-row .fi.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.fetch-row .fi.loading { background: var(--amber); animation: blink 0.7s infinite; }
-.fetch-row .fi.err { background: var(--red); }
-.fetch-row .fl { color: var(--muted); flex: 1; }
-.fetch-row .fs { color: var(--text); font-weight: 500; }
-@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+/* BUILD SELECTOR */
+.label-sm{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:10px;}
+.build-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.build-card{border:2px solid var(--border);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all .2s;background:var(--surface);user-select:none;}
+.build-card:hover{border-color:rgba(0,240,255,.5);background:rgba(0,240,255,.05);}
+.build-card.selected{border-color:var(--cyan);background:rgba(0,240,255,.08);box-shadow:0 0 20px rgba(0,240,255,.15);}
+.bc-title{font-size:.95rem;font-weight:700;color:var(--cyan);margin-bottom:4px;}
+.bc-sub{font-size:.73rem;color:var(--muted);line-height:1.4;}
 
-/* ── OPTION ROW ── */
-.opt-row { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
-.opt-group { display: flex; flex-direction: column; gap: 6px; }
-.opt-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-select {
-  background: var(--surface); border: 1px solid var(--border); color: var(--text);
-  padding: 8px 12px; border-radius: 8px; font-family: var(--font); font-size: 0.85rem;
-  cursor: pointer; outline: none;
-}
-select:focus { border-color: var(--cyan); }
-.erase-check { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer; }
-.erase-check input { width: 16px; height: 16px; accent-color: var(--cyan); cursor: pointer; }
+/* FETCH STATUS */
+.fetch-status{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.fetch-row{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.78rem;}
+.fi{width:12px;height:12px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s;}
+.fi.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+.fi.loading{background:var(--amber);animation:blink .7s infinite;}
+.fi.err{background:var(--red);}
+.fl{color:var(--muted);flex:1;} .fs{color:var(--text);font-weight:600;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 
-/* ── SUMMARY ── */
-.summary-box {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px 16px; margin-bottom: 18px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px;
-}
-.s-row { display: flex; justify-content: space-between; font-size: 0.78rem; font-family: var(--mono); }
-.s-row .sk { color: var(--muted); }
-.s-row .sv { color: var(--cyan); font-weight: 600; }
+/* OPTIONS */
+.opt-row{display:flex;align-items:flex-end;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+.opt-group{display:flex;flex-direction:column;gap:6px;}
+.opt-label{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:var(--font);font-size:.85rem;cursor:pointer;outline:none;}
+select:focus{border-color:var(--cyan);}
+.erase-check{display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding-bottom:1px;}
+.erase-check input{width:16px;height:16px;accent-color:var(--cyan);cursor:pointer;}
 
-/* ── BUTTONS ── */
-.btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.btn {
-  padding: 12px 24px; border-radius: 10px; border: none;
-  font-family: var(--font); font-size: 0.9rem; font-weight: 700;
-  cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
-  transition: all 0.2s;
-}
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-flash {
-  background: linear-gradient(135deg, var(--cyan), var(--purple));
-  color: #000; flex: 1; justify-content: center; font-size: 1rem;
-}
-.btn-flash:hover:not(:disabled) { box-shadow: 0 0 24px rgba(0,240,255,0.4); transform: translateY(-1px); }
-.btn-erase { background: rgba(255,59,92,0.15); border: 1px solid rgba(255,59,92,0.4); color: var(--red); }
-.btn-erase:hover:not(:disabled) { background: rgba(255,59,92,0.25); }
-.btn-reset { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
-.btn-reset:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+/* SUMMARY */
+.summary-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;}
+.s-row{display:flex;justify-content:space-between;font-size:.77rem;font-family:var(--mono);}
+.sk{color:var(--muted);} .sv{color:var(--cyan);font-weight:600;}
 
-/* ── PROGRESS ── */
-#progressWrap { display: none; margin-top: 18px; }
-.prog-label { display: flex; justify-content: space-between; font-size: 0.82rem; font-family: var(--mono); margin-bottom: 8px; }
-.prog-bar-bg { width: 100%; height: 10px; background: var(--surface); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
-.prog-bar-fill { height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, var(--cyan), var(--purple)); transition: width 0.3s; }
-.prog-stats { font-size: 0.75rem; font-family: var(--mono); color: var(--muted); margin-top: 6px; text-align: right; }
+/* BUTTONS */
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;}
+.btn{padding:12px 22px;border-radius:10px;border:none;font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s;}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn-flash{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#000;flex:1;justify-content:center;font-size:.95rem;}
+.btn-flash:hover:not(:disabled){box-shadow:0 0 28px rgba(0,240,255,.45);transform:translateY(-1px);}
+.btn-erase{background:rgba(255,59,92,.12);border:1px solid rgba(255,59,92,.4);color:var(--red);}
+.btn-erase:hover:not(:disabled){background:rgba(255,59,92,.22);}
+.btn-reset{background:var(--surface);border:1px solid var(--border);color:var(--text);}
+.btn-reset:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan);}
 
-/* ── CONSOLE ── */
-.console-wrap { background: #05070c; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.console-header { padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.console-title { font-size: 0.8rem; font-family: var(--mono); color: var(--muted); font-weight: 600; }
-.console-btns { display: flex; gap: 8px; }
-.con-btn { background: none; border: none; color: var(--muted); font-size: 0.78rem; cursor: pointer; padding: 3px 8px; border-radius: 4px; font-family: var(--font); }
-.con-btn:hover { color: var(--cyan); background: rgba(255,255,255,0.04); }
-.console-body { height: 260px; overflow-y: auto; padding: 14px 16px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.6; display: flex; flex-direction: column; gap: 2px; }
-.console-body::-webkit-scrollbar { width: 4px; }
-.console-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-.log-info { color: #38bdf8; }
-.log-ok { color: var(--green); font-weight: 600; }
-.log-warn { color: var(--amber); }
-.log-err { color: var(--red); font-weight: 600; }
-.log-plain { color: #94a3b8; }
+/* PROGRESS */
+#progressWrap{display:none;margin-top:18px;}
+.prog-label{display:flex;justify-content:space-between;font-size:.82rem;font-family:var(--mono);margin-bottom:8px;}
+.prog-bar-bg{width:100%;height:10px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border);}
+.prog-bar-fill{height:100%;width:0%;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .25s;}
+.prog-stats{font-size:.74rem;font-family:var(--mono);color:var(--muted);margin-top:6px;text-align:right;}
 
-/* ── FOOTER ── */
-footer { text-align: center; padding: 20px; color: var(--muted); font-size: 0.78rem; border-top: 1px solid var(--border); }
-footer a { color: var(--cyan); text-decoration: none; }
+/* CONSOLE */
+.console-wrap{background:#05070c;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.console-header{padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.console-title{font-size:.8rem;font-family:var(--mono);color:var(--muted);font-weight:600;}
+.console-btns{display:flex;gap:8px;}
+.con-btn{background:none;border:none;color:var(--muted);font-size:.78rem;cursor:pointer;padding:3px 8px;border-radius:4px;font-family:var(--font);}
+.con-btn:hover{color:var(--cyan);background:rgba(255,255,255,.04);}
+.console-body{height:280px;overflow-y:auto;padding:14px 16px;font-family:var(--mono);font-size:.79rem;line-height:1.7;display:flex;flex-direction:column;gap:1px;}
+.console-body::-webkit-scrollbar{width:4px;}
+.console-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px;}
+.log-info{color:#38bdf8;} .log-ok{color:var(--green);font-weight:600;} .log-warn{color:var(--amber);} .log-err{color:var(--red);font-weight:600;} .log-plain{color:#94a3b8;}
 
-/* ── RESPONSIVE ── */
-@media (max-width: 600px) {
-  .build-grid { grid-template-columns: 1fr; }
-  .summary-box { grid-template-columns: 1fr; }
-  .topbar { padding: 12px 16px; }
-  main { padding: 20px 14px; }
-}
+footer{text-align:center;padding:18px;color:var(--muted);font-size:.76rem;border-top:1px solid var(--border);}
+footer a{color:var(--cyan);text-decoration:none;}
+
+@media(max-width:600px){.build-grid,.summary-box{grid-template-columns:1fr;}.topbar{padding:12px 14px;}main{padding:16px 12px;}}
 </style>
 </head>
 <body>
@@ -204,10 +133,12 @@ footer a { color: var(--cyan); text-decoration: none; }
     <div class="brand-icon">🎃</div>
     <div>
       <div class="brand-name">AMAN'S <span>CHATROOM</span></div>
-      <div class="brand-sub">ESP32 Mesh Network</div>
+      <div class="brand-sub">ESP32 Mesh Flasher</div>
     </div>
   </a>
   <div class="topbar-right">
+    <span id="readyBadge">✓ Flasher Ready</span>
+    <span id="errorBadge">✗ Load Error</span>
     <a href="preview.html" class="nav-link">← Chat Preview</a>
     <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank" class="nav-link">GitHub</a>
     <div class="status-pill">
@@ -220,27 +151,25 @@ footer a { color: var(--cyan); text-decoration: none; }
 <main>
 
   <div id="browserWarn">
-    <b>⚠️ WebSerial Not Supported:</b> Please open this page in <b>Google Chrome</b>, <b>Microsoft Edge</b>, <b>Brave</b>, or <b>Opera</b>.
+    <b>⚠️ WebSerial Not Supported:</b> Open in <b>Google Chrome</b>, <b>Microsoft Edge</b>, <b>Brave</b>, or <b>Opera</b>.
   </div>
 
-  <!-- STEP 1: SELECT BUILD -->
   <div class="card">
     <div class="card-title">🎃 Flash AMAN'S Chatroom to ESP32</div>
-    <div class="card-sub">Select your node, connect via USB, and click Flash. Binaries are loaded directly from GitHub — always the latest compiled version.</div>
+    <div class="card-sub">Select your node. Binaries are fetched live from GitHub (always latest build). Uses the official Espressif esptool-js with real MD5 verification.</div>
 
-    <div style="font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">SELECT BUILD / NODE</div>
+    <span class="label-sm">SELECT BUILD / NODE</span>
     <div class="build-grid">
-      <div class="build-card selected" id="cardA" onclick="selectBuild('node_a')">
+      <div class="build-card selected" id="cardA">
         <div class="bc-title">📡 Node A — Master</div>
-        <div class="bc-sub">Primary AP &amp; Web Server &bull; SSID: AMAN'S CHATROOM - A &bull; IP: 192.168.4.1</div>
+        <div class="bc-sub">Primary AP &amp; Web Server · SSID: AMAN'S CHATROOM - A · IP: 192.168.4.1</div>
       </div>
-      <div class="build-card" id="cardB" onclick="selectBuild('node_b')">
+      <div class="build-card" id="cardB">
         <div class="bc-title">📻 Node B — Client</div>
-        <div class="bc-sub">Secondary Peer Node &bull; SSID: AMAN'S CHATROOM - B &bull; IP: 192.168.4.1</div>
+        <div class="bc-sub">Secondary Peer Node · SSID: AMAN'S CHATROOM - B · IP: 192.168.4.1</div>
       </div>
     </div>
 
-    <!-- File fetch status -->
     <div class="fetch-status" id="fetchStatus">
       <div class="fetch-row"><div class="fi" id="fi0"></div><span class="fl">Bootloader (0x1000)</span><span class="fs" id="fs0">—</span></div>
       <div class="fetch-row"><div class="fi" id="fi1"></div><span class="fl">Partition Table (0x8000)</span><span class="fs" id="fs1">—</span></div>
@@ -248,92 +177,73 @@ footer a { color: var(--cyan); text-decoration: none; }
       <div class="fetch-row"><div class="fi" id="fi3"></div><span class="fl">Application (0x10000)</span><span class="fs" id="fs3">—</span></div>
     </div>
 
-    <!-- Options -->
     <div class="opt-row">
       <div class="opt-group">
         <div class="opt-label">Upload Speed</div>
         <select id="baudSel">
-          <option value="115200">115200 — Standard</option>
+          <option value="115200">115200 — Safe</option>
           <option value="230400">230400</option>
           <option value="460800" selected>460800 — Fast</option>
           <option value="921600">921600 — High Speed</option>
         </select>
       </div>
-      <div class="opt-group">
-        <div class="opt-label">Flash Mode</div>
-        <select id="modeSel">
-          <option value="keep" selected>Keep</option>
-          <option value="dio">DIO</option>
-          <option value="qio">QIO</option>
-        </select>
-      </div>
-      <label class="erase-check" style="margin-top:18px;">
+      <label class="erase-check">
         <input type="checkbox" id="eraseChk" checked>
         Erase all flash before programming
       </label>
     </div>
 
-    <!-- Summary -->
     <div class="summary-box">
       <div class="s-row"><span class="sk">Selected Build:</span><span class="sv" id="sumBuild">Node A (Master)</span></div>
-      <div class="s-row"><span class="sk">Bootloader Offset:</span><span class="sv">0x1000</span></div>
+      <div class="s-row"><span class="sk">Bootloader:</span><span class="sv">0x1000</span></div>
       <div class="s-row"><span class="sk">Source:</span><span class="sv">GitHub Raw (Live)</span></div>
-      <div class="s-row"><span class="sk">Partitions Offset:</span><span class="sv">0x8000</span></div>
-      <div class="s-row"><span class="sk">Upload Speed:</span><span class="sv" id="sumBaud">460800 baud</span></div>
-      <div class="s-row"><span class="sk">App Offset:</span><span class="sv">0x10000</span></div>
+      <div class="s-row"><span class="sk">Partitions:</span><span class="sv">0x8000</span></div>
+      <div class="s-row"><span class="sk">Speed:</span><span class="sv" id="sumBaud">460800 baud</span></div>
+      <div class="s-row"><span class="sk">App:</span><span class="sv">0x10000</span></div>
       <div class="s-row"><span class="sk">Erase First:</span><span class="sv" id="sumErase">YES</span></div>
-      <div class="s-row"><span class="sk">Flash Size:</span><span class="sv">Detect Auto</span></div>
+      <div class="s-row"><span class="sk">Flash Size:</span><span class="sv">Auto Detect</span></div>
     </div>
 
-    <!-- Progress -->
     <div id="progressWrap">
-      <div class="prog-label">
-        <span id="progLabel">Flashing...</span>
-        <span id="progPct">0%</span>
-      </div>
+      <div class="prog-label"><span id="progLabel">Flashing...</span><span id="progPct">0%</span></div>
       <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill"></div></div>
       <div class="prog-stats" id="progStats"></div>
     </div>
 
-    <!-- Action Buttons -->
     <div class="btn-row" style="margin-top:18px;">
-      <button class="btn btn-flash" id="flashBtn" onclick="startFlash()">🎃 Flash AMAN'S Chatroom Now</button>
-      <button class="btn btn-erase" id="eraseBtn" onclick="eraseChip()">🗑️ Erase Flash</button>
-      <button class="btn btn-reset" id="resetBtn" onclick="resetDevice()">↺ Reset Device</button>
+      <button class="btn btn-flash" id="flashBtn">🎃 Flash AMAN'S Chatroom Now</button>
+      <button class="btn btn-erase" id="eraseBtn">🗑️ Erase Flash</button>
+      <button class="btn btn-reset" id="resetBtn">↺ Reset Device</button>
     </div>
   </div>
 
-  <!-- CONSOLE -->
-  <div class="console-wrap" id="consoleCard">
+  <div class="console-wrap">
     <div class="console-header">
       <span class="console-title">📟 Real-Time Console Log</span>
       <div class="console-btns">
-        <button class="con-btn" onclick="copyLog()">📋 Copy</button>
-        <button class="con-btn" onclick="clearLog()">🗑️ Clear</button>
+        <button class="con-btn" id="copyBtn">📋 Copy</button>
+        <button class="con-btn" id="clearBtn">🗑️ Clear</button>
       </div>
     </div>
     <div class="console-body" id="consoleBody">
-      <div class="log-info">[SYSTEM] AMAN'S CHATROOM ESP32 Flasher — powered by Espressif esptool-js.</div>
-      <div class="log-info">[SYSTEM] Binaries loaded directly from GitHub repo (always latest build).</div>
-      <div class="log-info">[SYSTEM] Connect your ESP32 via USB and click Flash to begin.</div>
+      <div class="log-info">[SYSTEM] AMAN'S CHATROOM ESP32 Flasher — loading esptool-js library...</div>
     </div>
   </div>
 
 </main>
 
 <footer>
-  AMAN'S CHATROOM &bull; Real ESP32 Web Flasher &bull; Powered by Espressif esptool-js &amp; Web Serial &bull;
+  AMAN'S CHATROOM &bull; Real ESP32 Web Flasher &bull; Espressif esptool-js &bull;
   <a href="https://github.com/amanpandey1202/AMAN-S-CHATROOM" target="_blank">View on GitHub</a>
 </footer>
 
-<script type="module">
-import { ESPLoader, Transport } from 'https://unpkg.com/esptool-js@0.4.3/lib/index.js';
-// ─── GitHub Raw Base URL ────────────────────────────────────────────────────
-const GITHUB_RAW = 'https://raw.githubusercontent.com/amanpandey1202/AMAN-S-CHATROOM/main/';
+<script>
+// ─── All UI wiring done IMMEDIATELY as classic script (no module needed) ──────
 
+const GITHUB_RAW = 'https://raw.githubusercontent.com/amanpandey1202/AMAN-S-CHATROOM/main/';
 const BUILDS = {
   node_a: {
-    label: "Node A (Master)",
+    label: 'Node A (Master)',
     files: [
       { url: GITHUB_RAW + 'node_a/build/esp32.esp32.esp32/node_a.ino.bootloader.bin', address: 0x1000,  name: 'Bootloader' },
       { url: GITHUB_RAW + 'node_a/build/esp32.esp32.esp32/node_a.ino.partitions.bin', address: 0x8000,  name: 'Partitions' },
@@ -342,7 +252,7 @@ const BUILDS = {
     ]
   },
   node_b: {
-    label: "Node B (Client)",
+    label: 'Node B (Client)',
     files: [
       { url: GITHUB_RAW + 'node_b/build/esp32.esp32.esp32/node_b.ino.bootloader.bin', address: 0x1000,  name: 'Bootloader' },
       { url: GITHUB_RAW + 'node_b/build/esp32.esp32.esp32/node_b.ino.partitions.bin', address: 0x8000,  name: 'Partitions' },
@@ -352,29 +262,38 @@ const BUILDS = {
   }
 };
 
-// ─── State ──────────────────────────────────────────────────────────────────
 let selectedBuild = 'node_a';
+let ESPLoader = null;
+let Transport = null;
 let esploader = null;
 let transport = null;
-let device = null;
+let flashStart = 0;
 
-// ─── Expose functions to global scope for HTML onclick ──────────────────────
-window.selectBuild = (key) => {
+// ── Logging ──────────────────────────────────────────────────────────────────
+function log(msg, type = 'plain') {
+  const body = document.getElementById('consoleBody');
+  const t = new Date().toLocaleTimeString([], { hour12:false });
+  const el = document.createElement('div');
+  el.className = 'log-' + type;
+  el.textContent = '[' + t + '] ' + msg;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── Build selection (works immediately, no library needed) ───────────────────
+document.getElementById('cardA').addEventListener('click', () => selectBuild('node_a'));
+document.getElementById('cardB').addEventListener('click', () => selectBuild('node_b'));
+
+function selectBuild(key) {
   selectedBuild = key;
   document.getElementById('cardA').classList.toggle('selected', key === 'node_a');
   document.getElementById('cardB').classList.toggle('selected', key === 'node_b');
   document.getElementById('sumBuild').textContent = BUILDS[key].label;
-  resetFetchStatus();
-  log(`Build selected: ${BUILDS[key].label}`, 'info');
-};
+  resetFetchDots();
+  log('Build selected: ' + BUILDS[key].label, 'info');
+}
 
-window.startFlash   = startFlash;
-window.eraseChip    = eraseChip;
-window.resetDevice  = resetDevice;
-window.copyLog      = copyLog;
-window.clearLog     = clearLog;
-
-// ─── Sync UI controls ───────────────────────────────────────────────────────
+// ── Options sync ─────────────────────────────────────────────────────────────
 document.getElementById('baudSel').addEventListener('change', () => {
   document.getElementById('sumBaud').textContent = document.getElementById('baudSel').value + ' baud';
 });
@@ -382,241 +301,256 @@ document.getElementById('eraseChk').addEventListener('change', () => {
   document.getElementById('sumErase').textContent = document.getElementById('eraseChk').checked ? 'YES' : 'NO';
 });
 
-// ─── Browser Check ──────────────────────────────────────────────────────────
-if (!('serial' in navigator)) {
-  document.getElementById('browserWarn').style.display = 'block';
-  log('WebSerial NOT supported. Use Chrome, Edge, Brave or Opera.', 'err');
-}
-
-// ─── Log ────────────────────────────────────────────────────────────────────
-function log(msg, type = 'plain') {
-  const body = document.getElementById('consoleBody');
-  const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const el = document.createElement('div');
-  el.className = 'log-' + type;
-  el.textContent = `[${time}] ${msg}`;
-  body.appendChild(el);
-  body.scrollTop = body.scrollHeight;
-}
-
-function clearLog() {
+// ── Console buttons ──────────────────────────────────────────────────────────
+document.getElementById('clearBtn').addEventListener('click', () => {
   document.getElementById('consoleBody').innerHTML = '<div class="log-info">[SYSTEM] Console cleared.</div>';
-}
-function copyLog() {
+});
+document.getElementById('copyBtn').addEventListener('click', () => {
   navigator.clipboard.writeText(document.getElementById('consoleBody').innerText)
     .then(() => log('Log copied to clipboard.', 'ok'));
-}
+});
 
-// ─── Fetch Status UI ────────────────────────────────────────────────────────
-function resetFetchStatus() {
+// ── Flash / Erase / Reset buttons ────────────────────────────────────────────
+document.getElementById('flashBtn').addEventListener('click', startFlash);
+document.getElementById('eraseBtn').addEventListener('click', eraseChip);
+document.getElementById('resetBtn').addEventListener('click', resetDevice);
+
+// ── Fetch dot helpers ────────────────────────────────────────────────────────
+function resetFetchDots() {
   for (let i = 0; i < 4; i++) {
-    const dot = document.getElementById('fi' + i);
-    const size = document.getElementById('fs' + i);
-    dot.className = 'fi';
-    size.textContent = '—';
+    document.getElementById('fi' + i).className = 'fi';
+    document.getElementById('fs' + i).textContent = '—';
   }
 }
-
-function setFetchRow(idx, state, sizeText) {
-  const dot = document.getElementById('fi' + idx);
-  const size = document.getElementById('fs' + idx);
-  dot.className = 'fi ' + state;
-  size.textContent = sizeText;
+function setFetchDot(idx, state, size) {
+  document.getElementById('fi' + idx).className = 'fi ' + state;
+  document.getElementById('fs' + idx).textContent = size;
 }
 
-// ─── Progress ───────────────────────────────────────────────────────────────
-let flashStart = 0;
+// ── Progress ─────────────────────────────────────────────────────────────────
 function showProgress(label, pct, written, total) {
   document.getElementById('progressWrap').style.display = 'block';
   document.getElementById('progLabel').textContent = label;
   document.getElementById('progPct').textContent = Math.round(pct) + '%';
   document.getElementById('progFill').style.width = pct + '%';
   if (written > 0 && total > 0) {
-    const elapsed = ((Date.now() - flashStart) / 1000) || 0.1;
-    const speed = ((written / 1024) / elapsed).toFixed(1);
+    const secs = ((Date.now() - flashStart) / 1000) || 0.1;
+    const kbs = ((written / 1024) / secs).toFixed(1);
     document.getElementById('progStats').textContent =
-      `${Math.floor(written / 1024)} kB / ${Math.floor(total / 1024)} kB  (${speed} kB/s)`;
+      Math.floor(written/1024) + ' kB / ' + Math.floor(total/1024) + ' kB  (' + kbs + ' kB/s)';
   }
 }
 
-// ─── Fetch binaries from GitHub ─────────────────────────────────────────────
-async function fetchBinaries(buildKey) {
-  const build = BUILDS[buildKey];
+// ── Set button disabled state ─────────────────────────────────────────────────
+function setButtons(disabled) {
+  ['flashBtn','eraseBtn','resetBtn'].forEach(id => document.getElementById(id).disabled = disabled);
+}
+
+// ── Binary → string conversion (required by esptool-js) ──────────────────────
+function toStr(buf) {
+  const u8 = new Uint8Array(buf);
+  let s = '';
+  for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]);
+  return s;
+}
+
+// ── Fetch binaries from GitHub ───────────────────────────────────────────────
+async function fetchBinaries() {
+  const build = BUILDS[selectedBuild];
   const fileArray = [];
   let totalBytes = 0;
-
-  log(`Fetching ${build.files.length} binaries from GitHub for ${build.label}...`, 'info');
-
+  log('Fetching ' + build.files.length + ' binaries from GitHub for ' + build.label + '...', 'info');
   for (let i = 0; i < build.files.length; i++) {
     const f = build.files[i];
-    setFetchRow(i, 'loading', 'downloading...');
-    log(`Fetching ${f.name} from GitHub...`, 'plain');
-
+    setFetchDot(i, 'loading', 'downloading...');
+    log('Fetching ' + f.name + '...', 'plain');
     try {
       const resp = await fetch(f.url);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const buf = await resp.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      const sizeKB = (bytes.length / 1024).toFixed(1);
-
-      // Convert to binary string as required by esptool-js
-      let binaryStr = '';
-      for (let b = 0; b < bytes.length; b++) binaryStr += String.fromCharCode(bytes[b]);
-
-      fileArray.push({ data: binaryStr, address: f.address });
-      totalBytes += bytes.length;
-      setFetchRow(i, 'ok', `${sizeKB} kB`);
-      log(`✓ ${f.name}: ${sizeKB} kB @ 0x${f.address.toString(16).toUpperCase()}`, 'ok');
+      const kb = (buf.byteLength / 1024).toFixed(1);
+      fileArray.push({ data: toStr(buf), address: f.address });
+      totalBytes += buf.byteLength;
+      setFetchDot(i, 'ok', kb + ' kB');
+      log('✓ ' + f.name + ': ' + kb + ' kB @ 0x' + f.address.toString(16).toUpperCase(), 'ok');
     } catch (e) {
-      setFetchRow(i, 'err', 'FAILED');
-      log(`✗ Failed to fetch ${f.name}: ${e.message}`, 'err');
-      throw new Error(`Cannot fetch ${f.name}: ${e.message}`);
+      setFetchDot(i, 'err', 'FAILED');
+      throw new Error('Cannot fetch ' + f.name + ': ' + e.message);
     }
   }
-
-  log(`All binaries ready! Total: ${(totalBytes / 1024).toFixed(1)} kB`, 'ok');
+  log('All binaries ready! Total: ' + (totalBytes/1024).toFixed(1) + ' kB', 'ok');
   return { fileArray, totalBytes };
 }
 
-// ─── Connect ESP32 ──────────────────────────────────────────────────────────
+// ── Connect ESP32 ─────────────────────────────────────────────────────────────
 async function connectESP32(baud) {
+  if (!ESPLoader || !Transport) {
+    throw new Error('esptool-js not loaded yet. Please wait for "Flasher Ready" badge and refresh.');
+  }
+  log('Opening USB port selector...', 'info');
+  let device;
   try {
-    log('Requesting USB serial port...', 'info');
     device = await navigator.serial.requestPort();
   } catch (e) {
-    if (e.name === 'NotFoundError') { log('Port selection cancelled.', 'warn'); return false; }
+    if (e.name === 'NotFoundError' || e.name === 'AbortError') {
+      log('Port selection cancelled.', 'warn');
+      return null;
+    }
     throw e;
   }
 
-  transport = new Transport(device, true);
-
-  const terminal = {
+  const trm = {
     clean() {},
-    writeLine(data) { log(data, 'plain'); },
-    write(data) { log(data, 'plain'); }
+    writeLine(data) { if (data && data.trim()) log('[ESP] ' + data, 'plain'); },
+    write(data) { if (data && data.trim()) log('[ESP] ' + data, 'plain'); }
   };
 
-  esploader = new ESPLoader({
-    transport,
-    baudrate: baud,
-    terminal,
-    debugLogging: false
-  });
+  transport = new Transport(device, true);
+  esploader = new ESPLoader({ transport, baudrate: baud, terminal: trm, debugLogging: false });
 
-  log(`Connecting at ${baud} baud... Hold BOOT + tap EN/RST to enter download mode`, 'warn');
+  document.getElementById('statusDot').className = 'dot loading';
+  document.getElementById('statusText').textContent = 'Connecting...';
+
+  log('Connecting at ' + baud + ' baud — If stuck: hold BOOT button then tap EN/RST, then release BOOT', 'warn');
   await esploader.main();
-  log(`Connected! Chip: ${esploader.chip.CHIP_NAME}`, 'ok');
 
+  const chip = esploader.chip ? esploader.chip.CHIP_NAME : 'ESP32';
+  log('✓ Connected! Chip: ' + chip, 'ok');
   document.getElementById('statusDot').className = 'dot connected';
-  document.getElementById('statusText').textContent = `Connected (${baud} Baud)`;
-  return true;
+  document.getElementById('statusText').textContent = 'Connected · ' + chip;
+  return esploader;
 }
 
-// ─── FLASH ──────────────────────────────────────────────────────────────────
+// ── FLASH ──────────────────────────────────────────────────────────────────────
 async function startFlash() {
   if (!('serial' in navigator)) {
     alert('WebSerial not supported. Use Chrome, Edge or Brave.');
     return;
   }
-
   const baud = parseInt(document.getElementById('baudSel').value);
   const eraseAll = document.getElementById('eraseChk').checked;
-
   setButtons(true);
+
   try {
-    // 1. Fetch binaries
-    const { fileArray, totalBytes } = await fetchBinaries(selectedBuild);
+    // 1. Fetch binaries from GitHub
+    const { fileArray, totalBytes } = await fetchBinaries();
 
-    // 2. Connect
-    const ok = await connectESP32(baud);
-    if (!ok) { setButtons(false); return; }
+    // 2. Connect to ESP32
+    const loader = await connectESP32(baud);
+    if (!loader) { setButtons(false); return; }
 
-    // 3. Flash options
+    // 3. Flash
     flashStart = Date.now();
-    const flashOptions = {
+    log('Starting flash write with MD5 verification...', 'info');
+    showProgress('Preparing...', 0, 0, totalBytes);
+
+    await esploader.write_flash({
       fileArray,
       flash_size: 'detect',
-      flash_mode: document.getElementById('modeSel').value,
+      flash_mode: 'keep',
       flash_freq: 'keep',
       eraseAll,
       compress: true,
-      reportProgress(fileIndex, written, total) {
-        const pct = (written / total) * 100;
-        const partName = BUILDS[selectedBuild].files[fileIndex]?.name || `Part ${fileIndex + 1}`;
-        showProgress(`Writing ${partName}...`, pct, written, total);
+      reportProgress(fileIdx, written, total) {
+        const name = BUILDS[selectedBuild].files[fileIdx] ? BUILDS[selectedBuild].files[fileIdx].name : ('Part ' + (fileIdx+1));
+        showProgress('Writing ' + name + '...', (written/total)*100, written, total);
       },
       calculateMD5Hash(image) {
         return CryptoJS.MD5(CryptoJS.enc.Latin1.parse(image)).toString();
       }
-    };
+    });
 
-    log('Starting real verified SPI flash write...', 'info');
-    await esploader.write_flash(flashOptions);
+    showProgress('✓ Flash Complete!', 100, totalBytes, totalBytes);
+    log("✓ AMAN'S CHATROOM flashed & MD5 verified successfully!", 'ok');
+    log('Rebooting ESP32 — look for AMAN\'S CHATROOM in your Wi-Fi list!', 'ok');
 
-    showProgress('Flash Complete!', 100, totalBytes, totalBytes);
-    log('✓ AMAN\'S CHATROOM flashed & MD5 verified successfully!', 'ok');
-    log('Rebooting ESP32...', 'info');
-
-    await esploader.after_flash();
-    log('✓ ESP32 rebooted! Look for "AMAN\'S CHATROOM - A" in your Wi-Fi!', 'ok');
+    try { await esploader.after_flash(); } catch(_) {}
 
     document.getElementById('statusDot').className = 'dot';
-    document.getElementById('statusText').textContent = 'Disconnected';
+    document.getElementById('statusText').textContent = 'Done — Rebooted';
 
   } catch (e) {
-    log('Flash error: ' + e.message, 'err');
+    log('✗ Flash error: ' + e.message, 'err');
     console.error(e);
   } finally {
-    try { if (transport) await transport.disconnect(); } catch (_) {}
-    esploader = null; transport = null; device = null;
+    try { if (transport) await transport.disconnect(); } catch(_) {}
+    esploader = null; transport = null;
     setButtons(false);
   }
 }
 
-// ─── ERASE ──────────────────────────────────────────────────────────────────
+// ── ERASE ──────────────────────────────────────────────────────────────────────
 async function eraseChip() {
   if (!('serial' in navigator)) return;
-  const baud = parseInt(document.getElementById('baudSel').value);
   setButtons(true);
   try {
-    const ok = await connectESP32(baud);
-    if (!ok) { setButtons(false); return; }
-    log('Erasing entire 4MB flash chip...', 'warn');
+    const loader = await connectESP32(115200);
+    if (!loader) { setButtons(false); return; }
+    log('Erasing entire flash chip (wipes all old firmware + NVS)...', 'warn');
     await esploader.erase_flash();
-    log('✓ Flash erased completely! Old Hydra/GhostESP NVS wiped.', 'ok');
-    await esploader.after_flash();
-  } catch (e) {
-    log('Erase error: ' + e.message, 'err');
+    log('✓ Flash fully erased! Old Hydra/GhostESP data wiped.', 'ok');
+    try { await esploader.after_flash(); } catch(_) {}
+  } catch(e) {
+    log('✗ Erase error: ' + e.message, 'err');
   } finally {
-    try { if (transport) await transport.disconnect(); } catch (_) {}
-    esploader = null; transport = null; device = null;
+    try { if (transport) await transport.disconnect(); } catch(_) {}
+    esploader = null; transport = null;
     setButtons(false);
   }
 }
 
-// ─── RESET ──────────────────────────────────────────────────────────────────
+// ── RESET ─────────────────────────────────────────────────────────────────────
 async function resetDevice() {
   if (!('serial' in navigator)) return;
   try {
     const port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
-    log('Sending hardware reset via RTS...', 'info');
-    await port.setSignals({ requestToSend: true, dataTerminalReady: false });
-    await new Promise(r => setTimeout(r, 150));
+    await port.setSignals({ requestToSend: true,  dataTerminalReady: false });
+    await new Promise(r => setTimeout(r, 200));
     await port.setSignals({ requestToSend: false, dataTerminalReady: false });
     await port.close();
-    log('✓ ESP32 reset! AMAN\'S CHATROOM should now be visible in Wi-Fi.', 'ok');
-  } catch (e) {
-    if (e.name !== 'NotFoundError') log('Reset error: ' + e.message, 'err');
+    log("✓ ESP32 reset! AMAN'S CHATROOM should appear in Wi-Fi now.", 'ok');
+  } catch(e) {
+    if (e.name !== 'NotFoundError' && e.name !== 'AbortError') log('Reset error: ' + e.message, 'err');
   }
 }
 
-function setButtons(disabled) {
-  ['flashBtn', 'eraseBtn', 'resetBtn'].forEach(id => {
-    document.getElementById(id).disabled = disabled;
-  });
+// ── Browser check ─────────────────────────────────────────────────────────────
+if (!('serial' in navigator)) {
+  document.getElementById('browserWarn').style.display = 'block';
+  log('WebSerial NOT supported! Use Chrome, Edge, Brave or Opera.', 'err');
+} else {
+  log('[SYSTEM] WebSerial available. Loading esptool-js via ES module...', 'info');
 }
-</script>
 
+// ── Load esptool-js via dynamic import (most reliable cross-origin method) ────
+// Uses esm.sh which properly converts the npm package to browser ESM
+(async () => {
+  try {
+    log('[SYSTEM] Importing esptool-js from esm.sh...', 'plain');
+    const mod = await import('https://esm.sh/esptool-js@0.4.3');
+    ESPLoader = mod.ESPLoader;
+    Transport = mod.Transport;
+    if (!ESPLoader || !Transport) throw new Error('ESPLoader or Transport is undefined after import');
+    log('[SYSTEM] ✓ esptool-js loaded successfully! Flasher is ready.', 'ok');
+    document.getElementById('readyBadge').classList.add('show');
+  } catch (e) {
+    log('[SYSTEM] ✗ Failed to load esptool-js: ' + e.message, 'err');
+    log('[SYSTEM] Trying fallback CDN (unpkg)...', 'warn');
+    try {
+      const mod2 = await import('https://unpkg.com/esptool-js@0.4.3/lib/index.js');
+      ESPLoader = mod2.ESPLoader || mod2.default?.ESPLoader;
+      Transport = mod2.Transport || mod2.default?.Transport;
+      if (!ESPLoader || !Transport) throw new Error('Still undefined after unpkg import');
+      log('[SYSTEM] ✓ esptool-js loaded via fallback CDN! Flasher is ready.', 'ok');
+      document.getElementById('readyBadge').classList.add('show');
+    } catch(e2) {
+      log('[SYSTEM] ✗ Both CDNs failed: ' + e2.message, 'err');
+      log('[SYSTEM] Check internet connection and refresh the page.', 'warn');
+      document.getElementById('errorBadge').classList.add('show');
+    }
+  }
+})();
+</script>
 </body>
 </html>
