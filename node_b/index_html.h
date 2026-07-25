@@ -48,46 +48,42 @@ body.bw-theme {
   --sys:rgba(15,15,15,0.9);
 }
 
-/* ── NEON GLOWING TEXT ENHANCEMENTS ── */
-.logo-title, #roomLabel, .user-name, .user-role-badge, .msg-user, .stat-val, .badge {
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.65), 0 0 16px rgba(0, 240, 255, 0.35);
+/* ── NEON GLOWING TEXT & ACCENT STYLES ── */
+.logo-title, #roomLabel, .user-name, .msg-user, .stat-val {
+  color: #ffffff;
+  font-weight: 700;
 }
 
-.user-name.admin, .user-role-badge.badge-admin, .user-avatar.admin-av {
-  text-shadow: 0 0 8px rgba(255, 0, 110, 0.7), 0 0 16px rgba(255, 0, 110, 0.4);
-}
-
-body.bw-theme #leftSidebar,
-body.bw-theme #rightSidebar,
-body.bw-theme #topbar,
-body.bw-theme #inputBar,
-body.bw-theme .login-panel,
-body.bw-theme .stat-card,
-body.bw-theme .user-item,
-body.bw-theme .msg.other,
-body.bw-theme #msgInput,
-body.bw-theme .qr-modal-card {
-  background: rgba(10, 10, 10, 0.94) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  box-shadow: none !important;
-}
-
-body.bw-theme .msg.me {
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
   background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.22) !important;
-}
-
-body.bw-theme .user-avatar {
-  background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(99,102,241,0.3)) !important;
-  border: 1px solid #00f0ff !important;
-  color: #00f0ff !important;
-}
-
-body.bw-theme .btn,
-body.bw-theme #sendBtn {
-  background: linear-gradient(135deg, #00f0ff, #7c3aed) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
   color: #ffffff !important;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5) !important;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  position: relative; flex-shrink: 0;
+}
+
+.user-avatar.admin-av {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  color: #fbbf24 !important;
+}
+
+.btn, #sendBtn {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15) !important;
+}
+
+.btn:hover, #sendBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 body.bw-theme .room-btn.active {
