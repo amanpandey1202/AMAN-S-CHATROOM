@@ -6,8 +6,6 @@
 <title>AMAN'S CHATROOM — ESP32 Flasher</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- Official Espressif esptool-js -->
-<script src="https://unpkg.com/esptool-js@0.4.3/lib/index.js"></script>
 <!-- CryptoJS required by esptool-js for MD5 verification -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
@@ -329,6 +327,7 @@ footer a { color: var(--cyan); text-decoration: none; }
 </footer>
 
 <script type="module">
+import { ESPLoader, Transport } from 'https://unpkg.com/esptool-js@0.4.3/lib/index.js';
 // ─── GitHub Raw Base URL ────────────────────────────────────────────────────
 const GITHUB_RAW = 'https://raw.githubusercontent.com/amanpandey1202/AMAN-S-CHATROOM/main/';
 
@@ -489,20 +488,7 @@ async function connectESP32(baud) {
     throw e;
   }
 
-  const { Transport, ESPLoader } = window.esptooljs || {};
-  if (!Transport || !ESPLoader) {
-    log('esptool-js not loaded yet, retrying...', 'warn');
-    // Try global fallback
-    if (typeof window.Transport === 'undefined') {
-      log('ESPLoader not available. Ensure page loaded fully.', 'err');
-      return false;
-    }
-  }
-
-  const TransportClass = (window.esptooljs && window.esptooljs.Transport) || window.Transport;
-  const ESPLoaderClass = (window.esptooljs && window.esptooljs.ESPLoader) || window.ESPLoader;
-
-  transport = new TransportClass(device, true);
+  transport = new Transport(device, true);
 
   const terminal = {
     clean() {},
@@ -510,14 +496,14 @@ async function connectESP32(baud) {
     write(data) { log(data, 'plain'); }
   };
 
-  esploader = new ESPLoaderClass({
+  esploader = new ESPLoader({
     transport,
     baudrate: baud,
     terminal,
     debugLogging: false
   });
 
-  log(`Connecting at ${baud} baud... (put ESP32 in download mode: hold BOOT, tap EN)`, 'warn');
+  log(`Connecting at ${baud} baud... Hold BOOT + tap EN/RST to enter download mode`, 'warn');
   await esploader.main();
   log(`Connected! Chip: ${esploader.chip.CHIP_NAME}`, 'ok');
 
