@@ -4154,12 +4154,9 @@ body:not(.purple-theme) #inputBar {
       // Use the shared engine: applies move, checks for check/checkmate, re-renders
       applyChessMove(fromIdx, toIdx);
     } else if (activeGameName === 'rps') {
+      if (isSenderMe) return; // Ignore echo of our own move since it was already handled locally by makeRpsChoice
       const choice = move.substring(4);
-      if (isSenderMe) {
-        myRpsChoice = choice;
-      } else {
-        opponentRpsChoice = choice;
-      }
+      opponentRpsChoice = choice;
       renderRpsBoard();
       updateRpsTurnBadge();
       checkRpsResult();
