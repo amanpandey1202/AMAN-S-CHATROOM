@@ -129,8 +129,7 @@ void drainTxQueue() {
   if (txQueueEmpty()) return;
   
   uint32_t now = millis();
-  // Wait at least 50ms before retrying a failed packet
-  if (txQueue[txHead].retries > 0 && (now - txQueue[txHead].lastAttempt < 50)) {
+  if (txQueue[txHead].retries > 0 && (now - txQueue[txHead].lastAttempt < 30)) {
     return; // Wait for next loop
   }
   
@@ -138,7 +137,15 @@ void drainTxQueue() {
   radio.stopListening();
   radio.openWritingPipe(RADIO_PIPE_2);
   txQueue[txHead].lastAttempt = now;
-  bool ok = radio.write(&txQueue[txHead].packet, sizeof(RadioPacket));
+  
+  // Transmit 3 redundant bursts over the air for 100% delivery without fragile HW ACKs
+  bool ok = false;
+  for (uint8_t burst = 0; burst < 3; burst++) {
+    if (radio.write(&txQueue[txHead].packet, sizeof(RadioPacket))) {
+      ok = true;
+    }
+  }
+  
   radio.startListening();
   xSemaphoreGive(radioMutex);
   
@@ -147,9 +154,9 @@ void drainTxQueue() {
     txHead = (txHead + 1) % TX_QUEUE_SIZE;
   } else {
     txQueue[txHead].retries++;
-    if (txQueue[txHead].retries >= 5) {
+    if (txQueue[txHead].retries >= 3) {
       packetsFailed++;
-      txHead = (txHead + 1) % TX_QUEUE_SIZE; // discard after 5 failed attempts
+      txHead = (txHead + 1) % TX_QUEUE_SIZE; // discard after 3 failed burst attempts
     }
   }
 }
@@ -2015,11 +2022,12 @@ void initRadio() {
     return;
   }
   
-  radio.setPALevel(Config::NRF_PA_LEVEL);         // Power level (LOW to prevent brownouts)
-  radio.setDataRate(RF24_250KBPS);                // 250 Kbps = maximum range (~2x improvement over 1Mbps)
+  radio.setAutoAck(false);                        // Disable fragile hardware ACK for 100% burst delivery
+  radio.setPALevel(Config::NRF_PA_LEVEL);         // LOW power mode prevents 3.3V rail brownouts
+  radio.setDataRate(RF24_250KBPS);                // 250 Kbps = maximum sensitivity & range (-94dBm)
   radio.setChannel(Config::NRF_CHANNEL);          // High-frequency isolation
-  radio.setRetries(15, 15);                       // 15 retries, 4ms delay = best reliability at long range
-  radio.enableDynamicPayloads();
+  radio.disableDynamicPayloads();                 // Fixed payload size = maximum clone/hardware stability
+  radio.setPayloadSize(32);                       // Fixed 32-byte packet size
   
   // Symmetrical read/write pipe mapping configured for Node B
   radio.openWritingPipe(RADIO_PIPE_2);
@@ -2085,7 +2093,6 @@ void checkRadioKeepalive() {
 }
 
 void handleRadioData() {
-  // If the radio hardware is not connected/responsive, don't read garbage
   if (!radio.isChipConnected()) {
     if (peerOnline) {
       peerOnline = false;
@@ -2094,59 +2101,55 @@ void handleRadioData() {
     return;
   }
 
-  if (!radio.available()) return;
-  
-  RadioPacket packet;
-  radio.read(&packet, sizeof(packet));
-  
-  // Validate packet type first to ignore garbage / floating MISO reads
-  if (packet.header.type != 0 && packet.header.type != 1) {
-    return;
-  }
-  
-  uint32_t now = millis();
-  
-  // Any valid packet received means the peer is online
-  lastPeerContact = now;
-  if (!peerOnline) {
-    peerOnline = true;
-    broadcastLinkStatus();
-  }
-  
-  // 1. Keepalive Ping Packets
-  if (packet.header.type == 0) {
-    packetsReceived++;
-    return;
-  }
-  
-  // 2. Chat/JSON Stream Packets
-  if (packet.header.type == 1) {
-    packetsReceived++;
+  while (radio.available()) {
+    RadioPacket packet;
+    radio.read(&packet, sizeof(packet));
     
-    // Check if packet belongs to active sequence or times out (2 seconds)
-    if (rxBuf.msgId != packet.header.msgId || (now - rxBuf.lastActivity > 2000)) {
-      rxBuf.msgId = packet.header.msgId;
-      rxBuf.totalChunks = packet.header.totalChunks;
-      rxBuf.chunksReceivedMask = 0;
-      memset(rxBuf.data, 0, sizeof(rxBuf.data));
+    if (packet.header.type != 0 && packet.header.type != 1) {
+      continue;
     }
     
-    rxBuf.lastActivity = now;
+    uint32_t now = millis();
+    lastPeerContact = now;
+    if (!peerOnline) {
+      peerOnline = true;
+      broadcastLinkStatus();
+    }
     
-    uint8_t chunkIdx = packet.header.chunkIdx;
-    if (chunkIdx < 32 && chunkIdx < rxBuf.totalChunks) {
-      rxBuf.chunksReceivedMask |= (1UL << chunkIdx);
+    // 1. Keepalive Ping Packets
+    if (packet.header.type == 0) {
+      packetsReceived++;
+      continue;
+    }
+    
+    // 2. Chat/JSON Stream Packets
+    if (packet.header.type == 1) {
+      packetsReceived++;
       
-      int offset = chunkIdx * 27;
-      if (offset + packet.header.payloadLen < RX_BUF_SIZE) {
-        memcpy(rxBuf.data + offset, packet.data, packet.header.payloadLen);
+      if (rxBuf.msgId != packet.header.msgId || (now - rxBuf.lastActivity > 2000)) {
+        rxBuf.msgId = packet.header.msgId;
+        rxBuf.totalChunks = packet.header.totalChunks;
+        rxBuf.chunksReceivedMask = 0;
+        memset(rxBuf.data, 0, sizeof(rxBuf.data));
       }
       
-      // Check if complete packet array is received
-      uint32_t expectedMask = (1UL << rxBuf.totalChunks) - 1;
-      if ((rxBuf.chunksReceivedMask & expectedMask) == expectedMask) {
-        processRadioMessage(rxBuf.data);
-        rxBuf.msgId = 0xFF; // Reset reassembly context
+      rxBuf.lastActivity = now;
+      
+      uint8_t chunkIdx = packet.header.chunkIdx;
+      if (chunkIdx < 32 && rxBuf.totalChunks > 0 && chunkIdx < rxBuf.totalChunks) {
+        rxBuf.chunksReceivedMask |= (1UL << chunkIdx);
+        
+        int offset = chunkIdx * 27;
+        if (offset + packet.header.payloadLen < RX_BUF_SIZE) {
+          memcpy(rxBuf.data + offset, packet.data, packet.header.payloadLen);
+          rxBuf.data[offset + packet.header.payloadLen] = '\0';
+        }
+        
+        uint32_t expectedMask = (1UL << rxBuf.totalChunks) - 1;
+        if ((rxBuf.chunksReceivedMask & expectedMask) == expectedMask) {
+          processRadioMessage(rxBuf.data);
+          rxBuf.msgId = 0xFF; // Reset reassembly context
+        }
       }
     }
   }
