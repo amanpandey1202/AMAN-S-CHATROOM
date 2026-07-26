@@ -29,7 +29,7 @@ namespace Config {
   const uint8_t NRF_CE_PIN  = 4;
   const uint8_t NRF_CSN_PIN = 5;
   const uint8_t NRF_CHANNEL = 76;                // 2.476 GHz (avoids standard Wi-Fi interference)
-  const rf24_pa_dbm_e NRF_PA_LEVEL = RF24_PA_HIGH; // PA+LNA module handles HIGH safely with capacitor
+  const rf24_pa_dbm_e NRF_PA_LEVEL = RF24_PA_LOW;  // Low power mode prevents 3.3V rail brownouts and transmit drops
 }
 
 // Node Identity Configuration
@@ -136,6 +136,7 @@ void drainTxQueue() {
   
   if (xSemaphoreTake(radioMutex, 0) != pdTRUE) return; // skip if busy
   radio.stopListening();
+  radio.openWritingPipe(RADIO_PIPE_2);
   txQueue[txHead].lastAttempt = now;
   bool ok = radio.write(&txQueue[txHead].packet, sizeof(RadioPacket));
   radio.startListening();
