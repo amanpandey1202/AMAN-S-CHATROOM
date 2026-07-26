@@ -29,7 +29,7 @@ namespace Config {
   const uint8_t NRF_CE_PIN  = 4;
   const uint8_t NRF_CSN_PIN = 5;
   const uint8_t NRF_CHANNEL = 76;                // 2.476 GHz (avoids standard Wi-Fi interference)
-  const rf24_pa_dbm_e NRF_PA_LEVEL = RF24_PA_LOW;  // Low power mode prevents 3.3V rail brownouts and transmit drops
+  const rf24_pa_dbm_e NRF_PA_LEVEL = RF24_PA_HIGH; // HIGH power mode for maximum range with capacitor
 }
 
 // Node Identity Configuration
@@ -129,37 +129,31 @@ void drainTxQueue() {
   if (txQueueEmpty()) return;
   
   uint32_t now = millis();
-  if (txQueue[txHead].retries > 0 && (now - txQueue[txHead].lastAttempt < 15)) {
+  if (txQueue[txHead].retries > 0 && (now - txQueue[txHead].lastAttempt < 30)) {
     return; // Wait a short time before retrying
   }
   
   if (xSemaphoreTake(radioMutex, 0) != pdTRUE) return; // skip if busy
   
   radio.stopListening();
-  radio.flush_tx(); // Clean TX FIFO to prevent clogging
   radio.openWritingPipe(RADIO_PIPE_1);
   
   uint8_t batchCount = 0;
-  // Send up to 12 packets in a single batch to drastically reduce TX/RX transition overhead
+  // Send up to 12 packets in a single batch
   while (!txQueueEmpty() && batchCount < 12) {
     txQueue[txHead].lastAttempt = millis();
-    bool ok = false;
     
-    // Transmit 3 redundant bursts over the air for 100% delivery without fragile HW ACKs
-    for (uint8_t burst = 0; burst < 3; burst++) {
-      if (radio.write(&txQueue[txHead].packet, sizeof(RadioPacket))) {
-        ok = true;
-      }
-    }
+    // Direct hardware write with auto-ack retries
+    bool ok = radio.write(&txQueue[txHead].packet, sizeof(RadioPacket));
     
     if (ok) {
       packetsSent++;
       txHead = (txHead + 1) % TX_QUEUE_SIZE;
     } else {
       txQueue[txHead].retries++;
-      if (txQueue[txHead].retries >= 3) {
+      if (txQueue[txHead].retries >= 5) {
         packetsFailed++;
-        txHead = (txHead + 1) % TX_QUEUE_SIZE; // discard after 3 failed attempts
+        txHead = (txHead + 1) % TX_QUEUE_SIZE; // discard after 5 failed attempts
       }
       break; // Stop batch on failure to allow retry window
     }
@@ -2056,12 +2050,12 @@ void initRadio() {
     return;
   }
   
-  radio.setAutoAck(false);                        // Disable fragile hardware ACK for 100% burst delivery
-  radio.setPALevel(Config::NRF_PA_LEVEL);         // LOW power mode prevents 3.3V rail brownouts
+  radio.setAutoAck(true);                         // Enable hardware-level AutoACK for reliable delivery
+  radio.setPALevel(Config::NRF_PA_LEVEL);         // Configured power level
   radio.setDataRate(RF24_250KBPS);                // 250 Kbps = maximum sensitivity & range (-94dBm)
   radio.setChannel(Config::NRF_CHANNEL);          // High-frequency isolation
-  radio.disableDynamicPayloads();                 // Fixed payload size = maximum clone/hardware stability
-  radio.setPayloadSize(32);                       // Fixed 32-byte packet size
+  radio.setRetries(15, 15);                       // 15 retries, 4ms delay = best hardware reliability
+  radio.enableDynamicPayloads();                  // Dynamic payload size
   
   // Symmetrical read/write pipe mapping configured for Node A
   radio.openWritingPipe(RADIO_PIPE_1);
