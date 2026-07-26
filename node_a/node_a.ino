@@ -108,10 +108,10 @@ struct RadioTxItem {
   uint8_t retries = 0;
   uint32_t lastAttempt = 0;
 };
-const uint8_t TX_QUEUE_SIZE = 64;
+const uint16_t TX_QUEUE_SIZE = 384;
 RadioTxItem txQueue[TX_QUEUE_SIZE];
-volatile uint8_t txHead = 0;
-volatile uint8_t txTail = 0;
+volatile uint16_t txHead = 0;
+volatile uint16_t txTail = 0;
 
 inline bool txQueueEmpty() { return txHead == txTail; }
 inline bool txQueueFull()  { return ((txTail + 1) % TX_QUEUE_SIZE) == txHead; }
@@ -124,41 +124,50 @@ void enqueueTxPacket(const RadioPacket &pkt) {
   txTail = (txTail + 1) % TX_QUEUE_SIZE;
 }
 
-// Call once per loop() -- sends ONE queued packet, never blocks
+// Call once per loop() -- sends queued packets in a non-blocking batch, never blocks AsyncTCP
 void drainTxQueue() {
   if (txQueueEmpty()) return;
   
   uint32_t now = millis();
-  if (txQueue[txHead].retries > 0 && (now - txQueue[txHead].lastAttempt < 30)) {
-    return; // Wait for next loop
+  if (txQueue[txHead].retries > 0 && (now - txQueue[txHead].lastAttempt < 15)) {
+    return; // Wait a short time before retrying
   }
   
   if (xSemaphoreTake(radioMutex, 0) != pdTRUE) return; // skip if busy
-  radio.stopListening();
-  radio.openWritingPipe(RADIO_PIPE_1);
-  txQueue[txHead].lastAttempt = now;
   
-  // Transmit 3 redundant bursts over the air for 100% delivery without fragile HW ACKs
-  bool ok = false;
-  for (uint8_t burst = 0; burst < 3; burst++) {
-    if (radio.write(&txQueue[txHead].packet, sizeof(RadioPacket))) {
-      ok = true;
+  radio.stopListening();
+  radio.flush_tx(); // Clean TX FIFO to prevent clogging
+  radio.openWritingPipe(RADIO_PIPE_1);
+  
+  uint8_t batchCount = 0;
+  // Send up to 12 packets in a single batch to drastically reduce TX/RX transition overhead
+  while (!txQueueEmpty() && batchCount < 12) {
+    txQueue[txHead].lastAttempt = millis();
+    bool ok = false;
+    
+    // Transmit 3 redundant bursts over the air for 100% delivery without fragile HW ACKs
+    for (uint8_t burst = 0; burst < 3; burst++) {
+      if (radio.write(&txQueue[txHead].packet, sizeof(RadioPacket))) {
+        ok = true;
+      }
     }
+    
+    if (ok) {
+      packetsSent++;
+      txHead = (txHead + 1) % TX_QUEUE_SIZE;
+    } else {
+      txQueue[txHead].retries++;
+      if (txQueue[txHead].retries >= 3) {
+        packetsFailed++;
+        txHead = (txHead + 1) % TX_QUEUE_SIZE; // discard after 3 failed attempts
+      }
+      break; // Stop batch on failure to allow retry window
+    }
+    batchCount++;
   }
   
   radio.startListening();
   xSemaphoreGive(radioMutex);
-  
-  if (ok) {
-    packetsSent++;
-    txHead = (txHead + 1) % TX_QUEUE_SIZE;
-  } else {
-    txQueue[txHead].retries++;
-    if (txQueue[txHead].retries >= 3) {
-      packetsFailed++;
-      txHead = (txHead + 1) % TX_QUEUE_SIZE; // discard after 3 failed burst attempts
-    }
-  }
 }
 
 bool isBanned(IPAddress ip, const String &username) {
@@ -568,6 +577,23 @@ void sendGameMoveToRadio(int cell) {
   doc["cell"] = cell;
   String out;
   serializeJson(doc, out);
+  sendJsonToRadio(out);
+}
+
+// Sends the full board state back to the peer node so their local clients
+// see the updated board after every move (fixes cross-node TTT stopping at move 2)
+void sendGameBoardToRadio(int8_t wl0=-1,int8_t wl1=-1,int8_t wl2=-1,int8_t winner=-1,bool draw=false) {
+  String out = "{\"type\":\"peerGameBoard\",\"board\":[";
+  for (int i = 0; i < 9; i++) { out += String(gameRoom.board[i]); if (i < 8) out += ','; }
+  out += "],\"turn\":"; out += gameRoom.turn;
+  out += ",\"scoreA\":"; out += gameRoom.scoreA;
+  out += ",\"scoreB\":"; out += gameRoom.scoreB;
+  if (winner >= 0) {
+    out += ",\"winner\":"; out += winner;
+    out += ",\"winLine\":["; out += wl0; out += ','; out += wl1; out += ','; out += wl2; out += ']';
+  }
+  if (draw) out += ",\"draw\":true";
+  out += '}';
   sendJsonToRadio(out);
 }
 
@@ -2134,9 +2160,18 @@ void handleRadioData() {
     if (packet.header.type == 1) {
       packetsReceived++;
       
-      if (rxBuf.msgId != packet.header.msgId || (now - rxBuf.lastActivity > 2000)) {
+      if (rxBuf.msgId != packet.header.msgId) {
+        // Protect ongoing active reassembly from being wiped by interleaving/colliding packets
+        if (rxBuf.msgId != 0xFF && (now - rxBuf.lastActivity < 1500)) {
+          continue; // Ignore this packet to protect the current message reassembly
+        }
         rxBuf.msgId = packet.header.msgId;
         rxBuf.totalChunks = packet.header.totalChunks;
+        rxBuf.chunksReceivedCount = 0;
+        memset(rxBuf.chunksReceived, 0, sizeof(rxBuf.chunksReceived));
+        memset(rxBuf.data, 0, sizeof(rxBuf.data));
+      } else if (now - rxBuf.lastActivity > 2000) {
+        // Timeout reset for same msgId
         rxBuf.chunksReceivedCount = 0;
         memset(rxBuf.chunksReceived, 0, sizeof(rxBuf.chunksReceived));
         memset(rxBuf.data, 0, sizeof(rxBuf.data));
@@ -2366,19 +2401,53 @@ void processRadioMessage(const char* jsonStr) {
           uint8_t sB = gameRoom.scoreB + (winner==1?1:0);
           gameRoom.scoreA = sA; gameRoom.scoreB = sB;
           broadcastGameBoard(wl[0],wl[1],wl[2],winner);
+          sendGameBoardToRadio(wl[0],wl[1],wl[2],winner); // Sync board back to peer node
           gameRoom.active = false;
           gameRoom.playerA = 0; gameRoom.playerB = 0;
           gameRoom.peerPlayerA = false; gameRoom.peerPlayerB = false;
           promoteQueue();
         } else if (isBoardFull(gameRoom.board)) {
           broadcastGameBoard(-1,-1,-1,-1,true);
+          sendGameBoardToRadio(-1,-1,-1,-1,true); // Sync draw back to peer node
           gameRoom.active = false;
           gameRoom.playerA = 0; gameRoom.playerB = 0;
           gameRoom.peerPlayerA = false; gameRoom.peerPlayerB = false;
           promoteQueue();
         } else {
           broadcastGameBoard();
+          sendGameBoardToRadio(); // Sync updated board back to peer node
         }
+      }
+    }
+  }
+  else if (type == "peerGameBoard") {
+    // Peer node processed a local player's move and is syncing the board back to us
+    if (gameRoom.active) {
+      JsonArray arr = doc["board"].as<JsonArray>();
+      if (arr.size() == 9) {
+        for (int i = 0; i < 9; i++) gameRoom.board[i] = arr[i].as<int8_t>();
+      }
+      gameRoom.turn   = doc["turn"]   | gameRoom.turn;
+      gameRoom.scoreA = doc["scoreA"] | gameRoom.scoreA;
+      gameRoom.scoreB = doc["scoreB"] | gameRoom.scoreB;
+      int8_t winner = doc["winner"] | (int8_t)-1;
+      bool draw = doc["draw"] | false;
+      int8_t wl0 = -1, wl1 = -1, wl2 = -1;
+      if (winner >= 0 && doc["winLine"].is<JsonArray>()) {
+        wl0 = doc["winLine"][0]; wl1 = doc["winLine"][1]; wl2 = doc["winLine"][2];
+        broadcastGameBoard(wl0,wl1,wl2,winner);
+        gameRoom.active = false;
+        gameRoom.playerA = 0; gameRoom.playerB = 0;
+        gameRoom.peerPlayerA = false; gameRoom.peerPlayerB = false;
+        promoteQueue();
+      } else if (draw) {
+        broadcastGameBoard(-1,-1,-1,-1,true);
+        gameRoom.active = false;
+        gameRoom.playerA = 0; gameRoom.playerB = 0;
+        gameRoom.peerPlayerA = false; gameRoom.peerPlayerB = false;
+        promoteQueue();
+      } else {
+        broadcastGameBoard();
       }
     }
   }

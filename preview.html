@@ -3963,7 +3963,44 @@ body:not(.purple-theme) #inputBar {
     }
   }
 
+  // Chess move 45-second timeout watchdog
+  let _chessMoveTimeoutId = null;
+  let _chessMoveCountdownId = null;
+
+  function clearChessMoveTimeout() {
+    if (_chessMoveTimeoutId)  { clearTimeout(_chessMoveTimeoutId);  _chessMoveTimeoutId = null; }
+    if (_chessMoveCountdownId){ clearInterval(_chessMoveCountdownId); _chessMoveCountdownId = null; }
+  }
+
+  function startChessMoveTimeout() {
+    clearChessMoveTimeout();
+    let remaining = 45;
+    const badge = $('turnBadge');
+    _chessMoveCountdownId = setInterval(() => {
+      remaining--;
+      if (badge && chessTurn !== myMark) {
+        badge.textContent = '\u23F3 Opponent Turn... ' + remaining + 's';
+        badge.className = '';
+      }
+      if (remaining <= 0) clearInterval(_chessMoveCountdownId);
+    }, 1000);
+    _chessMoveTimeoutId = setTimeout(() => {
+      if (chessTurn !== myMark && gameActive && activeGameName === 'chess') {
+        clearChessMoveTimeout();
+        const ol = $('gameOverlay');
+        if (ol) {
+          ol.style.display = 'flex';
+          ol.innerHTML = '<div class="g-card"><span class="g-emoji">🏆</span><div class="g-title">OPPONENT FORFEITED</div><div class="g-sub">No chess move received in 45 seconds.<br>Opponent\'s move never arrived over the mesh.</div><button class="g-btn primary" onclick="leaveGameToComms()">Claim Victory</button></div>';
+        }
+        gameActive = false;
+        clearGameIdleTimer();
+        autoLeaveAfter(8000);
+      }
+    }, 45000);
+  }
+
   function applyChessMove(fromIdx, toIdx) {
+    clearChessMoveTimeout(); // Cancel any running opponent timeout
     let piece = chessBoard[fromIdx];
     // Pawn promotion auto-queen
     if (CHESS_W.indexOf(piece) === CP.P && chessRow(toIdx) === 0) piece = '\u2655';
@@ -3999,6 +4036,10 @@ body:not(.purple-theme) #inputBar {
       $('boardHint').textContent = '\u26A0\uFE0F CHECK! ' + (chessTurn===0?'White':'Black') + ' must escape!';
     } else {
       $('boardHint').textContent = (chessTurn===myMark?'Your turn':'Opponent\'s turn') + ' \u2013 Select a piece';
+    }
+    // Start 45s countdown if it's now the opponent's turn
+    if (chessTurn !== myMark) {
+      startChessMoveTimeout();
     }
     startGameIdleTimer();
   }
