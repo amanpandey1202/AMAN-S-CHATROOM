@@ -367,7 +367,7 @@ async function fetchBinaries() {
     setFetchDot(i, 'loading', 'downloading...');
     log('Fetching ' + f.name + '...', 'plain');
     try {
-      const resp = await fetch(f.url);
+      const resp = await fetch(f.url + '?t=' + Date.now());
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const buf = await resp.arrayBuffer();
       const kb = (buf.byteLength / 1024).toFixed(1);
