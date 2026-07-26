@@ -2021,7 +2021,7 @@ body:not(.purple-theme) #inputBar {
       return;
     }
 
-    btn.title = 'Recording (2s max) - Click to STOP';
+    btn.title = 'Recording (4s max) - Click to STOP';
     if (indicator) indicator.classList.add('show');
 
     let chunks = [];
@@ -2059,13 +2059,13 @@ body:not(.purple-theme) #inputBar {
       reader.readAsDataURL(blob);
     };
 
-    // Record the full message in one piece, automatic stop after 2 seconds to fit ESP32 buffer
+    // Record the full message in one piece, automatic stop after 4 seconds to fit ESP32 buffer
     micRecorder.start();
     window.micTimeout = setTimeout(() => {
       if (micActive) {
         window.toggleMic();
       }
-    }, 2000);
+    }, 4000);
   };
 
   // Receive and play peer voice chunks
@@ -2668,19 +2668,38 @@ body:not(.purple-theme) #inputBar {
   }
 
   /* -- Radio UI Updates -- */
+  let _lastMeshOnline = true;
   function updateRadioStats(d) {
     $("localNode").textContent = d.localNode;
     const statusEl = $("linkStatus");
     if (d.online) {
       statusEl.textContent = "ONLINE";
       statusEl.className = "stat-val online";
+      _lastMeshOnline = true;
     } else {
+      if (_lastMeshOnline && gameActive && activeGameName) {
+        // Mesh just went offline mid-game — auto-forfeit opponent
+        _lastMeshOnline = false;
+        showMeshLostForfeit();
+      }
       statusEl.textContent = "OFFLINE";
       statusEl.className = "stat-val offline";
+      _lastMeshOnline = false;
     }
     $("txCount").textContent = d.txCount;
     $("rxCount").textContent = d.rxCount;
     $("linkQuality").textContent = d.quality + "%";
+  }
+
+  function showMeshLostForfeit() {
+    clearRpsMoveTimeout();
+    const ol = $('gameOverlay');
+    if (!ol) return;
+    ol.style.display = 'flex';
+    ol.innerHTML = '<div class="g-card"><span class="g-emoji">🛰️</span><div class="g-title">MESH LINK LOST</div><div class="g-sub">The radio link to the opponent\'s node dropped.<br>Opponent has been auto-forfeited. You win!</div><button class="g-btn primary" onclick="leaveGameToComms()">Return to Chat</button></div>';
+    gameActive = false;
+    clearGameIdleTimer();
+    autoLeaveAfter(8000);
   }
 
   /* -- UI Renderers -- */
@@ -3418,39 +3437,41 @@ body:not(.purple-theme) #inputBar {
   }
 
   /* -- Darknet E2EE (ECDH P-256 + AES-GCM) -- */
-  async function initDarknetE2EE(){
+  // isResponse=true means we are responding to a peer's pubKey (completes two-way handshake)
+  async function initDarknetE2EE(isResponse = false){
     if (!crypto.subtle) {
       // Fallback Mode (unsecure origin, e.g. unencrypted HTTP served by ESP32)
       const randomKey = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
       e2eeSharedKeyFallback = randomKey;
-      wsSend({type:'pubKey',key:'fallback:' + btoa(randomKey)});
+      wsSend({type:'pubKey', key:'fallback:' + btoa(randomKey), isResponse});
       updateE2eeBadge('pending');
       addSys('\u{1F512} E2EE initialized in Fallback Mode (Insecure HTTP Context).');
       return;
     }
     try {
-      e2eeKeyPair=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
-      const pub=await crypto.subtle.exportKey('raw',e2eeKeyPair.publicKey);
-      const b64=btoa(String.fromCharCode(...new Uint8Array(pub)));
-      wsSend({type:'pubKey',key:b64});
+      e2eeKeyPair = await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey']);
+      const pub = await crypto.subtle.exportKey('raw', e2eeKeyPair.publicKey);
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(pub)));
+      wsSend({type:'pubKey', key: b64, isResponse});
       updateE2eeBadge('pending');
     } catch(e){ 
       // Fallback as backup
       const randomKey = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
       e2eeSharedKeyFallback = randomKey;
-      wsSend({type:'pubKey',key:'fallback:' + btoa(randomKey)});
+      wsSend({type:'pubKey', key:'fallback:' + btoa(randomKey), isResponse});
       updateE2eeBadge('pending');
       addSys('\u{1F512} E2EE initialized in Fallback Mode.');
     }
   }
 
   async function onReceivePubKey(d){
-    if (d.key.startsWith('fallback:')) {
+    // --- Fallback mode ---
+    if (d.key && d.key.startsWith('fallback:')) {
       const k = d.key.substring(9);
       e2eeSharedKeyFallback = atob(k);
       updateE2eeBadge('active');
       addSys('\u{1F512} E2EE channel established (Fallback Mode).');
-      wsSend({type:'pubKey',key:'fallback_confirm'});
+      if (!d.isResponse) wsSend({type:'pubKey', key:'fallback_confirm', isResponse: true});
       decryptAllPendingMessages();
       return;
     }
@@ -3460,18 +3481,26 @@ body:not(.purple-theme) #inputBar {
       decryptAllPendingMessages();
       return;
     }
-    if(!e2eeKeyPair) return;
-    try{
-      const raw=Uint8Array.from(atob(d.key),c=>c.charCodeAt(0));
-      const peerPub=await crypto.subtle.importKey('raw',raw,{name:'ECDH',namedCurve:'P-256'},false,[]);
-      e2eeSharedKey=await crypto.subtle.deriveKey(
-        {name:'ECDH',public:peerPub},e2eeKeyPair.privateKey,
-        {name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+
+    // --- Full ECDH mode ---
+    // If we have no keypair yet and this is the initiator's pubKey (not a response),
+    // generate our own keypair and send it back to complete the two-way handshake.
+    if (!e2eeKeyPair && !d.isResponse) {
+      await initDarknetE2EE(true); // true = isResponse flag so peer knows not to re-reply
+    }
+
+    if (!e2eeKeyPair) return;
+    try {
+      const raw = Uint8Array.from(atob(d.key), c => c.charCodeAt(0));
+      const peerPub = await crypto.subtle.importKey('raw', raw, {name:'ECDH', namedCurve:'P-256'}, false, []);
+      e2eeSharedKey = await crypto.subtle.deriveKey(
+        {name:'ECDH', public: peerPub}, e2eeKeyPair.privateKey,
+        {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
       updateE2eeBadge('active');
-      addSys('\u{1F512} E2EE channel established with '+escHtml(d.from||'peer')+'.');
+      addSys('\u{1F512} E2EE channel established with ' + escHtml(d.from || 'peer') + '.');
       decryptAllPendingMessages();
-    }catch(e){ 
-      addSys('\u{26A0} E2EE key exchange failed.',true); 
+    } catch(e) {
+      addSys('\u{26A0} E2EE key exchange failed.',true);
     }
   }
 
@@ -4061,10 +4090,46 @@ body:not(.purple-theme) #inputBar {
     });
   }
 
+  let _rpsMoveTimeoutId = null;
+  let _rpsMoveCountdownId = null;
+
+  function clearRpsMoveTimeout() {
+    if (_rpsMoveTimeoutId)  { clearTimeout(_rpsMoveTimeoutId);  _rpsMoveTimeoutId = null; }
+    if (_rpsMoveCountdownId){ clearInterval(_rpsMoveCountdownId); _rpsMoveCountdownId = null; }
+  }
+
+  function startRpsMoveTimeout() {
+    clearRpsMoveTimeout();
+    let remaining = 15;
+    const badge = $('turnBadge');
+    _rpsMoveCountdownId = setInterval(() => {
+      remaining--;
+      if (badge && myRpsChoice && !opponentRpsChoice) {
+        badge.textContent = '\u23F3 Waiting for opponent... ' + remaining + 's';
+      }
+      if (remaining <= 0) clearInterval(_rpsMoveCountdownId);
+    }, 1000);
+    _rpsMoveTimeoutId = setTimeout(() => {
+      if (myRpsChoice && !opponentRpsChoice) {
+        // Opponent never responded — they forfeit
+        clearRpsMoveTimeout();
+        const ol = $('gameOverlay');
+        if (ol) {
+          ol.style.display = 'flex';
+          ol.innerHTML = '<div class="g-card"><span class="g-emoji">🏆</span><div class="g-title">OPPONENT FORFEITED</div><div class="g-sub">No response from opponent in 15 seconds.<br>Their move never arrived over the mesh.</div><button class="g-btn primary" onclick="leaveGameToComms()">Claim Victory</button></div>';
+        }
+        gameActive = false;
+        clearGameIdleTimer();
+        autoLeaveAfter(8000);
+      }
+    }, 15000);
+  }
+
   function makeRpsChoice(choice) {
     myRpsChoice = choice;
     renderRpsBoard();
     wsSend({type: 'gameMove', game: 'rps', move: choice});
+    startRpsMoveTimeout(); // Start 15s watchdog waiting for opponent response
     checkRpsResult();
   }
 
@@ -4086,6 +4151,9 @@ body:not(.purple-theme) #inputBar {
   function checkRpsResult() {
     if (!myRpsChoice || !opponentRpsChoice) return;
 
+    // Both moves arrived — cancel the timeout watchdog
+    clearRpsMoveTimeout();
+
     let result = '';
     if (myRpsChoice === opponentRpsChoice) {
       result = 'draw';
@@ -4104,6 +4172,7 @@ body:not(.purple-theme) #inputBar {
     const emojiMap = { rock: '\u270A', paper: '\u270B', scissors: '\u270C' };
     const myEmoji = emojiMap[myRpsChoice];
     const oppEmoji = emojiMap[opponentRpsChoice];
+    const resultLine = 'Round ' + rpsRound + ': You played ' + myEmoji + '  vs  Opponent played ' + oppEmoji;
 
     const isMatchOver = (rpsScoreA >= 2 || rpsScoreB >= 2);
     updateRpsScoreDisp();
