@@ -2634,9 +2634,12 @@ void setup() {
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
 
-  // HTTP Routes setup - send_P with explicit length (most reliable for PROGMEM on ESP32)
+  // HTTP Routes setup - GZIP compressed HTML for full page delivery (169KB→44KB)
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *req){
-    req->send_P(200, "text/html", (const uint8_t*)index_html, index_html_len);
+    AsyncWebServerResponse *response = req->beginResponse_P(200, "text/html", index_html_gz, index_html_gz_len);
+    response->addHeader("Content-Encoding", "gzip");
+    response->addHeader("Cache-Control", "no-cache");
+    req->send(response);
   });
 
   server.on("/manifest.json", HTTP_GET, [](AsyncWebServerRequest *req){
