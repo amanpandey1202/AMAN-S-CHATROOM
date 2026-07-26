@@ -302,11 +302,13 @@ uint32_t lastPeerContact = 0;
 bool peerOnline = false;
 
 // Radio Reassembly State
-#define RX_BUF_SIZE 512
+#define RX_BUF_SIZE 10240
+#define MAX_CHUNKS 384
 struct ReassemblyBuffer {
   uint8_t msgId = 0xFF;
   uint8_t totalChunks = 0;
-  uint32_t chunksReceivedMask = 0;
+  uint16_t chunksReceivedCount = 0;
+  bool chunksReceived[MAX_CHUNKS];
   char data[RX_BUF_SIZE];
   uint32_t lastActivity = 0;
 };
@@ -1999,6 +2001,8 @@ void onWsEvent(AsyncWebSocket *srv, AsyncWebSocketClient *client,
             ws.text(other.id, c->wsBuffer);
           }
         }
+        // Forward voice chunk over Mesh Radio to peer node
+        sendJsonToRadio(c->wsBuffer);
       } else {
         processWsMessage(client, c, c->wsBuffer);
       }
@@ -2133,24 +2137,27 @@ void handleRadioData() {
       if (rxBuf.msgId != packet.header.msgId || (now - rxBuf.lastActivity > 2000)) {
         rxBuf.msgId = packet.header.msgId;
         rxBuf.totalChunks = packet.header.totalChunks;
-        rxBuf.chunksReceivedMask = 0;
+        rxBuf.chunksReceivedCount = 0;
+        memset(rxBuf.chunksReceived, 0, sizeof(rxBuf.chunksReceived));
         memset(rxBuf.data, 0, sizeof(rxBuf.data));
       }
       
       rxBuf.lastActivity = now;
       
       uint8_t chunkIdx = packet.header.chunkIdx;
-      if (chunkIdx < 32 && rxBuf.totalChunks > 0 && chunkIdx < rxBuf.totalChunks) {
-        rxBuf.chunksReceivedMask |= (1UL << chunkIdx);
-        
-        int offset = chunkIdx * 27;
-        if (offset + packet.header.payloadLen < RX_BUF_SIZE) {
-          memcpy(rxBuf.data + offset, packet.data, packet.header.payloadLen);
-          rxBuf.data[offset + packet.header.payloadLen] = '\0';
+      if (chunkIdx < MAX_CHUNKS && rxBuf.totalChunks > 0 && chunkIdx < rxBuf.totalChunks) {
+        if (!rxBuf.chunksReceived[chunkIdx]) {
+          rxBuf.chunksReceived[chunkIdx] = true;
+          rxBuf.chunksReceivedCount++;
+          
+          int offset = chunkIdx * 27;
+          if (offset + packet.header.payloadLen < RX_BUF_SIZE) {
+            memcpy(rxBuf.data + offset, packet.data, packet.header.payloadLen);
+            rxBuf.data[offset + packet.header.payloadLen] = '\0';
+          }
         }
         
-        uint32_t expectedMask = (1UL << rxBuf.totalChunks) - 1;
-        if ((rxBuf.chunksReceivedMask & expectedMask) == expectedMask) {
+        if (rxBuf.chunksReceivedCount == rxBuf.totalChunks) {
           processRadioMessage(rxBuf.data);
           rxBuf.msgId = 0xFF; // Reset reassembly context
         }
@@ -2196,6 +2203,12 @@ void processRadioMessage(const char* jsonStr) {
     String room = doc["room"] | "comms";
     doc["mesh"] = true;
     
+    String out;
+    serializeJson(doc, out);
+    broadcastRoom(room, out);
+  }
+  else if (type == "voice") {
+    String room = "airwaves";
     String out;
     serializeJson(doc, out);
     broadcastRoom(room, out);
