@@ -10,6 +10,19 @@
 #include "esp_task_wdt.h"
 #include <Preferences.h>
 
+// ====== Radio Reassembly Structs (Must be before forward declarations) ======
+#define RX_BUF_SIZE 10240
+#define MAX_CHUNKS 384
+struct ReassemblyBuffer {
+  uint8_t msgId = 0xFF;
+  uint8_t totalChunks = 0;
+  uint16_t chunksReceivedCount = 0;
+  bool chunksReceived[MAX_CHUNKS];
+  char data[RX_BUF_SIZE];
+  uint32_t lastActivity = 0;
+  bool active = false;
+};
+
 // -- Configuration -------------------------------------------
 #include "secret/secrets.h"
 
@@ -218,6 +231,14 @@ struct GameRoom {
   uint8_t  turn         = 0;   // 0=A(X), 1=B(O)
   uint8_t  scoreA       = 0;
   uint8_t  scoreB       = 0;
+
+  // ARQ game moves sequence tracking
+  uint16_t moveSeq      = 0;
+  uint16_t lastAckedSeq = 0;
+  uint32_t lastMoveSent = 0;
+  int8_t   pendingMoveCell = -1;
+  bool     awaitingAck  = false;
+
   GameRoom() { memset(board, -1, sizeof(board)); }
 };
 
@@ -305,17 +326,29 @@ uint32_t lastPeerContact = 0;
 bool peerOnline = false;
 
 // Radio Reassembly State
-#define RX_BUF_SIZE 10240
-#define MAX_CHUNKS 384
-struct ReassemblyBuffer {
-  uint8_t msgId = 0xFF;
-  uint8_t totalChunks = 0;
-  uint16_t chunksReceivedCount = 0;
-  bool chunksReceived[MAX_CHUNKS];
-  char data[RX_BUF_SIZE];
-  uint32_t lastActivity = 0;
-};
-static ReassemblyBuffer rxBuf;
+#define MAX_REASSEMBLY_BUFFERS 4
+static ReassemblyBuffer rxBufs[MAX_REASSEMBLY_BUFFERS];
+
+ReassemblyBuffer* getRxBuf(uint8_t msgId, uint32_t now) {
+  for (int i = 0; i < MAX_REASSEMBLY_BUFFERS; i++) {
+    if (rxBufs[i].active && rxBufs[i].msgId == msgId) {
+      return &rxBufs[i];
+    }
+  }
+  for (int i = 0; i < MAX_REASSEMBLY_BUFFERS; i++) {
+    if (!rxBufs[i].active || (now - rxBufs[i].lastActivity > 2500)) {
+      rxBufs[i].msgId = msgId;
+      rxBufs[i].totalChunks = 0;
+      rxBufs[i].chunksReceivedCount = 0;
+      memset(rxBufs[i].chunksReceived, 0, sizeof(rxBufs[i].chunksReceived));
+      memset(rxBufs[i].data, 0, sizeof(rxBufs[i].data));
+      rxBufs[i].lastActivity = now;
+      rxBufs[i].active = true;
+      return &rxBufs[i];
+    }
+  }
+  return nullptr;
+}
 
 // Preferences and Bans
 Preferences prefs;
@@ -561,7 +594,7 @@ bool dequeuePlayer(uint32_t& outId, String& outName) {
   return true;
 }
 
-void sendGameMoveToRadio(int cell) {
+void sendGameMoveToRadio(int cell, uint16_t seq = 0) {
   #if ARDUINOJSON_VERSION_MAJOR >= 7
   JsonDocument doc;
   #else
@@ -569,6 +602,7 @@ void sendGameMoveToRadio(int cell) {
   #endif
   doc["type"] = "peerGameMove";
   doc["cell"] = cell;
+  if (seq > 0) doc["seq"] = seq;
   String out;
   serializeJson(doc, out);
   sendJsonToRadio(out);
@@ -598,6 +632,12 @@ void startGame(uint32_t idA, const String& nA, uint32_t idB, const String& nB, u
   gameRoom.nameA = nA;   gameRoom.nameB = nB;
   gameRoom.turn = 0; gameRoom.scoreA = sA; gameRoom.scoreB = sB;
   memset(gameRoom.board, -1, sizeof(gameRoom.board));
+  
+  // Reset ARQ tracking
+  gameRoom.moveSeq = 0;
+  gameRoom.lastAckedSeq = 0;
+  gameRoom.pendingMoveCell = -1;
+  gameRoom.awaitingAck = false;
   
   String pa = "{\"type\":\"gameStart\",\"mark\":0,\"nameA\":\"" + nA + "\",\"nameB\":\"" + nB + "\",\"scoreA\":" + String(sA) + ",\"scoreB\":" + String(sB) + "}";
   String pb = "{\"type\":\"gameStart\",\"mark\":1,\"nameA\":\"" + nA + "\",\"nameB\":\"" + nB + "\",\"scoreA\":" + String(sA) + ",\"scoreB\":" + String(sB) + "}";
@@ -1700,7 +1740,11 @@ void processWsMessage(AsyncWebSocketClient *client, ChatClient *c, const String 
 
       // Send this game move via radio to peer node if playing a peer match
       if (gameRoom.peerPlayerA || gameRoom.peerPlayerB) {
-        sendGameMoveToRadio(cell);
+        gameRoom.moveSeq++;
+        gameRoom.pendingMoveCell = cell;
+        gameRoom.awaitingAck = true;
+        gameRoom.lastMoveSent = millis();
+        sendGameMoveToRadio(cell, gameRoom.moveSeq);
       }
 
       int8_t winner = checkWinner(gameRoom.board);
@@ -2161,44 +2205,34 @@ void handleRadioData() {
     if (packet.header.type == 1) {
       packetsReceived++;
       
-      static uint8_t processedMsgIds[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+      static uint8_t processedMsgIds[64];
       static uint8_t processedMsgIdIdx = 0;
       
-      if (rxBuf.msgId != packet.header.msgId) {
-        // Protect ongoing active reassembly from being wiped by interleaving/colliding packets
-        if (rxBuf.msgId != 0xFF && (now - rxBuf.lastActivity < 1500)) {
-          continue; // Ignore this packet to protect the current message reassembly
-        }
-        rxBuf.msgId = packet.header.msgId;
-        rxBuf.totalChunks = packet.header.totalChunks;
-        rxBuf.chunksReceivedCount = 0;
-        memset(rxBuf.chunksReceived, 0, sizeof(rxBuf.chunksReceived));
-        memset(rxBuf.data, 0, sizeof(rxBuf.data));
-      } else if (now - rxBuf.lastActivity > 2000) {
-        // Timeout reset for same msgId
-        rxBuf.chunksReceivedCount = 0;
-        memset(rxBuf.chunksReceived, 0, sizeof(rxBuf.chunksReceived));
-        memset(rxBuf.data, 0, sizeof(rxBuf.data));
-      }
+      ReassemblyBuffer* buf = getRxBuf(packet.header.msgId, now);
+      if (!buf) continue;
       
-      rxBuf.lastActivity = now;
+      buf->lastActivity = now;
       
       uint8_t chunkIdx = packet.header.chunkIdx;
-      if (chunkIdx < MAX_CHUNKS && rxBuf.totalChunks > 0 && chunkIdx < rxBuf.totalChunks) {
-        if (!rxBuf.chunksReceived[chunkIdx]) {
-          rxBuf.chunksReceived[chunkIdx] = true;
-          rxBuf.chunksReceivedCount++;
+      if (chunkIdx < MAX_CHUNKS && buf->totalChunks == 0) {
+        buf->totalChunks = packet.header.totalChunks;
+      }
+      
+      if (chunkIdx < MAX_CHUNKS && buf->totalChunks > 0 && chunkIdx < buf->totalChunks) {
+        if (!buf->chunksReceived[chunkIdx]) {
+          buf->chunksReceived[chunkIdx] = true;
+          buf->chunksReceivedCount++;
           
           int offset = chunkIdx * 27;
           if (offset + packet.header.payloadLen < RX_BUF_SIZE) {
-            memcpy(rxBuf.data + offset, packet.data, packet.header.payloadLen);
+            memcpy(buf->data + offset, packet.data, packet.header.payloadLen);
           }
         }
         
-        if (rxBuf.chunksReceivedCount == rxBuf.totalChunks) {
+        if (buf->chunksReceivedCount == buf->totalChunks) {
           // Check if this msgId has already been processed recently (deduplication)
           bool alreadyProcessed = false;
-          for (int idx = 0; idx < 8; idx++) {
+          for (int idx = 0; idx < 64; idx++) {
             if (processedMsgIds[idx] == packet.header.msgId) {
               alreadyProcessed = true;
               break;
@@ -2206,15 +2240,15 @@ void handleRadioData() {
           }
           if (!alreadyProcessed) {
             processedMsgIds[processedMsgIdIdx] = packet.header.msgId;
-            processedMsgIdIdx = (processedMsgIdIdx + 1) % 8;
+            processedMsgIdIdx = (processedMsgIdIdx + 1) % 64;
 
             // Null-terminate the fully assembled message before parsing
-            int totalLen = rxBuf.totalChunks * 27;
-            if (totalLen < RX_BUF_SIZE) rxBuf.data[totalLen] = '\0';
-            else rxBuf.data[RX_BUF_SIZE - 1] = '\0';
-            processRadioMessage(rxBuf.data);
+            int totalLen = buf->totalChunks * 27;
+            if (totalLen < RX_BUF_SIZE) buf->data[totalLen] = '\0';
+            else buf->data[RX_BUF_SIZE - 1] = '\0';
+            processRadioMessage(buf->data);
           }
-          rxBuf.msgId = 0xFF; // Reset reassembly context
+          buf->active = false; // Release buffer context
         }
       }
     }
@@ -2399,6 +2433,22 @@ void processRadioMessage(const char* jsonStr) {
   else if (type == "peerGameMove") {
     if (gameRoom.active) {
       int cell = doc["cell"] | -1;
+      uint16_t seq = doc["seq"] | 0;
+
+      // Send ACK back over radio
+      if (seq > 0) {
+        #if ARDUINOJSON_VERSION_MAJOR >= 7
+        JsonDocument ackDoc;
+        #else
+        DynamicJsonDocument ackDoc(128);
+        #endif
+        ackDoc["type"] = "peerGameMoveAck";
+        ackDoc["seq"] = seq;
+        String ackOut;
+        serializeJson(ackDoc, ackOut);
+        sendJsonToRadio(ackOut);
+      }
+
       if (cell >= 0 && cell <= 8 && gameRoom.board[cell] < 0) {
         // Play the move for the active turn player
         gameRoom.board[cell] = (int8_t)gameRoom.turn;
@@ -2482,6 +2532,13 @@ void processRadioMessage(const char* jsonStr) {
       gameRoom.peerPlayerA = false; gameRoom.peerPlayerB = false;
       memset(gameRoom.board, -1, sizeof(gameRoom.board)); gameRoom.turn = 0;
       promoteQueue();
+    }
+  }
+  else if (type == "peerGameMoveAck") {
+    uint16_t seq = doc["seq"] | 0;
+    if (gameRoom.awaitingAck && seq == gameRoom.moveSeq) {
+      gameRoom.awaitingAck = false;
+      gameRoom.pendingMoveCell = -1;
     }
   }
   else if (type == "peerGameLeaveLobby") {
@@ -2796,6 +2853,23 @@ void setup() {
   Serial.println("Node B Chat Server listening on port 80");
 }
 
+void runGameMoveRetransmit() {
+  if (gameRoom.active && gameRoom.awaitingAck && (millis() - gameRoom.lastMoveSent > 400)) {
+    #if ARDUINOJSON_VERSION_MAJOR >= 7
+    JsonDocument doc;
+    #else
+    DynamicJsonDocument doc(128);
+    #endif
+    doc["type"] = "peerGameMove";
+    doc["cell"] = gameRoom.pendingMoveCell;
+    doc["seq"]  = gameRoom.moveSeq;
+    String out;
+    serializeJson(doc, out);
+    sendJsonToRadio(out);
+    gameRoom.lastMoveSent = millis();
+  }
+}
+
 // ====== Loop ======
 
 void loop() {
@@ -2805,6 +2879,7 @@ void loop() {
 
   // Drain ONE queued radio packet per loop iteration -- never blocks AsyncTCP
   drainTxQueue();
+  runGameMoveRetransmit();
 
   // WebSocket server-side ping every 20s -- keeps browser connections alive
   static uint32_t lastWsPing = 0;

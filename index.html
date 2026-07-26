@@ -3368,10 +3368,15 @@ body:not(.purple-theme) #inputBar {
     }
 
     // --- Full ECDH mode ---
-    // If we have no keypair yet and this is the initiator's pubKey (not a response),
-    // generate our own keypair and send it back to complete the two-way handshake.
-    if (!e2eeKeyPair && !d.isResponse) {
-      await initDarknetE2EE(true); // true = isResponse flag so peer knows not to re-reply
+    // If this is an initiator's pubKey (not a response), we must send our pubKey back.
+    if (!d.isResponse) {
+      if (!e2eeKeyPair) {
+        await initDarknetE2EE(true); // true = isResponse flag
+      } else {
+        const pub = await crypto.subtle.exportKey('raw', e2eeKeyPair.publicKey);
+        const b64 = btoa(String.fromCharCode(...new Uint8Array(pub)));
+        wsSend({type:'pubKey', key: b64, isResponse: true});
+      }
     }
 
     if (!e2eeKeyPair) return;
