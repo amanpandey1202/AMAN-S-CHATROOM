@@ -108,7 +108,7 @@ struct RadioTxItem {
   uint8_t retries = 0;
   uint32_t lastAttempt = 0;
 };
-const uint8_t TX_QUEUE_SIZE = 24;
+const uint8_t TX_QUEUE_SIZE = 64;
 RadioTxItem txQueue[TX_QUEUE_SIZE];
 volatile uint8_t txHead = 0;
 volatile uint8_t txTail = 0;
@@ -2153,11 +2153,14 @@ void handleRadioData() {
           int offset = chunkIdx * 27;
           if (offset + packet.header.payloadLen < RX_BUF_SIZE) {
             memcpy(rxBuf.data + offset, packet.data, packet.header.payloadLen);
-            rxBuf.data[offset + packet.header.payloadLen] = '\0';
           }
         }
         
         if (rxBuf.chunksReceivedCount == rxBuf.totalChunks) {
+          // Null-terminate the fully assembled message before parsing
+          int totalLen = rxBuf.totalChunks * 27;
+          if (totalLen < RX_BUF_SIZE) rxBuf.data[totalLen] = '\0';
+          else rxBuf.data[RX_BUF_SIZE - 1] = '\0';
           processRadioMessage(rxBuf.data);
           rxBuf.msgId = 0xFF; // Reset reassembly context
         }
@@ -2170,7 +2173,7 @@ void processRadioMessage(const char* jsonStr) {
 #if ARDUINOJSON_VERSION_MAJOR >= 7
   JsonDocument doc;
 #else
-  DynamicJsonDocument doc(512);
+  DynamicJsonDocument doc(1024);
 #endif
 
   if (deserializeJson(doc, jsonStr)) return;
