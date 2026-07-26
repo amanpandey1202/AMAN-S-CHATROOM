@@ -2021,9 +2021,7 @@ body:not(.purple-theme) #inputBar {
       return;
     }
 
-    micActive = true;
-    btn.classList.add('recording');
-    btn.title = 'Recording (5s max) - Click to STOP';
+    btn.title = 'Recording (2s max) - Click to STOP';
     if (indicator) indicator.classList.add('show');
 
     let chunks = [];
@@ -2061,13 +2059,13 @@ body:not(.purple-theme) #inputBar {
       reader.readAsDataURL(blob);
     };
 
-    // Record the full message in one piece, automatic stop after 4 seconds to fit ESP32 buffer
+    // Record the full message in one piece, automatic stop after 2 seconds to fit ESP32 buffer
     micRecorder.start();
     window.micTimeout = setTimeout(() => {
       if (micActive) {
         window.toggleMic();
       }
-    }, 4000);
+    }, 2000);
   };
 
   // Receive and play peer voice chunks
