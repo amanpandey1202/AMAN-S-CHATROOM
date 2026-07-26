@@ -466,7 +466,13 @@ async function startFlash() {
         showProgress('Writing ' + name + '...', (written/total)*100, written, total);
       },
       calculateMD5Hash(image) {
-        return CryptoJS.MD5(CryptoJS.enc.Latin1.parse(image)).toString();
+        let binary = '';
+        const chunkSize = 8192;
+        for (let i = 0; i < image.length; i += chunkSize) {
+          const chunk = image.subarray(i, i + chunkSize);
+          binary += String.fromCharCode.apply(null, chunk);
+        }
+        return CryptoJS.MD5(CryptoJS.enc.Latin1.parse(binary)).toString();
       }
     };
 
