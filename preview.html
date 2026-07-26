@@ -825,6 +825,8 @@ body.bw-theme .room-btn.active {
 
 .board-panel{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;}
 #tttBoard{display:grid;grid-template-columns:repeat(3,90px);grid-template-rows:repeat(3,90px);gap:10px;}
+/* When chess is active, the board needs to be unrestricted to show 8x8 */
+#tttBoard.chess-active{grid-template-columns:unset !important;grid-template-rows:unset !important;gap:0 !important;}
 .ttt-cell{
   width:90px;height:90px;border-radius:14px;
   background:rgba(20,20,38,0.85);border:1.5px solid rgba(255,255,255,0.07);
@@ -1011,7 +1013,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(255, 255, 
 #micBtn.recording{background:rgba(255,0,110,.18);border-color:rgba(255,0,110,.65);color:#ff6ea9;}
 #gameArea{background:radial-gradient(800px 500px at 80% 0%,rgba(0,217,255,.06),transparent 60%),var(--bg);}
 #gameTopBar{background:rgba(10,14,39,.78);border-bottom-color:rgba(255, 255, 255, 0.12);}
-#tttBoard{gap:12px;grid-template-columns:repeat(3,96px);grid-template-rows:repeat(3,96px);}
+#tttBoard:not(.chess-active){gap:12px;grid-template-columns:repeat(3,96px);grid-template-rows:repeat(3,96px);}
 .ttt-cell{border-radius:20px 9px 18px 7px;background:rgba(26,31,58,.88);border-color:rgba(255,255,255,.12);font-family:var(--mono);}
 .ttt-cell.empty:hover{transform:translateY(-2px) scale(1.02);border-color:rgba(0,217,255,.5);background:rgba(0,217,255,.09);}
 .ttt-cell.x{color:#6be9ff;border-color:rgba(0,217,255,.65);background:rgba(0,217,255,.12);}
@@ -1076,7 +1078,7 @@ body.v2-theme{background:radial-gradient(1200px 700px at 8% -14%,rgba(255, 255, 
   
   .menu-btn, .users-btn{display:flex !important;}
   .close-sidebar-btn{display:block !important;}
-  #tttBoard{grid-template-columns:repeat(3,80px);grid-template-rows:repeat(3,80px);}
+  #tttBoard:not(.chess-active){grid-template-columns:repeat(3,80px);grid-template-rows:repeat(3,80px);}
   .ttt-cell{width:80px;height:80px;font-size:2.2rem;}
   .player-card{width:140px;}
 }
@@ -2021,7 +2023,7 @@ body:not(.purple-theme) #inputBar {
       return;
     }
 
-    btn.title = 'Recording (4s max) - Click to STOP';
+    btn.title = 'Recording (2s max) - Click to STOP';
     if (indicator) indicator.classList.add('show');
 
     let chunks = [];
@@ -2059,13 +2061,13 @@ body:not(.purple-theme) #inputBar {
       reader.readAsDataURL(blob);
     };
 
-    // Record the full message in one piece, automatic stop after 4 seconds to fit ESP32 buffer
+    // Record the full message in one piece, automatic stop after 2 seconds to fit ESP32 buffer
     micRecorder.start();
     window.micTimeout = setTimeout(() => {
       if (micActive) {
         window.toggleMic();
       }
-    }, 4000);
+    }, 2000);
   };
 
   // Receive and play peer voice chunks
@@ -3338,10 +3340,15 @@ body:not(.purple-theme) #inputBar {
     const b=$('tttBoard');
     if(!b) return;
     b.innerHTML='';
+    b.classList.remove('chess-active'); // Ensure chess class is cleared for TTT
     b.style.display = 'grid';
-    b.style.gridTemplateColumns = 'repeat(3, 100px)';
-    b.style.gridTemplateRows = 'repeat(3, 100px)';
-    b.style.gap = '12px';
+    b.style.gridTemplateColumns = '';
+    b.style.gridTemplateRows = '';
+    b.style.gap = '';
+    b.style.border = '';
+    b.style.borderRadius = '';
+    b.style.overflow = '';
+    b.style.boxShadow = '';
     board.forEach((v,i)=>{
       const cell=document.createElement('div');
       cell.className='ttt-cell'+(v<0?' empty':v===0?' x played':' o played');
@@ -3808,6 +3815,7 @@ body:not(.purple-theme) #inputBar {
     if (!b) return;
     b.innerHTML = '';
     b.style.display = 'grid';
+    b.classList.add('chess-active'); // Override the 3x3 CSS constraint
 
     const isMobile = window.innerWidth <= 480;
     const cellSize = isMobile ? '36px' : '50px';

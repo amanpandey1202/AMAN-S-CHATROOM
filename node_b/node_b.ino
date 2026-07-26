@@ -2071,23 +2071,34 @@ void sendJsonToRadio(const String &jsonStr) {
   int len = jsonStr.length();
   if (len == 0) return;
 
-  // Enqueue all chunks -- actual transmission happens in drainTxQueue() each loop()
+  // Determine redundancy count: 3x for critical messages (E2EE pubKey, game state/moves), 1x for others
+  int redundancy = 1;
+  if (jsonStr.indexOf("pubKey") >= 0 || 
+      jsonStr.indexOf("peerGame") >= 0 || 
+      jsonStr.indexOf("gameMove") >= 0 || 
+      jsonStr.indexOf("gameSelect") >= 0 ||
+      jsonStr.indexOf("GAME_") >= 0) {
+    redundancy = 3;
+  }
+
   uint8_t totalChunks = (len + 26) / 27;
-  uint8_t msgId = nextMsgId++;
 
-  for (uint8_t i = 0; i < totalChunks; i++) {
-    RadioPacket packet;
-    packet.header.type        = 1;
-    packet.header.msgId       = msgId;
-    packet.header.chunkIdx    = i;
-    packet.header.totalChunks = totalChunks;
+  for (int r = 0; r < redundancy; r++) {
+    uint8_t msgId = nextMsgId++;
+    for (uint8_t i = 0; i < totalChunks; i++) {
+      RadioPacket packet;
+      packet.header.type        = 1;
+      packet.header.msgId       = msgId;
+      packet.header.chunkIdx    = i;
+      packet.header.totalChunks = totalChunks;
 
-    int offset   = i * 27;
-    int chunkLen = min(27, len - offset);
-    packet.header.payloadLen  = chunkLen;
-    memcpy(packet.data, jsonStr.c_str() + offset, chunkLen);
+      int offset   = i * 27;
+      int chunkLen = min(27, len - offset);
+      packet.header.payloadLen  = chunkLen;
+      memcpy(packet.data, jsonStr.c_str() + offset, chunkLen);
 
-    enqueueTxPacket(packet); // NON-BLOCKING -- no delay, no stopListening here
+      enqueueTxPacket(packet); // NON-BLOCKING -- enqueued for drainTxQueue
+    }
   }
 }
 
@@ -2156,6 +2167,9 @@ void handleRadioData() {
     if (packet.header.type == 1) {
       packetsReceived++;
       
+      static uint8_t processedMsgIds[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+      static uint8_t processedMsgIdIdx = 0;
+      
       if (rxBuf.msgId != packet.header.msgId) {
         // Protect ongoing active reassembly from being wiped by interleaving/colliding packets
         if (rxBuf.msgId != 0xFF && (now - rxBuf.lastActivity < 1500)) {
@@ -2188,11 +2202,24 @@ void handleRadioData() {
         }
         
         if (rxBuf.chunksReceivedCount == rxBuf.totalChunks) {
-          // Null-terminate the fully assembled message before parsing
-          int totalLen = rxBuf.totalChunks * 27;
-          if (totalLen < RX_BUF_SIZE) rxBuf.data[totalLen] = '\0';
-          else rxBuf.data[RX_BUF_SIZE - 1] = '\0';
-          processRadioMessage(rxBuf.data);
+          // Check if this msgId has already been processed recently (deduplication)
+          bool alreadyProcessed = false;
+          for (int idx = 0; idx < 8; idx++) {
+            if (processedMsgIds[idx] == packet.header.msgId) {
+              alreadyProcessed = true;
+              break;
+            }
+          }
+          if (!alreadyProcessed) {
+            processedMsgIds[processedMsgIdIdx] = packet.header.msgId;
+            processedMsgIdIdx = (processedMsgIdIdx + 1) % 8;
+
+            // Null-terminate the fully assembled message before parsing
+            int totalLen = rxBuf.totalChunks * 27;
+            if (totalLen < RX_BUF_SIZE) rxBuf.data[totalLen] = '\0';
+            else rxBuf.data[RX_BUF_SIZE - 1] = '\0';
+            processRadioMessage(rxBuf.data);
+          }
           rxBuf.msgId = 0xFF; // Reset reassembly context
         }
       }
