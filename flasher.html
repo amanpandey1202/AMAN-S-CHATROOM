@@ -407,7 +407,7 @@ async function connectESP32(baud) {
     write(data) { if (data && data.trim()) log('[ESP] ' + data, 'plain'); }
   };
 
-  transport = new Transport(device, true);
+  transport = new Transport(device, false);
   esploader = new ESPLoader({ transport, baudrate: baud, terminal: trm, debugLogging: false });
 
   document.getElementById('statusDot').className = 'dot loading';
@@ -527,6 +527,9 @@ async function startFlash() {
 
   } catch (e) {
     log('✗ Flash error: ' + e.message, 'err');
+    if (e.message.toLowerCase().includes('timeout')) {
+      log('💡 Tip: Try disconnecting & reconnecting the USB cable, using a different USB port/cable, or uncheck "Erase all flash before programming". You can also try changing the upload speed to 460800 baud.', 'warn');
+    }
     console.error(e);
   } finally {
     try { if (transport) await transport.disconnect(); } catch(_) {}
